@@ -1,0 +1,16 @@
+Contributors:
+
+1-
+name: "Wbjitscool"
+action: Helped me use 'override.txt', which allowed me to make textures
+for different sign types and coloed end rod variants.
+
+2-
+name: "Impulse"
+action: Overhauled 'texture_converter.py', which helped me obtain certain
+textures for certain versions.
+
+3-
+name: "the-real-herowl"
+action: Made end rods use a mesh model, which allowed me to make it more
+MC-like.
