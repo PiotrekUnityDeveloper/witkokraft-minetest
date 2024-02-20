@@ -1,7 +1,0 @@
-day_count = 0
-lbm_introduction_times = digicontrol:routing_compat~0;mesecons_pistons:replace_legacy_piston_down~0;mesecons_pistons:replace_legacy_piston_up~0;
-lbm_introduction_times_version = 1
-last_clear_objects_time = 0
-time_of_day = 12000
-game_time = 203
-EnvArgsEnd
