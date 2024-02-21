@@ -1,0 +1,1 @@
+local _={};_[1]="singleplayer";_[2]="unlocked";_[3]={};_[3].eat={};_[3].place={mcl_signs={standing_sign=4}};_[3].craft={};_[3].deaths=0;_[3].joins=1;_[3].name=_[1];_[3][_[2]]={};_[3].chats=0;_[3].count={mcl_core={dirt_with_grass=4}};return {[_[1]]=_[3],[_[3]]={eat={},place={},craft={},deaths=0,joins=0,name=_[3],[_[2]]={},chats=0,count={}}}

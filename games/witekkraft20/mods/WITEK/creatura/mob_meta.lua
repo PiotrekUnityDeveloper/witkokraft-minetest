@@ -1093,6 +1093,7 @@ function mob:_execute_utilities()
 		local step_delay
 		local score, args
 		for i = 1, #util_stack do
+			if util_stack[i] == nil then goto continue end
 			utility = util_stack[i].utility
 			get_score = util_stack[i].get_score
 			cooldown = self._util_cooldown[i] or 0
@@ -1130,6 +1131,8 @@ function mob:_execute_utilities()
 			end
 
 			self._util_cooldown[i] = cooldown
+			
+			::continue::
 		end
 	end
 
