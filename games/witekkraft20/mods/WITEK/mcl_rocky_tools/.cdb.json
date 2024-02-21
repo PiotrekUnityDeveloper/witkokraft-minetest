@@ -1,0 +1,11 @@
+{
+    "type": "MOD",
+    "title": "Mineclone2 Rocky Tools",
+    "name": "mcl_rocky_tools",
+    "short_description": "Andesite, Diorite, Granite, and Deepslate tools for Mineclone2.",
+    "dev_state": "BETA",
+    "tags": ["tools"],
+    "license": "BSD-3-Clause",
+    "media_license": "CC-BY-SA-4.0",
+    "website": "https://cs.wellesley.edu/~pmwh/mcl_rocky_tools/"
+}

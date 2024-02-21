@@ -7,3 +7,6 @@ backend = sqlite3
 gameid = witekkraft20
 world_name = SwiatTutorial
 server_announce = false
+load_mod_mcl_rocky_tools = false
+load_mod_mcl_autocrafter = false
+load_mod_mcl_multitool = false
