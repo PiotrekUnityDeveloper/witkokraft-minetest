@@ -1,1 +1,1 @@
-return {players_stored_data={singleplayer={viewed_count={},revealed_count={nodes=95},revealed={nodes={["mcl_signs:wall_sign"]=true}},viewed={}}}}
+local _={};_[1]="craftitems";_[2]="advanced";return {players_stored_data={singleplayer={viewed_count={nodes=0,basics=0,[_[1]]=0,[_[2]]=0,tools=0},revealed_count={nodes=95,basics=25,[_[1]]=4,[_[2]]=8,tools=8},revealed={nodes={["mcl_signs:wall_sign"]=true},basics={},[_[1]]={},[_[2]]={},tools={}},viewed={nodes={},basics={},[_[1]]={},[_[2]]={},tools={}}}}}
