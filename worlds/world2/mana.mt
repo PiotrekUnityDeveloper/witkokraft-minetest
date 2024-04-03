@@ -1,0 +1,1 @@
+return {playerlist={singleplayer={maxmana=200,mana=200,regen=1,remainder=0}}}
