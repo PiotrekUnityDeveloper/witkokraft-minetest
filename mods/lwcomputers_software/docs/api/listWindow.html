@@ -1,0 +1,1213 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>listWindow</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>win.listWindow - WIN</h1>
+    Class <b>listWindow</b><br>
+    Inherits from <a moz-do-not-send="true" href="window.html">window</a>.<br>
+    <br>
+    The listWindow class provides a single selection vertical list of
+    strings. Its colors are initialized from the theme but may be
+    customized after creation. The list's vertical scrolling is
+    automatically handled but any strings exceeding the width are
+    clipped. The scroll width of the control may be manually set,
+    ensuring the scroll height is preserved.<br>
+    <br>
+    The following events are sent to the parent with a first parameter
+    of the list window object:<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top"><a moz-do-not-send="true"
+              href="events.html#selection_change">selection_change</a></td>
+          <td valign="top">When the current selection changes, by any
+            means.</td>
+        </tr>
+        <tr>
+          <td valign="top"><a moz-do-not-send="true"
+              href="events.html#list_click">list_click</a></td>
+          <td valign="top">When a list item is left
+            clicked/touched/enter key pressed while active.</td>
+        </tr>
+        <tr>
+          <td valign="top"><a moz-do-not-send="true"
+              href="events.html#list_double_click">list_double_click</a></td>
+          <td valign="top">When a list item is left
+            clicked/touched/enter key pressed within the theme's
+            double_click time of os.clock () on the same character.</td>
+        </tr>
+      </tbody>
+    </table>
+    A <a moz-do-not-send="true" href="events.html#list_click">list_click</a>
+    is not sent if <a moz-do-not-send="true"
+      href="events.html#list_double_click">list_double_click</a> is, but
+    the <a moz-do-not-send="true" href="events.html#list_double_click">list_double_click</a>
+    will be preceded with a <a moz-do-not-send="true"
+      href="events.html#list_click">list_click</a>.<br>
+    <br>
+    To create a listWindow use it's new method:<br>
+    <tt><font color="#000066">local</font> lst = win.listWindow:new
+      (parent, id, x, y, width, height)</tt><br>
+    <br>
+    <br>
+    <b>Properties</b><br>
+    <br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">list__click_time</td>
+          <td valign="top">number</td>
+          <td valign="top">Records click time for double click.</td>
+        </tr>
+        <tr>
+          <td valign="top">list__click_x</td>
+          <td valign="top">number</td>
+          <td valign="top">Records x coordinate for double click.</td>
+        </tr>
+        <tr>
+          <td valign="top">list__click_y</td>
+          <td valign="top">number</td>
+          <td valign="top">Records y coordinate for double click.</td>
+        </tr>
+        <tr>
+          <td valign="top">list__colors</td>
+          <td valign="top">table</td>
+          <td valign="top">Color table.</td>
+        </tr>
+        <tr>
+          <td valign="top">list__colors.back</td>
+          <td valign="top">number</td>
+          <td valign="top">Blurred background color.</td>
+        </tr>
+        <tr>
+          <td valign="top">list__colors.focus</td>
+          <td valign="top">number</td>
+          <td valign="top">Focused background color.</td>
+        </tr>
+        <tr>
+          <td valign="top">list__colors.selected_back</td>
+          <td valign="top">number</td>
+          <td valign="top">Background color of selected item.</td>
+        </tr>
+        <tr>
+          <td valign="top">list__colors.selected_text</td>
+          <td valign="top">number</td>
+          <td valign="top">Text color of selected item.</td>
+        </tr>
+        <tr>
+          <td valign="top">list__colors.text</td>
+          <td valign="top">number</td>
+          <td valign="top">Text color.</td>
+        </tr>
+        <tr>
+          <td valign="top">list__items</td>
+          <td valign="top">table</td>
+          <td valign="top">Table of items.</td>
+        </tr>
+        <tr>
+          <td valign="top">list__sel_index</td>
+          <td valign="top">number</td>
+          <td valign="top">Holds the last selected item's index.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Methods</b><br>
+    <ul id="mozToc">
+      <!--mozToc h3 1-->
+      <li><a href="#mozTocId622465">list_sorter_ascending</a></li>
+      <li><a href="#mozTocId600957">list_sorter_descending</a></li>
+      <li><a href="#mozTocId703834">listWindow:add_string</a></li>
+      <li><a href="#mozTocId678462">listWindow:constructor</a></li>
+      <li><a href="#mozTocId994847">listWindow:count</a></li>
+      <li><a href="#mozTocId968178">listWindow:draw</a></li>
+      <li><a href="#mozTocId87127">listWindow:ensure_visible</a></li>
+      <li><a href="#mozTocId110598">listWindow:find</a></li>
+      <li><a href="#mozTocId511948">listWindow:get_cur_sel</a></li>
+      <li><a href="#mozTocId179886">listWindow:get_data</a></li>
+      <li><a href="#mozTocId657983">listWindow:get_string</a></li>
+      <li><a href="#mozTocId608471">listWindow:on_blur</a></li>
+      <li><a href="#mozTocId146412">listWindow:on_focus</a></li>
+      <li><a href="#mozTocId75857">listWindow:on_key</a></li>
+      <li><a href="#mozTocId722549">listWindow:on_left_click</a></li>
+      <li><a href="#mozTocId76525">listWindow:on_touch</a></li>
+      <li><a href="#mozTocId113732">listWindow:remove_string</a></li>
+      <li><a href="#mozTocId625326">listWindow:reset_content</a></li>
+      <li><a href="#mozTocId498904">listWindow:set_colors</a></li>
+      <li><a href="#mozTocId427348">listWindow:set_cur_sel</a></li>
+      <li><a href="#mozTocId532817">listWindow:set_data</a></li>
+      <li><a href="#mozTocId448452">listWindow:set_string</a></li>
+      <li><a href="#mozTocId104240">listWindow:sort</a></li>
+    </ul>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId622465" class="mozTocH3"></a><a
+        name="list_sorter_ascending"></a>local list_sorter_ascending</h3>
+    <i> result list_sorter_ascending (string1, string2)</i><br>
+    <br>
+    Helper function to sort the list of strings.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">string1 </td>
+          <td valign="top">string<br>
+          </td>
+          <td valign="top">First string to test.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">string2 </td>
+          <td valign="top">string </td>
+          <td valign="top">Second string to test. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean<br>
+          </td>
+          <td valign="top">True if string1 is before string2.<br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Used internally.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId600957" class="mozTocH3"></a><a
+        name="list_sorter_descending"></a>local list_sorter_descending</h3>
+    <i> result list_sorter_descending (string1, string2)</i><br>
+    <br>
+    Helper function to sort the list of strings.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">string1 </td>
+          <td valign="top">string </td>
+          <td valign="top">First string to test. </td>
+        </tr>
+        <tr>
+          <td valign="top">string2 </td>
+          <td valign="top">string </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if string1 is before string2. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Used internally.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId703834" class="mozTocH3"></a><a
+        name="listWindow:add_string"></a>win.listWindow:add_string</h3>
+    <i>listWindow:add_string (str, data, index)</i><br>
+    <br>
+    Inserts an item (string) into the list.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">str </td>
+          <td valign="top">string </td>
+          <td valign="top">The string to display in the list. </td>
+        </tr>
+        <tr>
+          <td valign="top">data </td>
+          <td valign="top">any </td>
+          <td valign="top">Any custom object/value associated with the
+            list entry. </td>
+        </tr>
+        <tr>
+          <td valign="top">index</td>
+          <td valign="top">number/nil</td>
+          <td valign="top">1 based index to insert the item. If nil or
+            out of range the item is added to the end of the list.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Scroll sizing and invalidation is handled.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#listWindow:remove_string">listWindow:remove_string</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId678462" class="mozTocH3"></a><a
+        name="listWindow:constructor"></a>win.listWindow:constructor</h3>
+    <i> list listWindow:constructor (parent, id, x, y, width, height)</i><br>
+    <br>
+    Constructs and returns the instantiated list window.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">parent </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">Parent window, typically a frame. </td>
+        </tr>
+        <tr>
+          <td valign="top">id </td>
+          <td valign="top">number </td>
+          <td valign="top">Numeric id value for list window. </td>
+        </tr>
+        <tr>
+          <td valign="top">x</td>
+          <td valign="top">number</td>
+          <td valign="top">Parent relative x position.</td>
+        </tr>
+        <tr>
+          <td valign="top">y</td>
+          <td valign="top">number</td>
+          <td valign="top">Parent relative y position.</td>
+        </tr>
+        <tr>
+          <td valign="top">width</td>
+          <td valign="top">number</td>
+          <td valign="top">List window's width.</td>
+        </tr>
+        <tr>
+          <td valign="top">height</td>
+          <td valign="top">number</td>
+          <td valign="top">List window's height.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">list </td>
+          <td valign="top">listWindow </td>
+          <td valign="top">The instantiated list window.<br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId994847" class="mozTocH3"></a><a
+        name="listWindow:count"></a>win.listWindow:count</h3>
+    <i> count listWindow:count ()</i><br>
+    <br>
+    Returns the count of items (strings) in the list.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">count </td>
+          <td valign="top">number </td>
+          <td valign="top">The count of items in the list control. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId968178" class="mozTocH3"></a><a
+        name="listWindow:draw"></a>win.listWindow:draw</h3>
+    <i> listWindow:draw (gdi, bounds)</i><br>
+    <br>
+    Draws the list control.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">gdi </td>
+          <td valign="top">GDI </td>
+          <td valign="top">GDI object to use for drawing. </td>
+        </tr>
+        <tr>
+          <td valign="top">bounds </td>
+          <td valign="top">rect </td>
+          <td valign="top">Invalidated area of the window. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:draw">window:draw</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId87127" class="mozTocH3"></a><a
+        name="listWindow:ensure_visible"></a>win.listWindow:ensure_visible</h3>
+    <i>listWindow:ensure_visible (index)</i><br>
+    <br>
+    Adjusts the scrolling to bring the item at the given index into
+    view, if needed.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">index </td>
+          <td valign="top">number </td>
+          <td valign="top">1 based item index to ensure is visible. If
+            nil the currently selected item is used. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Invalidation is handled.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId110598" class="mozTocH3"></a><a
+        name="listWindow:find"></a>win.listWindow:find</h3>
+    <i> index listWindow:find (str, from, exact)</i><br>
+    <br>
+    Finds the next item in the list which matches the string.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">str </td>
+          <td valign="top">string </td>
+          <td valign="top">The string to search for. </td>
+        </tr>
+        <tr>
+          <td valign="top">from </td>
+          <td valign="top">number/nil </td>
+          <td valign="top">The 1 based index to search after. Zero or
+            nil searches from the beginning. </td>
+        </tr>
+        <tr>
+          <td valign="top">exact</td>
+          <td valign="top">boolean</td>
+          <td valign="top">If true the string must match exactly,
+            otherwise a match if the start of the string is the same.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">index </td>
+          <td valign="top">number </td>
+          <td valign="top">The 1 based index of the item found, or zero
+            if none. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId511948" class="mozTocH3"></a><a
+        name="listWindow:get_cur_sel"></a>win.listWindow:get_cur_sel<br>
+    </h3>
+    <i> index listWindow:get_cur_sel ()</i><br>
+    <br>
+    Returns the index of the currently selected list item.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">index </td>
+          <td valign="top">number </td>
+          <td valign="top">The 1 based index of the currently selected
+            list item, or zero if none. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#listWindow:set_cur_sel">listWindow:set_cur_sel</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId179886" class="mozTocH3"></a><a
+        name="listWindow:get_data"></a>win.listWindow:get_data</h3>
+    <i> data listWindow:get_data (index)</i><br>
+    <br>
+    Returns the data of the item at the given index.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">index </td>
+          <td valign="top">number/nil </td>
+          <td valign="top">The 1 based index of the item. If nil or
+            omitted the currently selected item is used, if any. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">data </td>
+          <td valign="top">any </td>
+          <td valign="top">The item's data, or nil if index is out of
+            range. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#listWindow:set_data">listWindow:set_data</a>,
+    <a moz-do-not-send="true" href="#listWindow:get_string">listWindow:get_string</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId657983" class="mozTocH3"></a><a
+        name="listWindow:get_string"></a>win.listWindow:get_string</h3>
+    <i> str listWindow:get_string (index)</i><br>
+    <br>
+    Returns the string of the item at the given index.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">index </td>
+          <td valign="top">number/nil </td>
+          <td valign="top">The 1 based index of the item. If nil or
+            omitted the currently selected item is used, if any. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">str </td>
+          <td valign="top">string/nil </td>
+          <td valign="top">The item's string, or nil if index is out of
+            range. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#listWindow:set_string">listWindow:set_string</a>,
+    <a moz-do-not-send="true" href="#listWindow:get_data">listWindow:get_data</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId608471" class="mozTocH3"></a><a
+        name="listWindow:on_blur"></a>win.listWindow:on_blur</h3>
+    <i> result listWindow:on_blur (focused)</i><br>
+    <br>
+    Sets blurred background color.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">focused </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">The window gaining focus, it may be nil. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Always false. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:on_blur">window:on_blur</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId146412" class="mozTocH3"></a><a
+        name="listWindow:on_focus"></a>win.listWindow:on_focus</h3>
+    <i> result listWindow:on_focus (blurred)</i><br>
+    <br>
+    Sets focused background color.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">blurred </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">The window losing focus, it may be nil. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Always false. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:on_focus">window:on_focus</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId75857" class="mozTocH3"></a><a
+        name="listWindow:on_key"></a>win.listWindow:on_key</h3>
+    <i> result listWindow:on_key (key, ctrl, alt, shift)</i><br>
+    <br>
+    Handles key events; up, down, page up, page down, home, end,
+    ctrl+up, ctrl+down, ctrl+left, ctrl+right, ctrl+page up, ctrl+page
+    down, ctrl+home, ctrl+end and sends a <a moz-do-not-send="true"
+      href="events.html#list_click">list_click</a> or <a
+      moz-do-not-send="true" href="events.html#list_double_click">list_double_click</a>
+    event to the parent window on enter.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">key </td>
+          <td valign="top">number </td>
+          <td valign="top">Key code. </td>
+        </tr>
+        <tr>
+          <td valign="top">ctrl </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if control key is depressed. </td>
+        </tr>
+        <tr>
+          <td valign="top">alt</td>
+          <td valign="top">boolean</td>
+          <td valign="top">True if alternate key is depressed.</td>
+        </tr>
+        <tr>
+          <td valign="top">shift</td>
+          <td valign="top">boolean</td>
+          <td valign="top">True if shift key is depressed.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if key was handled, false if not. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:on_key">window:on_key</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId722549" class="mozTocH3"></a><a
+        name="listWindow:on_left_click"></a>win.listWindow:on_left_click</h3>
+    <i> result listWindow:on_left_click (x, y, count)</i><br>
+    <br>
+    Calls the base implementation, sets the selected item at the click
+    point, and sends <a moz-do-not-send="true"
+      href="events.html#list_click">list_click</a> and <a
+      moz-do-not-send="true" href="events.html#list_double_click">list_double_click</a>
+    events to parent.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">x </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative x position. </td>
+        </tr>
+        <tr>
+          <td valign="top">y </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative y position. </td>
+        </tr>
+        <tr>
+          <td valign="top">count</td>
+          <td valign="top">number</td>
+          <td valign="top">The number of times this same position was
+            repeatedly clicked, with each successive click within the <i>double_click_time</i>.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Always true. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true"
+      href="window.html#window:on_left_click">window:on_left_click</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId76525" class="mozTocH3"></a><a
+        name="listWindow:on_touch"></a>win.listWindow:on_touch</h3>
+    <i> result listWindow:on_touch (x, y)</i><br>
+    <br>
+    Calls the base implementation, sets the selected item at the touch
+    point, and sends <a moz-do-not-send="true"
+      href="events.html#list_click">list_click</a> and <a
+      moz-do-not-send="true" href="events.html#list_double_click">list_double_click</a>
+    events to parent.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">x </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative x position. </td>
+        </tr>
+        <tr>
+          <td valign="top">y </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative y position. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Always true. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    See <a moz-do-not-send="true" href="window.html#window:on_touch">window:on_touch</a>.<br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId113732" class="mozTocH3"></a><a
+        name="listWindow:remove_string"></a>win.listWindow:remove_string</h3>
+    <i> result listWindow:remove_string (index)</i><br>
+    <br>
+    Removes the item at the given index from the list.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">index </td>
+          <td valign="top">number </td>
+          <td valign="top">1 based index of the item to remove. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if successfully removed, or false
+            otherwise (index is out of range). </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Scroll sizing and invalidation is handled.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#listWindow:add_string">listWindow:add_string</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId625326" class="mozTocH3"></a><a
+        name="listWindow:reset_content"></a>win.listWindow:reset_content</h3>
+    <i>listWindow:reset_content ()</i><br>
+    <br>
+    Removes all items from the list.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Scroll sizing and invalidation is handled.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId498904" class="mozTocH3"></a><a
+        name="listWindow:set_colors"></a>win.listWindow:set_colors</h3>
+    <i>listWindow:set_colors (text, background, focus, selected_text,
+      selected_back)</i><br>
+    <br>
+    Sets the colors for the list control.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">text </td>
+          <td valign="top">number </td>
+          <td valign="top">Text color. </td>
+        </tr>
+        <tr>
+          <td valign="top">background </td>
+          <td valign="top">number </td>
+          <td valign="top">Blurred background color. </td>
+        </tr>
+        <tr>
+          <td valign="top">focus</td>
+          <td valign="top">number</td>
+          <td valign="top">Focused background color.</td>
+        </tr>
+        <tr>
+          <td valign="top">selected_text</td>
+          <td valign="top">number</td>
+          <td valign="top">Text color of selected item.</td>
+        </tr>
+        <tr>
+          <td valign="top">selected_back</td>
+          <td valign="top">number</td>
+          <td valign="top">Background color of selected item.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    The window is invalidated.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId427348" class="mozTocH3"></a><a
+        name="listWindow:set_cur_sel"></a>win.listWindow:set_cur_sel</h3>
+    <i> changed listWindow:set_cur_sel (index, make_visible)</i><br>
+    <br>
+    Sets the currently selected item in the list to the index given (1
+    based).<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">index </td>
+          <td valign="top">number </td>
+          <td valign="top">1 based index of the item to select. Zero or
+            nil for no selection. </td>
+        </tr>
+        <tr>
+          <td valign="top">make_visible </td>
+          <td valign="top">boolean </td>
+          <td valign="top">If true or nil scrolling is adjusted to bring
+            the selected item into view if needed. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">changed </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if the current selection changed, false
+            if not. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If index is greater than the number of items in the list the last
+    one is selected.<br>
+    <br>
+    If the selection changed a <a moz-do-not-send="true"
+      href="events.html#selection_change">selection_change</a> event is
+    sent to the parent.<br>
+    <br>
+    Invalidation is handled.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#listWindow:get_cur_sel">listWindow:get_cur_sel</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId532817" class="mozTocH3"></a><a
+        name="listWindow:set_data"></a>win.listWindow:set_data</h3>
+    <i> result listWindow:set_data (data, index)</i><br>
+    <br>
+    Sets the data value for the item.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">data </td>
+          <td valign="top">any </td>
+          <td valign="top">The data value to set. </td>
+        </tr>
+        <tr>
+          <td valign="top">index </td>
+          <td valign="top">number/nil </td>
+          <td valign="top">The 1 based index of the item to set. If nil
+            the currently selected item is used, if any. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if the item was successfully set, false
+            if not. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#listWindow:get_data">listWindow:get_data</a>,
+    <a moz-do-not-send="true" href="#listWindow:set_string">listWindow:set_string</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId448452" class="mozTocH3"></a><a
+        name="listWindow:set_string"></a>win.listWindow:set_string</h3>
+    <i> result listWindow:set_string (str, index)</i><br>
+    <br>
+    Sets the string for the item.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">str </td>
+          <td valign="top">string </td>
+          <td valign="top">The string value to set. </td>
+        </tr>
+        <tr>
+          <td valign="top">index </td>
+          <td valign="top">number/nil </td>
+          <td valign="top">The 1 based index of the item to set. If nil
+            the currently selected item is used, if any. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if the item was successfully set, false
+            if not. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#listWindow:get_string">listWindow:get_string</a>,
+    <a moz-do-not-send="true" href="#listWindow:set_data">listWindow:set_data</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId104240" class="mozTocH3"></a><a
+        name="listWindow:sort"></a>win.listWindow:sort</h3>
+    <i> listWindow:sort (descending)</i><br>
+    <br>
+    Sorts the items (strings) in the list.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">descending </td>
+          <td valign="top">boolean </td>
+          <td valign="top">If true the sort is descending, otherwise
+            ascending. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Invalidation is handled.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#list_sorter_ascending">list_sorter_ascending</a>,
+    <a moz-do-not-send="true" href="#list_sorter_descending">list_sorter_descending</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="listWindow.html#top">top</a><br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

@@ -1,0 +1,1996 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>desktopWindow</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>private.desktopWindow - WIN</h1>
+    Class <b>desktopWindow</b><br>
+    Inherits from <a moz-do-not-send="true" href="window.html">window</a>.<br>
+    <br>
+    The desktopWindow class provides a window class object to serve as
+    the top, administrative window in the hierarchy on a single display
+    device.<br>
+    <br>
+    <b>Properties</b><br>
+    <br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">dt__app_list</td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="appListFrame.html">appListFrame</a></td>
+          <td valign="top">The running applications list window.</td>
+        </tr>
+        <tr>
+          <td valign="top">dt__capture_mouse_wnd</td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>/nil</td>
+          <td valign="top">The window that currently has mouse capture,
+            if any.</td>
+        </tr>
+        <tr>
+          <td valign="top">dt__clipboard_data</td>
+          <td valign="top">any</td>
+          <td valign="top">Holds the clipboard data.</td>
+        </tr>
+        <tr>
+          <td valign="top">dt__clipboard_type</td>
+          <td valign="top">number</td>
+          <td valign="top">Holds the clipboard's data type.</td>
+        </tr>
+        <tr>
+          <td valign="top">dt__drag_wnd</td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>/nil</td>
+          <td valign="top">The window that last received a click event.</td>
+        </tr>
+        <tr>
+          <td valign="top">dt__home_page</td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="homePageFrame.html">homePageFrame</a></td>
+          <td valign="top">The home page window.</td>
+        </tr>
+        <tr>
+          <td valign="top">dt__keyboard</td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="keyboardFrame.html">keyboardFrame</a></td>
+          <td valign="top">The keyboard overlay window when it's active.</td>
+        </tr>
+        <tr>
+          <td valign="top">dt__keyboard_fullscreen<br>
+          </td>
+          <td valign="top">boolean<br>
+          </td>
+          <td valign="top">Stores full screen mode while keyboard is
+            active.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">dt__lock_screen</td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="lockScrnFrame.html">lockScrnFrame</a><br>
+          </td>
+          <td valign="top">The lock screen window.</td>
+        </tr>
+        <tr>
+          <td valign="top">dt__lockable</td>
+          <td valign="top">boolean<br>
+          </td>
+          <td valign="top">Whether this desktop can be locked.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">dt__sys_msgbox</td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="sysMsgBoxFrame.html">sysMsgBoxFrame</a><br>
+          </td>
+          <td valign="top">The system message box window.</td>
+        </tr>
+        <tr>
+          <td valign="top">dt__taskbar</td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="taskBarFrame.html">taskBarFrame</a></td>
+          <td valign="top">The task bar window.</td>
+        </tr>
+        <tr>
+          <td valign="top">dt__theme</td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="desktopTheme.html">desktopTheme</a></td>
+          <td valign="top">The desktop theme object.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Methods</b><br>
+    <ul id="mozToc">
+      <!--mozToc h3 1-->
+      <li><a href="#mozTocId401432">desktopWindow:can_lock</a></li>
+      <li><a href="#mozTocId331950">desktopWindow:capture_mouse</a></li>
+      <li><a href="#mozTocId576538">desktopWindow:captured_mouse</a></li>
+      <li><a href="#mozTocId341560">desktopWindow:constructor</a></li>
+      <li><a href="#mozTocId760262">desktopWindow:create_bars</a></li>
+      <li><a href="#mozTocId676547">desktopWindow:create_theme</a></li>
+      <li><a href="#mozTocId664472">desktopWindow:dismiss_keyboard</a></li>
+      <li><a href="#mozTocId912361">desktopWindow:do_idle</a></li>
+      <li><a href="#mozTocId156408">desktopWindow:do_keyboard</a></li>
+      <li><a href="#mozTocId956086">desktopWindow:drop_app</a></li>
+      <li><a href="#mozTocId810958">desktopWindow:enum_apps</a></li>
+      <li><a href="#mozTocId326164">desktopWindow:get_active_app_frame</a></li>
+      <li><a href="#mozTocId323667">desktopWindow:get_active_frame</a></li>
+      <li><a href="#mozTocId99758">desktopWindow:get_clipboard</a></li>
+      <li><a href="#mozTocId126426">desktopWindow:get_focus_wnd</a></li>
+      <li><a href="#mozTocId581630">desktopWindow:get_fullscreen</a></li>
+      <li><a href="#mozTocId111227">desktopWindow:get_lockable</a></li>
+      <li><a href="#mozTocId483116">desktopWindow:get_next_app_frame</a></li>
+      <li><a href="#mozTocId513300">desktopWindow:get_password</a></li>
+      <li><a href="#mozTocId831705">desktopWindow:get_taskbar_index</a></li>
+      <li><a href="#mozTocId838329">desktopWindow:get_theme</a></li>
+      <li><a href="#mozTocId933735">desktopWindow:get_work_area</a></li>
+      <li><a href="#mozTocId756707">desktopWindow:hide_lock_screen</a></li>
+      <li><a href="#mozTocId966999">desktopWindow:hide_msgbox</a></li>
+      <li><a href="#mozTocId657192">desktopWindow:is_locked</a></li>
+      <li><a href="#mozTocId196260">desktopWindow:is_touch</a></li>
+      <li><a href="#mozTocId461738">desktopWindow:load_app_list</a></li>
+      <li><a href="#mozTocId430963">desktopWindow:load_theme</a></li>
+      <li><a href="#mozTocId788680">desktopWindow:lock_screen</a></li>
+      <li><a href="#mozTocId368345">desktopWindow:msgbox</a></li>
+      <li><a href="#mozTocId913922">desktopWindow:on_resize</a></li>
+      <li><a href="#mozTocId625784">desktopWindow:run_app</a></li>
+      <li><a href="#mozTocId779890">desktopWindow:save_theme</a></li>
+      <li><a href="#mozTocId372660">desktopWindow:set_active_frame</a></li>
+      <li><a href="#mozTocId660659">desktopWindow:set_clipboard</a></li>
+      <li><a href="#mozTocId639615">desktopWindow:set_fullscreen</a></li>
+      <li><a href="#mozTocId109699">desktopWindow:set_lockable</a></li>
+      <li><a href="#mozTocId148594">desktopWindow:set_text_scale</a></li>
+      <li><a href="#mozTocId496521">desktopWindow:show_home_page</a></li>
+      <li><a href="#mozTocId769681">desktopWindow:show_list_page</a></li>
+      <li><a href="#mozTocId181875">desktopWindow:show_lock_screen</a></li>
+      <li><a href="#mozTocId44268">desktopWindow:update</a></li>
+    </ul>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId401432" class="mozTocH3"></a><a
+        name="desktopWindow:can_lock"></a>private.desktopWindow:can_lock</h3>
+    <i> result desktopWindow:can_lock ()</i><br>
+    <br>
+    Returns whether the lock screen can be activated on the desktop.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if can lock, false if not. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#desktopWindow:is_locked">desktopWindow:is_locked</a>,
+    <a moz-do-not-send="true" href="#desktopWindow:lock_screen">desktopWindow:lock_screen</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId331950" class="mozTocH3"></a><a
+        name="desktopWindow:capture_mouse"></a>private.desktopWindow:capture_mouse</h3>
+    <i>desktopWindow:capture_mouse (wnd)</i><br>
+    <br>
+    Sets or releases mouse capture.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">wnd </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>/nil
+
+
+
+          </td>
+          <td valign="top">The window to receive mouse capture. If nil
+            mouse capture is released. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Use <a moz-do-not-send="true"
+      href="window.html#window:capture_mouse">window:capture_mouse</a>
+    and <a moz-do-not-send="true"
+      href="window.html#window:release_mouse">window:release_mouse</a>
+    to set and release mouse capture.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId576538" class="mozTocH3"></a><a
+        name="desktopWindow:captured_mouse"></a>private.desktopWindow:captured_mouse</h3>
+    <i> wnd desktopWindow:captured_mouse ()</i><br>
+    <br>
+    Returns the <a moz-do-not-send="true" href="window.html">window</a>
+    object that currently has mouse capture, or nil if none.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">wnd </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">The window that currently has mouse capture,
+            or nil if none. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true"
+      href="window.html#window:captured_mouse">window:captured_mouse</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId341560" class="mozTocH3"></a><a
+        name="desktopWindow:constructor"></a>private.desktopWindow:constructor</h3>
+    <i> desktop desktopWindow:constructor (type, dir, width, channels)</i><br>
+    <br>
+    Constructs and returns the instantiated desktop window.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">type </td>
+          <td valign="top">string </td>
+          <td valign="top">Type of device. Can be:<br>
+            <tt>"term"</tt><br>
+            <tt>"monitor"</tt><br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">dir </td>
+          <td valign="top">string </td>
+          <td valign="top">Desktop directory under<i> /win/devices</i>.
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">width</td>
+          <td valign="top">number</td>
+          <td valign="top">Display width for multi-monitor devices.
+            Ignored for others.</td>
+        </tr>
+        <tr>
+          <td valign="top">channels</td>
+          <td valign="top">string/list</td>
+          <td valign="top">The digilines channel/s of the attached
+            device.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">desktop </td>
+          <td valign="top">desktopWindow </td>
+          <td valign="top">The instantiated desktop window. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId760262" class="mozTocH3"></a><a
+        name="desktopWindow:create_bars"></a>private.desktopWindow:create_bars</h3>
+    <i>desktopWindow:create_bars ()</i><br>
+    <br>
+    Creates the task bar and system page frames, running them in modal
+    state, then initializes and displays the home page.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId676547" class="mozTocH3"></a><a
+        name="desktopWindow:create_theme"></a>private.desktopWindow:create_theme</h3>
+    <i> theme desktopWindow:create_theme ()</i><br>
+    <br>
+    Attempts to load the theme object from the desktop theme file. If
+    unable to, a new theme is created and saved to the desktop theme
+    file. A theme object is always returned.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">theme </td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="desktopTheme.html">desktopTheme</a> </td>
+          <td valign="top">Desktop theme object. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#desktopWindow:load_theme">desktopWindow:load_theme</a>,
+    <a moz-do-not-send="true" href="#desktopWindow:save_theme">desktopWindow:save_theme</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId664472" class="mozTocH3"></a><a
+        name="desktopWindow:dismiss_keyboard"></a>private.desktopWindow:dismiss_keyboard</h3>
+    <i>desktopWindow:dismiss_keyboard ()</i><br>
+    <br>
+    Dismisses the keyboard overlay if it is active.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#desktopWindow:do_keyboard">desktopWindow:do_keyboard</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId912361" class="mozTocH3"></a><a
+        name="desktopWindow:do_idle"></a>private.desktopWindow:do_idle</h3>
+    <i>desktopWindow:do_idle (count)</i><br>
+    <br>
+    Sends the <a moz-do-not-send="true" href="events.html#idle">idle</a>
+    event to each of its children (frame level windows).<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">count </td>
+          <td valign="top">number </td>
+          <td valign="top">Number of successive times (1 based) the idle
+            event was propagated since any other event type was
+            processed. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:on_idle">window:on_idle</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId156408" class="mozTocH3"></a><a
+        name="desktopWindow:do_keyboard"></a>private.desktopWindow:do_keyboard</h3>
+    <i>desktopWindow:do_keyboard (target_wnd)</i><br>
+    <br>
+    Displays the keyboard overlay. The target_wnd is adopted by the
+    keyboard overlay while it is active.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">target_wnd </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">The window to receive key input from the
+            overlay. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true"
+      href="#desktopWindow:dismiss_keyboard">desktopWindow:dismiss_keyboard</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId956086" class="mozTocH3"></a><a
+        name="desktopWindow:drop_app"></a>private.desktopWindow:drop_app</h3>
+    <i>desktopWindow:drop_app (frame)</i><br>
+    <br>
+    Drops the application's main frame, destroying it and all its popups
+    and children.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">frame </td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="applicationFrame.html">applicationFrame</a> </td>
+          <td valign="top">The application main frame to drop. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    This method should not be called while the application is in modal
+    state.<br>
+    <br>
+    Use <a moz-do-not-send="true"
+      href="applicationFrame.html#applicationFrame:quit_app">applicationFrame:quit_app</a>
+    to quit an application.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId810958" class="mozTocH3"></a><a
+        name="desktopWindow:enum_apps"></a>private.desktopWindow:enum_apps</h3>
+    <i> iterator, frame desktopWindow:enum_apps (iterator)</i><br>
+    <br>
+    Returns the next application frame from the desktop's children.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">iterator </td>
+          <td valign="top">number </td>
+          <td valign="top">Iterator passed back at the last call. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">iterator </td>
+          <td valign="top">number </td>
+          <td valign="top">Iterator to pass back at the next call. </td>
+        </tr>
+        <tr>
+          <td valign="top">frame </td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="applicationFrame.html">applicationFrame</a> </td>
+          <td valign="top">Next application frame or nil when no more. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    The iterator should be nil for the first call, and passed back at
+    each successive call. When there are no more application frames the
+    frame object returned is nil.<br>
+    <pre><font color="#000066">local</font> itor, frame = desktop:enum_apps ()
+<font color="#000066">while</font> frame <font color="#000066">do</font>
+&nbsp;&nbsp; <font color="#cc0000">-- do something</font>
+&nbsp;&nbsp; itor, frame = desktop:enum_apps (itor)
+<font color="#000066">end</font></pre>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId326164" class="mozTocH3"></a><a
+        name="desktopWindow:get_active_app_frame"></a>private.desktopWindow:get_active_app_frame</h3>
+    <i> frame desktopWindow:get_active_app_frame ()</i><br>
+    <br>
+    Returns the application main frame currently lowest in the z order
+    (on top of all others), or nil if none. System applicationFrame
+    windows not included.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">frame </td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="applicationFrame.html">applicationFrame</a>/nil </td>
+          <td valign="top">The top application main frame, or nil if
+            none loaded. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true"
+      href="#desktopWindow:get_active_frame">desktopWindow:get_active_frame</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId323667" class="mozTocH3"></a><a
+        name="desktopWindow:get_active_frame"></a>private.desktopWindow:get_active_frame</h3>
+    <i> frame desktopWindow:get_active_frame ()</i><br>
+    <br>
+    Returns the frame window lowest in the z order after the task bar
+    (on top of all others), or nil if none. The returned frame may be
+    either a <a moz-do-not-send="true" href="popupFrame.html">popupFrame</a>
+    window or an <a moz-do-not-send="true" href="applicationFrame.html">applicationFrame</a>
+    window, including the system's home and list pages.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">frame </td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="parentFrame.html">parentFrame</a> </td>
+          <td valign="top">The top frame window. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    nil should only be returned during start up as the system's page
+    windows should exist after that.<br>
+    <br>
+    See <a moz-do-not-send="true"
+      href="#desktopWindow:get_active_app_frame">desktopWindow:get_active_app_frame</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId99758" class="mozTocH3"></a><a
+        name="desktopWindow:get_clipboard"></a>private.desktopWindow:get_clipboard</h3>
+    <i> type, data desktopWindow:get_clipboard ()</i><br>
+    <br>
+    Returns the current type and data from the desktop's clipboard.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">type </td>
+          <td valign="top">number </td>
+          <td valign="top">Clipboard data type. </td>
+        </tr>
+        <tr>
+          <td valign="top">data </td>
+          <td valign="top">any </td>
+          <td valign="top">Clipboard data. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If the clipboard is empty the type is <a moz-do-not-send="true"
+      href="globals.html#Clipboard_data_types"><tt>win.CB_EMPTY</tt></a>,
+    and data is nil.<br>
+    <br>
+    See <a moz-do-not-send="true"
+      href="window.html#window:get_clipboard">window:get_clipboard</a>,
+    <a moz-do-not-send="true" href="#desktopWindow:set_clipboard">desktopWindow:set_clipboard</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId126426" class="mozTocH3"></a><a
+        name="desktopWindow:get_focus_wnd"></a>private.desktopWindow:get_focus_wnd</h3>
+    <i> wnd desktopWindow:get_focus_wnd ()</i><br>
+    <br>
+    Returns the window that currently has input focus on the desktop
+    (the focus window of the active frame), or nil if none.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">wnd </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>/nil
+
+
+
+          </td>
+          <td valign="top">The window that has input focus, or nil if
+            none. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:get_focus">window:get_focus</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId581630" class="mozTocH3"></a><a
+        name="desktopWindow:get_fullscreen"></a>private.desktopWindow:get_fullscreen</h3>
+    <i> fullscreen desktopWindow:get_fullscreen ()</i><br>
+    <br>
+    Returns whether the desktop is in full screen mode.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">fullscreen </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if desktop is in full screen mode, false
+            if not. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#desktopWindow:set_fullscreen">desktopWindow:set_fullscreen</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId111227" class="mozTocH3"></a><a
+        name="desktopWindow:get_lockable"></a>private.desktopWindow:get_lockable</h3>
+    <i> lockable desktopWindow:get_lockable ()</i><br>
+    <br>
+    Returns whether the desktop setting allows locking.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none<br>
+          </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">lockable </td>
+          <td valign="top">boolean<br>
+          </td>
+          <td valign="top">True if lockable, false if not.<br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks<br>
+    </b>This method does not check if there is a password.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#desktopWindow:set_lockable">desktopWindow:set_lockable</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId483116" class="mozTocH3"></a><a
+        name="desktopWindow:get_next_app_frame"></a>private.desktopWindow:get_next_app_frame</h3>
+    <i> appframe desktopWindow:get_next_app_frame (frame)</i><br>
+    <br>
+    Returns the next <a moz-do-not-send="true"
+      href="applicationFrame.html">applicationFrame</a> window after the
+    frame given in the desktop's children z order, or nil if none or the
+    frame is not a child. The search excludes system page frame windows.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">frame </td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="parentFrame.html">parentFrame</a> </td>
+          <td valign="top">The frame to search from. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">appframe </td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="applicationFrame.html">applicationFrame</a> </td>
+          <td valign="top">The next application frame window in the z
+            order. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true"
+      href="#desktopWindow:get_active_app_frame">desktopWindow:get_active_app_frame</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId513300" class="mozTocH3"></a><a
+        name="desktopWindow:get_password"></a>private.desktopWindow:get_password</h3>
+    <i> password desktopWindow:get_password ()</i><br>
+    <br>
+    Returns the system's password. An empty string is returned if a
+    password is not set.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">password </td>
+          <td valign="top">string </td>
+          <td valign="top">The system's password. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#desktopWindow:lock_screen">desktopWindow:lock_screen</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId831705" class="mozTocH3"></a><a
+        name="desktopWindow:get_taskbar_index"></a>private.desktopWindow:get_taskbar_index</h3>
+    <i> index desktopWindow:get_taskbar_index ()</i><br>
+    <br>
+    Returns the 1 based index position of the task bar window in the
+    desktop's children's z order, or zero if not found.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">index </td>
+          <td valign="top">number </td>
+          <td valign="top">Task bar window index. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId838329" class="mozTocH3"></a><a
+        name="desktopWindow:get_theme"></a>private.desktopWindow:get_theme</h3>
+    <i> theme desktopWindow:get_theme ()</i><br>
+    <br>
+    Returns the desktop's theme object.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">theme </td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="desktopTheme.html">desktopTheme</a> </td>
+          <td valign="top">Desktop's theme object. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:get_theme">window:get_theme</a>,
+    <a moz-do-not-send="true" href="window.html#window:get_colors">window:get_colors</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId933735" class="mozTocH3"></a><a
+        name="desktopWindow:get_work_area"></a>private.desktopWindow:get_work_area</h3>
+    <i> rt desktopWindow:get_work_area ()</i><br>
+    <br>
+    Returns the desktop area not obscured by the task bar.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">rt </td>
+          <td valign="top"><a moz-do-not-send="true" href="rect.html">rect</a>
+          </td>
+          <td valign="top">A rectangle of the desktop work area, in
+            screen coordinates. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId756707" class="mozTocH3"></a><a
+        name="desktopWindow:hide_lock_screen"></a>private.desktopWindow:hide_lock_screen</h3>
+    <i> desktopWindow:hide_lock_screen ()</i><br>
+    <br>
+    Hides the lock screen if currently displayed.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none<br>
+          </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#desktopWindow:is_locked">desktopWindow:is_locked</a>,
+    <a moz-do-not-send="true" href="#desktopWindow:lock_screen">desktopWindow:lock_screen</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId966999" class="mozTocH3"></a><a
+        name="desktopWindow:hide_msgbox"></a>private.desktopWindow:hide_msgbox</h3>
+    <i> desktopWindow:hide_msgbox ()</i><br>
+    <br>
+    Hides the system message box if currently displayed.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#desktopWindow:msgbox">desktopWindow:msgbox</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId657192" class="mozTocH3"></a><a
+        name="desktopWindow:is_locked"></a>private.desktopWindow:is_locked</h3>
+    <i> result desktopWindow:is_locked ()</i><br>
+    <br>
+    Returns whether the lock screen is active on the desktop.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if locked, false if not. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#desktopWindow:can_lock">desktopWindow:can_lock</a>,
+    <a moz-do-not-send="true" href="#desktopWindow:lock_screen">desktopWindow:lock_screen</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId196260" class="mozTocH3"></a><a
+        name="desktopWindow:is_touch"></a>private.desktopWindow:is_touch</h3>
+    <i> x, y desktopWindow:is_touch (channel, msg)</i><br>
+    <br>
+    Determines if a digilines message is a touch message from a monitor
+    attached to this desktopWindow.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">channel </td>
+          <td valign="top">string </td>
+          <td valign="top">Digilines channel of the devices sending the
+            message. </td>
+        </tr>
+        <tr>
+          <td valign="top">msg </td>
+          <td valign="top">any </td>
+          <td valign="top">The digilines message. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">x </td>
+          <td valign="top">number/nil </td>
+          <td valign="top">The monitor's x character coordinate touched
+            or nil if not from this desktop monitor device. </td>
+        </tr>
+        <tr>
+          <td valign="top">y </td>
+          <td valign="top">number/nil </td>
+          <td valign="top">The monitor's y character coordinate touched
+            or nil if not from this desktop monitor device. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId461738" class="mozTocH3"></a><a
+        name="desktopWindow:load_app_list"></a>private.desktopWindow:load_app_list</h3>
+    <i>desktopWindow:load_app_list ()</i><br>
+    <br>
+    Reloads the list of running applications on the system's running
+    applications list page.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId430963" class="mozTocH3"></a><a
+        name="desktopWindow:load_theme"></a>private.desktopWindow:load_theme</h3>
+    <i> theme desktopWindow:load_theme ()</i><br>
+    <br>
+    Loads and returns the theme object loaded from the desktop theme
+    file, at "/win/&lt;side&gt;/theme.ini".<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">theme </td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="desktopTheme.html">desktopTheme</a> </td>
+          <td valign="top">The loaded theme, or nil on error. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#desktopWindow:create_theme">desktopWindow:create_theme</a>,
+    <a moz-do-not-send="true" href="#desktopWindow:save_theme">desktopWindow:save_theme</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId788680" class="mozTocH3"></a><a
+        name="desktopWindow:lock_screen"></a>private.desktopWindow:lock_screen</h3>
+    <i>desktopWindow:lock_screen ()</i><br>
+    <br>
+    Invokes a <a moz-do-not-send="true" href="lockScrnFrame.html">lockScrnFrame</a>
+    if not already active, blocking user interaction until the password
+    is entered.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If no system's password is set, or <i>nolock</i> is true for this
+    desktop this call is ignored.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#desktopWindow:can_lock">desktopWindow:can_lock</a>,
+    <a moz-do-not-send="true" href="#desktopWindow:is_locked">desktopWindow:is_locked</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId368345" class="mozTocH3"></a><a
+        name="desktopWindow:msgbox"></a>private.desktopWindow:msgbox</h3>
+    <i>desktopWindow:msgbox (title, message, bgcolor)</i><br>
+    <br>
+    Displays the message in a system <a moz-do-not-send="true"
+      href="msgBoxFrame.html">msgBoxFrame</a>.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">title </td>
+          <td valign="top">string </td>
+          <td valign="top">Title bar text. </td>
+        </tr>
+        <tr>
+          <td valign="top">message </td>
+          <td valign="top">string </td>
+          <td valign="top">Message to display. </td>
+        </tr>
+        <tr>
+          <td valign="top">bgcolor</td>
+          <td valign="top">number</td>
+          <td valign="top">Background color of the message box, if nil
+            the theme's popup_back color is used.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    The desktop interface is disabled until the message box is
+    dismissed.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId913922" class="mozTocH3"></a><a
+        name="desktopWindow:on_resize"></a>private.desktopWindow:on_resize</h3>
+    <i> result desktopWindow:on_resize ()</i><br>
+    <br>
+    Resizes the desktop then sends a <a moz-do-not-send="true"
+      href="events.html#monitor_resize">monitor_resize</a> event to each
+    of its children (frame level windows).<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Always true. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:on_resize">window:on_resize</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId625784" class="mozTocH3"></a><a
+        name="desktopWindow:run_app"></a>private.desktopWindow:run_app</h3>
+    <i>desktopWindow:run_app (path, ...)</i><br>
+    <br>
+    Starts the program given by path passing it the arguments, then
+    reloads the running applications list.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">path </td>
+          <td valign="top">string </td>
+          <td valign="top">Full path to program file to run. </td>
+        </tr>
+        <tr>
+          <td valign="top">... </td>
+          <td valign="top">string </td>
+          <td valign="top">Any command line arguments. They may be one
+            or a series of string parameters. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Individual arguments containing spaces may be delimited with double
+    quotes. Any arguments are parsed before passing them as individual
+    arguments to the called program.<br>
+    <br>
+    See <a moz-do-not-send="true"
+      href="workSpace.html#workSpace:run_app">workSpace:run_app</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId779890" class="mozTocH3"></a><a
+        name="desktopWindow:save_theme"></a>private.desktopWindow:save_theme</h3>
+    <i> result desktopWindow:save_theme (theme)</i><br>
+    <br>
+    Saves the given theme object to the theme file for the desktop, at <i>/win/devices/&lt;desktop&gt;/theme.ini</i>.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">theme </td>
+          <td valign="top">desktopTheme </td>
+          <td valign="top">The theme object to save. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if successful, false if not. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#desktopWindow:create_theme">desktopWindow:create_theme</a>,
+    <a moz-do-not-send="true" href="#desktopWindow:load_theme">desktopWindow:load_theme</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId372660" class="mozTocH3"></a><a
+        name="desktopWindow:set_active_frame"></a>private.desktopWindow:set_active_frame</h3>
+    <i> result desktopWindow:set_active_frame (frame)</i><br>
+    <br>
+    Brings the frame to the top (after the task bar in the z order). The
+    frame must be a child of the desktop.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">frame </td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="parentFrame.html">parentFrame</a> </td>
+          <td valign="top">The frame to make active. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if the frame is active, false if not. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If the active frame is changed the <a moz-do-not-send="true"
+      href="parentFrame.html#parentFrame:on_frame_activate">on_frame_activate</a>
+    handler is called for the deactivated and activated frames, and the
+    <a moz-do-not-send="true" href="window.html#window:on_blur">on_blur</a>
+    and <a moz-do-not-send="true" href="window.html#window:on_focus">on_focus
+
+
+
+    </a> handlers for windows as appropriate.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId660659" class="mozTocH3"></a><a
+        name="desktopWindow:set_clipboard"></a>private.desktopWindow:set_clipboard</h3>
+    <i>desktopWindow:set_clipboard (data, cbType)</i><br>
+    <br>
+    Sets the desktop's clipboard with the data and type.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">data </td>
+          <td valign="top">any </td>
+          <td valign="top">Data to place on clipboard. </td>
+        </tr>
+        <tr>
+          <td valign="top">type </td>
+          <td valign="top">number </td>
+          <td valign="top">Type of data. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If data is nil then the type is set to <tt><a
+        moz-do-not-send="true" href="globals.html#Clipboard_data_types">win.CB_EMPTY</a>.</tt>
+    If data is given and type is nil (or omitted) then the type is set
+    to <tt><a moz-do-not-send="true"
+        href="globals.html#Clipboard_data_types">win.CB_TEXT</a>.</tt>
+    Custom clipboard data types may be implemented by using unique type
+    indicators.<br>
+    <br>
+    See <a moz-do-not-send="true"
+      href="window.html#window:set_clipboard">window:set_clipboard</a>,
+    <a moz-do-not-send="true" href="#desktopWindow:get_clipboard">desktopWindow:get_clipboard</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId639615" class="mozTocH3"></a><a
+        name="desktopWindow:set_fullscreen"></a>private.desktopWindow:set_fullscreen</h3>
+    <i>desktopWindow:set_fullscreen (fullscreen)</i><br>
+    <br>
+    Sets the desktop in or out of full screen mode.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">fullscreen </td>
+          <td valign="top">boolean/nil </td>
+          <td valign="top">True sets full screen. False resets normal
+            screen. nil toggles the current mode. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#desktopWindow:get_fullscreen">desktopWindow:get_fullscreen</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId109699" class="mozTocH3"></a><a
+        name="desktopWindow:set_lockable"></a>private.desktopWindow:set_lockable</h3>
+    <i>desktopWindow:set_lockable (lockable)</i><br>
+    <br>
+    Sets whether this desktop can be locked.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">lockable </td>
+          <td valign="top">boolean<br>
+          </td>
+          <td valign="top">True to set lockable, false for not.<br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none<br>
+          </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#desktopWindow:get_lockable">desktopWindow:get_lockable</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId148594" class="mozTocH3"></a><a
+        name="desktopWindow:set_text_scale"></a>private.desktopWindow:set_text_scale</h3>
+    <i>desktopWindow:set_text_scale (scale)</i><br>
+    <br>
+    Sets the text scale for the monitor device this desktop is displayed
+    on. If the device is not a monitor the call is ignored.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">scale </td>
+          <td valign="top">number </td>
+          <td valign="top">The text scale to set (1 - 5). </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId496521" class="mozTocH3"></a><a
+        name="desktopWindow:show_home_page"></a>private.desktopWindow:show_home_page</h3>
+    <i>desktopWindow:show_home_page ()</i><br>
+    <br>
+    Sets the system's home page as the active top frame.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#desktopWindow:show_list_page">desktopWindow:show_list_page</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId769681" class="mozTocH3"></a><a
+        name="desktopWindow:show_list_page"></a>private.desktopWindow:show_list_page</h3>
+    <i>desktopWindow:show_list_page ()</i><br>
+    <br>
+    Sets the system's running applications list page as the active top
+    frame.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#desktopWindow:show_home_page">desktopWindow:show_home_page</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId181875" class="mozTocH3"></a><a
+        name="desktopWindow:show_lock_screen"></a>private.desktopWindow:show_lock_screen</h3>
+    <i> desktopWindow:show_lock_screen ()</i><br>
+    <br>
+    Displays the lock screen if a password is set.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId44268" class="mozTocH3"></a><a
+        name="desktopWindow:update"></a>private.desktopWindow:update</h3>
+    <i> rt desktopWindow:update (force)</i><br>
+    <br>
+    Updates (redraws) the desktop.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">force </td>
+          <td valign="top">boolean </td>
+          <td valign="top">If true the whole desktop is redrawn,
+            otherwise only the invalidated area (if any). </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">rt </td>
+          <td valign="top">rect </td>
+          <td valign="top">Screen relative affected area of drawing. It
+            may be empty, if no area was drawn. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="desktopWindow.html#top">top</a><br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

@@ -1,0 +1,96 @@
+
+-- collect any program arguments
+local app_args = { ... }
+
+-- create the application's main frame
+local appFrame = win.create_app_frame ()
+
+
+local APP_TITLE      = "Starter"
+
+
+-- handle control, wanted and custom events
+function appFrame:on_event (event, p1, p2, p3, p4, p5, ...)
+   -- handle events and return true
+
+   return false
+end
+
+
+-- if needed, low priority, called about every 1/3 second
+-- when nothing happening - but keep it brief
+function appFrame:on_idle (idle_count)
+	return false
+end
+
+
+-- if needed
+function appFrame:on_alarm (alarm_id)
+	return false
+end
+
+
+-- if needed
+function appFrame:on_timer (timer_id)
+	return false
+end
+
+
+-- to reposition control windows, app frames should only
+-- move if monitor device changes size/resolution or
+-- fullscreen mode changes
+function appFrame:on_move ()
+	return false
+end
+
+
+-- for clean up, if needed
+function appFrame:on_destroy_wnd ()
+end
+
+
+-- to implement accelerator keys. best to use with combo keys
+-- to try and avoid char event following to child
+function appFrame:on_child_key (wnd, key, ctrl, alt, shift)
+	-- base implements tab key navigation
+	if win.applicationFrame.on_child_key (self, wnd, key, ctrl, alt, shift) then
+		return true
+	end
+
+   -- return true if handled so child does not receive key event
+
+   return false
+end
+
+
+-- called when app becomes and stops being the active app
+function appFrame:on_frame_activate (active)
+end
+
+
+-- called when app is quitting
+function appFrame:on_quit ()
+	-- return true to stop app from quitting
+
+	return false
+end
+
+
+function appFrame:on_create ()
+	-- add title bar and close btn, close btn will have focus
+	-- frame wnd text displays in running app list
+	self:dress (APP_TITLE)
+
+
+   -- create controls, usually setting focus to first
+
+
+   -- app is constructed, bring it to top
+   self:set_active_top_frame ()
+
+   return true
+end
+
+
+-- run application loop after methods are defined
+appFrame:run_app ()

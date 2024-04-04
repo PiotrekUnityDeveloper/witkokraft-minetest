@@ -1,0 +1,397 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>Private</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>Title - WIN</h1>
+    <ul id="mozToc">
+      <!--mozToc h2 1 h3 2-->
+      <li><a href="#mozTocId878042"> Values</a>
+        <ul>
+          <li><a href="#mozTocId905498">GDI device types </a></li>
+          <li><a href="#mozTocId805405">Window identifiers </a></li>
+          <li><a href="#mozTocId38030">Window classes </a></li>
+          <li><a href="#mozTocId641217">private.defaultTheme </a></li>
+          <li><a href="#mozTocId139591">private.workspace </a></li>
+          <li><a href="#mozTocId692847">private.reboot </a></li>
+          <li><a href="#mozTocId437699">private.workspace </a></li>
+        </ul>
+      </li>
+      <li><a href="#mozTocId306347">private</a>
+        <ul>
+          <li><a href="#mozTocId4017">private.get_password</a></li>
+          <li><a href="#mozTocId194678">private.run_app_frame</a></li>
+          <li><a href="#mozTocId793275">private.safe_read</a></li>
+        </ul>
+      </li>
+    </ul>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+    <h2><a name="mozTocId878042" class="mozTocH2"></a> Values</h2>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId905498" class="mozTocH3"></a><a
+        name="GDI_device_types"></a>GDI device types<br>
+    </h3>
+    <br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top"><tt>private.GDI_TERM</tt></td>
+          <td valign="top">1<br>
+          </td>
+          <td valign="top">Indicates GDI for the terminal.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.GDI_MONITOR</tt></td>
+          <td valign="top">2<br>
+          </td>
+          <td valign="top">Indicates GDI for a monitor.</td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.GDI_PRINTER</tt></td>
+          <td valign="top">4<br>
+          </td>
+          <td valign="top">Indicates GDI for a printer.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="private.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId805405" class="mozTocH3"></a><a
+        name="Window_identifiers"></a>Window identifiers<br>
+    </h3>
+    <br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top"><tt>private.ID_DESKTOP</tt></td>
+          <td valign="top">65536</td>
+          <td valign="top">Desktop window.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.ID_FRAME</tt></td>
+          <td valign="top">65537</td>
+          <td valign="top">Application frame window.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.ID_TASKBAR</tt></td>
+          <td valign="top">65538</td>
+          <td valign="top">Task bar frame window.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.ID_MENULIST</tt></td>
+          <td valign="top">65539</td>
+          <td valign="top">Home page menu list window.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.ID_APPLIST</tt></td>
+          <td valign="top">65540</td>
+          <td valign="top">Running applications list window.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.ID_MENUFRAME</tt></td>
+          <td valign="top">65541</td>
+          <td valign="top">Home page frame window.</td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.ID_APPFRAME</tt></td>
+          <td valign="top">65542</td>
+          <td valign="top">Running applications frame window.</td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.ID_KEYBOARD</tt></td>
+          <td valign="top">65543</td>
+          <td valign="top">On screen keyboard frame window.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.ID_DIALOG</tt></td>
+          <td valign="top">65544</td>
+          <td valign="top">Popup frame window.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.ID_MSGBOX_MSG</tt></td>
+          <td valign="top">65545</td>
+          <td valign="top">Message box frame window.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.ID_LOCKSCRN</tt></td>
+          <td valign="top">65546</td>
+          <td valign="top">Lock screen frame window.</td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.ID_LOCKPW</tt></td>
+          <td valign="top">65547</td>
+          <td valign="top">Lock screen password window.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.ID_LOCKOK</tt></td>
+          <td valign="top">65548</td>
+          <td valign="top">Lock screen OK button window.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.ID_HOMELOCK</tt></td>
+          <td valign="top">65549</td>
+          <td valign="top">Home page lock button window.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.ID_SYSMSGBOX</tt></td>
+          <td valign="top">65550</td>
+          <td valign="top">System message box frame window.<br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="private.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId38030" class="mozTocH3"></a><a
+        name="Window_classes"></a>Window classes<br>
+    </h3>
+    <br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top"><tt>private.FRAME_CLASS_WINDOW</tt></td>
+          <td valign="top">70000</td>
+          <td valign="top">Normal window class.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.FRAME_CLASS_SYSTEM</tt></td>
+          <td valign="top">70001</td>
+          <td valign="top">System application frame class.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.FRAME_CLASS_APPLICATION</tt></td>
+          <td valign="top">70002</td>
+          <td valign="top">Application frame class.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>private.FRAME_CLASS_DIALOG</tt></td>
+          <td valign="top">70003</td>
+          <td valign="top">Popup frame class.<br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="private.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId641217" class="mozTocH3"></a><a
+        name="private.defaultTheme"></a>private.defaultTheme<br>
+    </h3>
+    <tt>private.defaultTheme</tt><br>
+    <br>
+    Contains the default <a moz-do-not-send="true"
+      href="desktopTheme.html">desktopTheme</a> object.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="private.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId139591" class="mozTocH3"></a><a
+        name="private.workspace"></a>private.workspace<br>
+    </h3>
+    <tt>private.workspace</tt><br>
+    <br>
+    Contains the workSpace object for the running instance of WIN.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="private.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId692847" class="mozTocH3"></a><a
+        name="private.reboot"></a>private.reboot<br>
+    </h3>
+    <tt>private.reboot</tt><br>
+    <br>
+    Contains the original os.reboot function.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="private.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId437699" class="mozTocH3"></a><a
+        name="private.workspace_"></a>private.workspace<br>
+    </h3>
+    <tt>private.shutdown</tt><br>
+    <br>
+    Contains the original os.shutdown function.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="private.html#top">top</a><br>
+    <br>
+    <br>
+    <h2><a name="mozTocId306347" class="mozTocH2"></a>private</h2>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId4017" class="mozTocH3"></a><a
+        name="private.get_password"></a>private.get_password</h3>
+    <i> password private.get_password ()</i><br>
+    <br>
+    Returns the password from the <i>/win.ini</i> file.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none<br>
+          </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">password </td>
+          <td valign="top">string<br>
+          </td>
+          <td valign="top">The password. If not set an empty string is
+            returned.<br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId194678" class="mozTocH3"></a><a
+        name="private.run_app_frame"></a>private.run_app_frame</h3>
+    <i> private.run_app_frame (frame)</i><br>
+    <br>
+    Creates the thread for the given application frame and starts it.
+    Used to start system application frame threads.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">frame </td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="applicationFrame.html">applicationFrame</a> </td>
+          <td valign="top">The application frame to run. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    This function throws errors if the thread could not be started.<br>
+    <br>
+    Local to the win API.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId793275" class="mozTocH3"></a><a
+        name="private.safe_read"></a>private.safe_read</h3>
+    <i>input private.safe_read (mask)</i><br>
+    <br>
+    Reads user input from the console, and displays it at the current
+    cursor position.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">mask </td>
+          <td valign="top">string/nil </td>
+          <td valign="top">A single mask character to display instead of
+            the user input. If nil the input is displayed. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">input </td>
+          <td valign="top">string </td>
+          <td valign="top">The user input entered. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    This is a local function to the win API.<br>
+    <br>
+    Only the backspace key is supported for editing. The function
+    returns when the enter key is pressed.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

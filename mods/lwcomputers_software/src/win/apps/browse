@@ -1,0 +1,658 @@
+
+local app_args = { ... }
+local appFrame = win.create_app_frame ()
+
+local APP_TITLE      = "browse"
+
+-- control ids
+local ID_MENUBTN     = 100
+local ID_ADDRESS     = 101
+local ID_REQUEST     = 102
+local ID_VIEWER      = 103
+
+-- command ids
+local IDM_OPEN       = 1001
+local IDM_SAVEAS     = 1002
+local IDM_PRINT      = 1003
+local IDM_PRINTBW    = 1004
+local IDM_BACK       = 1005
+local IDM_FORWARD    = 1006
+local IDM_SHOWBAR    = 1007
+local IDM_QUITAPP    = 1008
+
+
+
+-- history -------------------------------------------------------------
+
+local history = win.__classBase:base ()
+
+function history:constructor (strict)
+	self.hist__cache = { }
+	self.hist__index = 0
+	self.strict = strict == true
+
+	return self
+end
+
+
+function history:cache (address)
+	if address:sub (1, 4) ~= "ftp:" then
+		if self.strict then
+			while #self.hist__cache > self.hist__index do
+				table.remove (self.hist__cache, #self.hist__cache)
+			end
+
+			self.hist__index = self.hist__index + 1
+			self.hist__cache[self.hist__index] = address
+		else
+			for i = #self.hist__cache, 1, -1 do
+				if self.hist__cache[i] == address then
+					table.remove (self.hist__cache, i)
+				end
+			end
+
+			self.hist__cache[#self.hist__cache + 1] = address
+			self.hist__index = #self.hist__cache
+		end
+	end
+end
+
+
+function history:can_next ()
+	return self.hist__index < #self.hist__cache
+end
+
+
+function history:can_prior ()
+	return self.hist__index > 1
+end
+
+
+function history:next ()
+	if self:can_next () then
+		self.hist__index = self.hist__index + 1
+		return self.hist__cache[self.hist__index]
+	end
+
+	return nil
+end
+
+
+function history:prior ()
+	if self:can_prior () then
+		self.hist__index = self.hist__index - 1
+		return self.hist__cache[self.hist__index]
+	end
+
+	return nil
+end
+
+
+function history:clear ()
+	self.hist__cache = { }
+	self.hist__index = 0
+end
+
+-- end history ---------------------------------------------------------
+
+
+
+function appFrame:on_receive (msg)
+	if (msg.recipient_name or msg.recipient_id) then
+		if msg.data.path and msg.data.content then
+			if msg.context == "http_response" then
+				self.app_viewer:set_text (msg.data.content)
+				self.app_cur_address = msg.data.path
+				self.app_cur_file = self.app_viewer:get_title (fs.path_name (msg.data.path))
+				self:update_title ()
+
+				return true
+			end
+
+			if msg.context == "ftp_response" then
+				local path = cmndlg.save_file (self, fs.path_name (msg.data.path),
+														 nil, nil, self:safe_popup_color ())
+
+				if path then
+					local file = io.open (path, "w")
+
+					if file then
+						file:write (msg.data.content)
+						file:close ()
+						self.app_cur_path = path
+					else
+						self:msgbox ("File Error", "Could not write file "..path, term.colors.red)
+					end
+				end
+
+				return true
+			end
+
+		end
+	end
+
+	return false
+end
+
+
+function appFrame:on_sent (msg, success)
+	if not success then
+		if msg.context == "ftp_request" then
+			self:msgbox ("Error",
+				"Could not download "..msg.data.path.." from "..msg.recipient_name..
+				".\nThe server may be down or the file does not exist.", term.colors.red)
+		else
+			self.app_viewer:server_not_found (msg.data.address)
+		end
+	end
+
+	return true
+end
+
+
+function appFrame:on_event (event, p1, p2, p3, p4, p5, ...)
+	if event == "btn_click" then
+		if p1:get_id () == ID_MENUBTN then
+			self:on_menu ()
+			return true
+		end
+
+		if p1:get_id () == ID_REQUEST then
+			self:on_send_request ()
+			return true
+		end
+
+	elseif event == "menu_cmd" then
+		return self:on_command (p1)
+
+	elseif event == "link_click" then
+		self:on_send_request (self.app_viewer:merge_address (p2, self.app_cur_address, p3))
+		return true
+
+	end
+
+	return false
+end
+
+
+function appFrame:on_print_page_bw (gdi, page, data)
+	local width, height = gdi:get_page_size ()
+	local top_line = ((page - 1) * height)
+	local first, last = data.data.map:get_range (top_line, top_line + height - 1)
+
+	gdi:set_colors (term.colors.black, term.colors.white)
+
+	if first then
+		for i = first, last, 1 do
+			local map = data.data.map[i]
+
+			if map.text:len () > 0 then
+				gdi:write (map.text, map.column, (map.line - top_line))
+			end
+		end
+	end
+
+	return (last < #data.data.map)
+end
+
+
+function appFrame:on_print_page_color (gdi, page, data)
+	local width, height = gdi:get_page_size ()
+	local top_line = ((page - 1) * height)
+	local first, last = data.data.map:get_range (top_line, top_line + height - 1)
+
+	gdi:set_colors (nil, data.data.map.bgcolor)
+	gdi:clear (0, 0, width, height)
+
+	if first then
+		local erase_line = -1
+		local erase = ""
+
+		if data.data.map:get_width () > 0 then
+			erase = string.rep (" ", data.data.map:get_width ())
+		end
+
+		for index = first, last, 1 do
+			local map = data.data.map[index]
+
+			if map.erase and map.line ~= erase_line then
+				gdi:set_colors (nil, map.erase)
+				gdi:write (erase, 0, (map.line - top_line))
+				erase_line = map.line
+			end
+
+			if map.text:len () > 0 then
+				gdi:set_colors (map.color, map.bgcolor)
+				gdi:write (map.text, map.column, (map.line - top_line))
+			end
+		end
+	end
+
+	return (last < #data.data.map)
+end
+
+
+
+function appFrame:on_print_data ()
+	local title = self.app_cur_file
+	local data =
+	{
+		map = self.app_viewer:get_map (40)
+	}
+	local pages = math.ceil (data.map:lines() / 30)
+
+	if title:sub (-4) == ".htm" then
+		title = title:sub (1, -5)
+	elseif title:sub (-5) == ".html" then
+		title = title:sub (1, -6)
+	end
+
+	return win.applicationFrame.on_print_data (self, title, data, pages, self:safe_popup_color ())
+end
+
+
+function appFrame:on_move ()
+	if self:is_bar_visible () then
+		self.app_address:move (2, 1, self.width - 5)
+		self.app_request:move (self.width - 3)
+		self.app_viewer:move (0, 2, self.width, self.height - 2)
+	else
+		self.app_viewer:move (0, 1, self.width, self.height - 1)
+	end
+
+	return false
+end
+
+
+function appFrame:on_child_key (wnd, key, ctrl, alt, shift)
+	if win.applicationFrame.on_child_key (self, wnd, key, ctrl, alt, shift) then
+		return true
+	end
+
+	if not ctrl and not alt and not shift then
+		if key == keys.KEY_ENTER then
+			if wnd == self.app_address then
+				self:on_send_request ()
+				return true
+			end
+		end
+
+		if key == keys.KEY_UP then
+			if wnd == self.app_address then
+				self:on_prior_address ()
+				return true
+			end
+		end
+
+		if key == keys.KEY_DOWN then
+			if wnd == self.app_address then
+				self:on_next_address ()
+				return true
+			end
+		end
+
+	elseif ctrl and not alt and not shift then
+		if key == keys.KEY_LEFT then
+			return self:on_command (IDM_BACK)
+		end
+
+		if key == keys.KEY_RIGHT then
+			return self:on_command (IDM_FORWARD)
+		end
+
+		if key == keys.KEY_O then
+			return self:on_command (IDM_OPEN)
+		end
+
+		if key == keys.KEY_N then
+			return self:on_command (IDM_SHOWBAR)
+		end
+
+	elseif not ctrl and alt and not shift then
+		if key == keys.KEY_M then
+			self:on_menu ()
+			return true
+		end
+
+	end
+
+	return false
+end
+
+
+function appFrame:on_quit ()
+	if self.connection_name then
+		self:comm_close (self.connection_name)
+	end
+
+	return false
+end
+
+
+function appFrame:on_create ()
+	self:dress (APP_TITLE)
+
+	local menuBtn = win.buttonWindow:new (self, ID_MENUBTN, 0, 0, "Menu")
+	menuBtn:set_colors (menuBtn:get_colors ().frame_text,
+							  menuBtn:get_colors ().title_back,
+							  menuBtn:get_colors ().frame_back)
+	menuBtn:move (nil, nil, nil, nil, win.WND_TOP)
+
+	self.app_address = win.inputWindow:new (self, ID_ADDRESS, 2, 1,
+														 self.width - 5, "", "Address")
+	self.app_request = win.buttonWindow:new (self, ID_REQUEST,
+														  self.width - 3, 1, ">")
+	self.app_viewer = html.browserWindow:new (self, ID_VIEWER, 0, 2,
+															self.width, self.height - 2)
+
+	self.app_address:set_focus ()
+
+	self.app_cur_address = nil
+	self.app_cur_path = nil
+	self.app_cur_file = ""
+
+	self.app_network_id = "wide_area_network"
+	self.app_app_id = APP_TITLE..tostring (math.random (1, 65535))
+	self.app_address_history = history:new (false)
+	self.app_page_history = history:new (true)
+
+	if #app_args > 0 then
+		if app_args[1] == "-a" then
+			self:show_bar (false)
+
+			if #app_args > 1 then
+				self:on_send_request (app_args[2])
+			end
+		else
+			self:on_send_request (app_args[1])
+		end
+	end
+
+	self:set_active_top_frame ()
+
+	return true
+end
+
+
+function appFrame:on_menu ()
+	local menu = win.menuWindow:new (self)
+
+	menu:add_string ("Open     Ctrl+O",		IDM_OPEN)
+	menu:add_string ("Save as",				IDM_SAVEAS)
+	menu:add_string ("Print",					IDM_PRINT)
+	menu:add_string ("Print BW",				IDM_PRINTBW)
+	menu:add_string ("----------------")
+
+	local sep = false
+	if self.app_page_history:can_prior () then
+		menu:add_string ("Back    Ctrl+<-",	IDM_BACK)
+		sep = true
+	end
+	if self.app_page_history:can_next () then
+		menu:add_string ("Forward Ctrl+->",	IDM_FORWARD)
+		sep = true
+	end
+	if sep then
+		menu:add_string ("----------------")
+	end
+
+	if self:is_bar_visible () then
+		menu:add_string ("Hide bar Ctrl+N",	IDM_SHOWBAR)
+	else
+		menu:add_string ("Show bar Ctrl+N",	IDM_SHOWBAR)
+	end
+	menu:add_string ("----------------")
+	menu:add_string ("Quit",					IDM_QUITAPP)
+
+	menu:track (0, 1)
+end
+
+
+function appFrame:on_command (cmdId)
+	if cmdId == IDM_OPEN then
+		self:on_open_file ()
+		return true
+	end
+
+	if cmdId == IDM_SAVEAS then
+		self:on_save_file_as ()
+		return true
+	end
+
+	if cmdId == IDM_PRINT then
+		appFrame.on_print_page = appFrame.on_print_page_color
+		self:print_doc ()
+		return true
+	end
+
+	if cmdId == IDM_PRINTBW then
+		appFrame.on_print_page = appFrame.on_print_page_bw
+		self:print_doc ()
+		return true
+	end
+
+	if cmdId == IDM_BACK then
+		self:on_back ()
+		return true
+	end
+
+	if cmdId == IDM_FORWARD then
+		self:on_forward ()
+		return true
+	end
+
+	if cmdId == IDM_SHOWBAR then
+		self:show_bar ()
+		return true
+	end
+
+	if cmdId == IDM_QUITAPP then
+		self:quit_app ()
+		return true
+	end
+
+	return false
+end
+
+
+function appFrame:show_bar (show)
+	show = show or (not self:is_bar_visible ())
+	self.app_address:show (show)
+	self.app_request:show (show)
+	self:on_move ()
+
+	if show then
+		self.app_address:set_sel (0, -1)
+		self.app_address:set_focus ()
+	end
+end
+
+
+function appFrame:is_bar_visible ()
+	return self.app_address:is_shown ()
+end
+
+
+function appFrame:connect ()
+	if not self.connection_name then
+		local timeout = 5
+		local ini = fs.load_ini (self:get_app_path ()..".ini")
+		if ini then
+			timeout = tonumber (ini:find("timeout")) or 5
+			self.app_network_id = (ini:find ("network")) or self.app_network_id
+		end
+
+		local con = self:comm_open (nil, timeout)
+
+		if not con then
+			self:msgbox ("Connection", "Could not connect to modem!", term.colors.red)
+			return false
+		end
+
+		self.connection_name = con:get_name ()
+		self:want_messages (self.app_app_id, self.connection_name)
+		self:want_messages (self.app_network_id, self.connection_name)
+	end
+
+	return true
+end
+
+
+function appFrame:update_title ()
+	if self.app_cur_file:len () > 0 then
+		self:set_title (self.app_cur_file..":"..APP_TITLE)
+	else
+		self:set_title (APP_TITLE)
+	end
+end
+
+
+function appFrame:open_file (path)
+	path = tostring (path)
+	if path:sub (1, 5) == "file:" then
+		path = path:sub (6)
+	end
+	local file = io.open (path, "r")
+
+	if file then
+		self.app_viewer:set_text (file:read ("*a"))
+		file:close()
+		self.app_cur_path = path
+		self.app_cur_address = "file:"..path
+		self.app_cur_file = self.app_viewer:get_title (fs.path_name (self.app_cur_path))
+		self:update_title ()
+	else
+		self:msgbox ("File Error", "Could not read file "..path, term.colors.red)
+	end
+end
+
+
+function appFrame:on_open_file ()
+	local path = cmndlg.open_file (self, self.app_cur_path, nil, nil, nil,
+											 self:safe_popup_color ())
+
+	if path then
+		self:on_send_request ("file:"..path)
+	end
+end
+
+
+function appFrame:save_file_as (path)
+	local file = io.open (path, "w")
+
+	if file then
+		file:write (self.app_viewer:serialize ())
+		file:close ()
+		self.app_cur_path = path
+		self.app_cur_file = fs.path_name (self.app_cur_path)
+		self:update_title ()
+	else
+		self:msgbox ("File Error", "Could not write file "..path, term.colors.red)
+	end
+end
+
+
+function appFrame:on_save_file_as ()
+	local path = cmndlg.save_file (self, self.app_cur_path, nil, nil,
+											 self:safe_popup_color ())
+
+	if path then
+		self:save_file_as (path)
+	end
+end
+
+
+function appFrame:send_request (address)
+	if self:connect() then
+		local path, domain, protocol = self.app_viewer:split_address (address)
+		local context = protocol.."_request"
+
+		self:send_message (domain, self.app_network_id, context,
+								 {
+									 application = self.app_app_id,
+									 protocol = protocol,
+									 domain = domain,
+									 path = path,
+									 address = address
+								 }, self.connection_name)
+	end
+end
+
+
+function appFrame:on_send_request (address, record)
+	address = address or self.app_address:get_text ()
+
+	if address:len () > 0 then
+		local path, domain, protocol = self.app_viewer:split_address (address)
+		address = protocol..":"..domain.."/"..path
+
+		if protocol == "file" then
+			self:open_file ("/"..path)
+		else
+			self:send_request (address)
+		end
+
+		self.app_address:set_text (address)
+		self.app_address:set_sel (0, 0)
+		self.app_address:set_sel (0, -1)
+		self.app_address:set_focus ()
+		self.app_address_history:cache (address)
+		if record ~= false then
+			self.app_page_history:cache (address)
+		end
+	end
+end
+
+
+function appFrame:on_next_address ()
+	local address = self.app_address_history:next ()
+	if address then
+		self.app_address:set_text (address)
+		self.app_address:set_sel (0, 0)
+		self.app_address:set_sel (0, -1)
+		self.app_address:set_focus ()
+	end
+end
+
+
+function appFrame:on_prior_address ()
+	local address = self.app_address_history:prior ()
+	if address then
+		self.app_address:set_text (address)
+		self.app_address:set_sel (0, 0)
+		self.app_address:set_sel (0, -1)
+		self.app_address:set_focus ()
+	end
+end
+
+
+function appFrame:on_forward ()
+	local address = self.app_page_history:next ()
+	if address then
+		self:on_send_request (address, false)
+	end
+end
+
+
+function appFrame:on_back ()
+	local address = self.app_page_history:prior ()
+	if address then
+		self:on_send_request (address, false)
+	end
+end
+
+
+function appFrame:safe_popup_color ()
+	if self.app_viewer:get_bg_color() == self:get_colors ().popup_back then
+		if self:get_colors ().popup_back == term.colors.yellow then
+			return term.colors.orange
+		end
+
+		return term.colors.yellow
+	end
+
+	return self:get_colors ().popup_back
+end
+
+
+appFrame:run_app ()

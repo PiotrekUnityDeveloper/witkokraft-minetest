@@ -1,0 +1,121 @@
+function get_key_response ()
+	local event = nil
+
+	repeat
+		event = { os.peek_event ("key") }
+		os.sleep (0.3)
+	until #event > 0
+
+	os.get_event ("key")
+
+	if not event[3] and not event[4] then
+		if os.peek_event ("char") then
+			os.get_event ("char")
+		end
+
+		return event[2] == keys.KEY_Y
+	end
+
+	return false
+end
+
+local function load_file (src)
+	local file = io.open (src, "rb")
+
+	if file then
+		local str = file:read ("*a")
+		file:close ()
+
+		return str
+	end
+
+	return nil
+end
+
+local function store_file (dest, str)
+	fs.mkdir (fs.path_folder (dest))
+	local file = io.open (dest, "wb")
+
+	if file then
+		local str = file:write (str)
+		file:close ()
+
+		return true
+	end
+
+	return false
+end
+
+local function unpack_file (src, dest)
+	print ("unpack %s\n", dest)
+
+	local str = load_file (src)
+
+	if str then
+		str = utils.decompress (str, "deflate")
+
+		if str then
+			if store_file (dest, str) then
+				os.sleep (0.1)
+
+				return true
+			end
+		end
+	end
+
+	term.set_colors (term.colors.red, term.colors.black)
+	print ("*** failed %s\n", dest)
+	term.set_colors (term.colors.silver, term.colors.black)
+	os.sleep (0.1)
+
+	return false
+end
+
+term.set_colors (term.colors.white, term.colors.black)
+print ("Installing Open Software to /public\n\n")
+term.set_colors (term.colors.orange, term.colors.black)
+print ("Existing files will be overwritten\n")
+term.set_colors (term.colors.silver, term.colors.black)
+print ("Continue? (y to continue)")
+
+if not get_key_response () then
+	print ("\r                          \rcancelled\n")
+
+	os.sleep (0.5)
+
+	os.shutdown ()
+end
+print ("\r                          \r")
+
+unpack_file ("/OPEN/files/license.txt", "/license.txt")
+unpack_file ("/OPEN/files/public/index.html", "/public/index.html")
+unpack_file ("/OPEN/files/public/advertise.html", "/public/advertise.html")
+unpack_file ("/OPEN/files/public/bank.html", "/public/bank.html")
+unpack_file ("/OPEN/files/public/banking.html", "/public/banking.html")
+unpack_file ("/OPEN/files/public/calculator.html", "/public/calculator.html")
+unpack_file ("/OPEN/files/public/codepad.html", "/public/codepad.html")
+unpack_file ("/OPEN/files/public/codewin.html", "/public/codewin.html")
+unpack_file ("/OPEN/files/public/register.html", "/public/register.html")
+unpack_file ("/OPEN/files/public/estore.html", "/public/estore.html")
+unpack_file ("/OPEN/files/public/eshop.html", "/public/eshop.html")
+unpack_file ("/OPEN/files/public/downloads/advertise", "/public/downloads/advertise")
+unpack_file ("/OPEN/files/public/downloads/bank", "/public/downloads/bank")
+unpack_file ("/OPEN/files/public/downloads/bank.ini", "/public/downloads/bank.ini")
+unpack_file ("/OPEN/files/public/downloads/banking", "/public/downloads/banking")
+unpack_file ("/OPEN/files/public/downloads/banking.ini", "/public/downloads/banking.ini")
+unpack_file ("/OPEN/files/public/downloads/calculator", "/public/downloads/calculator")
+unpack_file ("/OPEN/files/public/downloads/codepad", "/public/downloads/codepad")
+unpack_file ("/OPEN/files/public/downloads/codepad.def", "/public/downloads/codepad.def")
+unpack_file ("/OPEN/files/public/downloads/codewin", "/public/downloads/codewin")
+unpack_file ("/OPEN/files/public/downloads/register", "/public/downloads/register")
+unpack_file ("/OPEN/files/public/downloads/register.dat", "/public/downloads/register.dat")
+unpack_file ("/OPEN/files/public/downloads/register.ini", "/public/downloads/register.ini")
+unpack_file ("/OPEN/files/public/downloads/estore", "/public/downloads/estore")
+unpack_file ("/OPEN/files/public/downloads/estore.ini", "/public/downloads/estore.ini")
+unpack_file ("/OPEN/files/public/downloads/eshop", "/public/downloads/eshop")
+unpack_file ("/OPEN/files/public/downloads/eshop.ini", "/public/downloads/eshop.ini")
+
+term.set_colors (term.colors.silver, term.colors.black)
+print ("Open Software installed\n")
+
+return 0

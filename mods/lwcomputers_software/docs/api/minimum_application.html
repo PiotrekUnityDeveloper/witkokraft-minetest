@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>Minimum Application</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>Minimum Application - WIN</h1>
+    The following is the minimum code necessary to create an
+    application.<br>
+    <br>
+    <pre><font color="#cc0000">-- collect any program arguments</font><br><font color="#330099">local</font> app_args = { ... }<br><br><font color="#cc0000">-- create the application's main frame</font><br><font color="#330099">local</font> appFrame = win.create_app_frame ()<br><br><font color="#cc0000">-- run the application's loop</font><br>appFrame:run_app ()</pre>
+    <br>
+    The <a moz-do-not-send="true"
+      href="globals.html#win.create_app_frame">win.create_app_frame</a>
+    function creates and returns an <a moz-do-not-send="true"
+      href="applicationFrame.html">applicationFrame</a> window, which is
+    the main frame for the application. The frame's <a
+      moz-do-not-send="true"
+      href="applicationFrame.html#applicationFrame:run_app">run_app</a>
+    method sets the application's thread into modal state, where it runs
+    in a loop processing events until the application quits. The call to
+    <a moz-do-not-send="true"
+      href="applicationFrame.html#applicationFrame:run_app">run_app</a>
+    must be the last statement in the application program. The
+    application's main frame object, and program arguments table, may be
+    named whatever you like.<br>
+    <br>
+    Although the above code produces a running application: it starts in
+    the background; has an empty frame; is identified by the program's
+    file name on the List page; does nothing and cannot be closed on a
+    monitor (Ctrl+Alt+X can be used on the terminal. It is a base frame
+    window to extend upon with the application functionality.<br>
+    <br>
+    While the contents of the frame can be organized however desired,
+    typically a title bar and close button are added. These can be added
+    by a call to the frame's <a moz-do-not-send="true"
+      href="applicationFrame.html#applicationFrame:dress">dress</a>
+    method, with a string value parameter of the initial title for the
+    frame. This string is also set as the frame window's text value (as
+    with <a moz-do-not-send="true" href="window.html#window:set_text">set_text</a>).
+    The frame window's text value is used by the List page to identify
+    the application. Typically the title bar text and List page entry
+    would be the same. If different values are desired then call the
+    frame's <a moz-do-not-send="true"
+      href="window.html#window:set_text">set_text</a> method after <a
+      moz-do-not-send="true"
+      href="applicationFrame.html#applicationFrame:dress">dress</a>, and
+    <a moz-do-not-send="true"
+      href="applicationFrame.html#applicationFrame:set_title">set_title</a>,
+    with the desired value. The close button event's are handled by the
+    system.<br>
+    <br>
+    <br>
+    See <a moz-do-not-send="true" href="application_writing.html">Application
+      Writing</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

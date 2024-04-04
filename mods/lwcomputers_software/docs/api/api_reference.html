@@ -1,0 +1,82 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>API Reference</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;">API
+      Reference - WIN</h1>
+    <b>Caveats</b><br>
+    Window and screen coordinates through the API are from 0, 0 left,
+    top.<br>
+    <br>
+    <b>Conventions</b><br>
+    Class object properties beginning with a prefix and double
+    underscore are intended as private members.<br>
+    <br>
+    Most API objects are metatable class based objects. In the documents
+    the class name is used as a place holder for the name of the
+    instantiated object. If a method may be used as a static member
+    (called with the class name) it states so in the remarks. For
+    example, to call the win.buttonWindow:set_colors method:<br>
+    <pre><font color="#000066">local</font> btn = win.buttonWindow:new&nbsp; ( ... )<br>btn:set_colors (term.colors.red, term.colors.pink, term.colors.purple)</pre>
+    When instantiating a class object pass the parameters for the class'
+    constructor to new:<br>
+    <pre><font color="#990000">-- constructor for buttonWindow</font><br><font color="#990000">-- win.buttonWindow:constructor (parent, id, x, y, label)</font><br><font color="#000066">local</font> btn = win.buttonWindow:new (appFrame, ID_BTN, <font color="#339999">2</font>, <font color="#339999">5</font>, <font color="#ff9900">"Button"</font>)</pre>
+    When a frame implements one of the <tt>frame:on_child_*</tt>
+    events, if this handler returns true the child window does not
+    receive the event.<br>
+    <br>
+    <b>Topics</b><br>
+    <a moz-do-not-send="true" href="__classBase.html">__classBase</a><br>
+    <a moz-do-not-send="true" href="applicationFrame.html">applicationFrame</a><br>
+    <a moz-do-not-send="true" href="appListFrame.html">appListFrame</a><br>
+    <a moz-do-not-send="true" href="buttonWindow.html">buttonWindow</a><br>
+    <a moz-do-not-send="true" href="checkWindow.html">checkWindow</a><br>
+    <a moz-do-not-send="true" href="closeButtonWindow.html">closeButtonWindow</a><br>
+    <a moz-do-not-send="true" href="comm.html">comm</a><br>
+    <a moz-do-not-send="true" href="cnmdlg.html">Common Dialog API</a><br>
+    <a moz-do-not-send="true" href="desktopTheme.html">desktopTheme</a><br>
+    <a moz-do-not-send="true" href="desktopWindow.html">desktopWindow</a><br>
+    <a moz-do-not-send="true" href="editUndo.html">editUndo</a><br>
+    <a moz-do-not-send="true" href="editWindow.html">editWindow</a><br>
+    <a moz-do-not-send="true" href="events.html">Events</a><br>
+    <a moz-do-not-send="true" href="GDI.html">GDI</a> (Graphics Device
+    Interface)<br>
+    <a moz-do-not-send="true" href="globals.html">Global</a><br>
+    <a moz-do-not-send="true" href="homePageFrame.html">homePageFrame</a><br>
+    <a moz-do-not-send="true" href="html_api.html">HTML API</a><br>
+    <ul style="margin-top: 0px; margin-bottom: 0px;">
+      <li><a moz-do-not-send="true" href="htmlDoc.html">htmlDoc</a></li>
+      <li><a moz-do-not-send="true" href="htmlMap.html">htmlMap</a></li>
+      <li><a moz-do-not-send="true" href="browserWindow.html">browserWindow</a><br>
+      </li>
+    </ul>
+    <a moz-do-not-send="true" href="inputWindow.html">inputWindow</a><br>
+    <a moz-do-not-send="true" href="keyboardFrame.html">keyboardFrame</a><br>
+    <a moz-do-not-send="true" href="labelWindow.html">labelWindow</a><br>
+    <a moz-do-not-send="true" href="listWindow.html">listWindow</a><br>
+    <a moz-do-not-send="true" href="lockScrnFrame.html">lockScrnFrame</a><br>
+    <a moz-do-not-send="true" href="menuWindow.html">menuWindow</a><br>
+    <a moz-do-not-send="true" href="msgBoxFrame.html">msgBoxFrame</a><br>
+    <a moz-do-not-send="true" href="parentFrame.html">parentFrame</a><br>
+    <a moz-do-not-send="true" href="popupFrame.html">popupFrame</a><br>
+    <a moz-do-not-send="true" href="printData.html">printData</a><br>
+    <a moz-do-not-send="true" href="private.html">Private</a><br>
+    <a moz-do-not-send="true" href="rect.html">rect</a> (rectangle)<br>
+    <a moz-do-not-send="true" href="server.html">server</a><br>
+    <a moz-do-not-send="true" href="sysMsgBoxFrame.html">sysMsgBoxFrame</a><br>
+    <a moz-do-not-send="true" href="taskBarFrame.html">taskBarFrame</a><br>
+    <a moz-do-not-send="true" href="textWindow.html">textWindow</a><br>
+    <a moz-do-not-send="true" href="window.html">window</a><br>
+    <a moz-do-not-send="true" href="workSpace.html">workSpace</a><br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

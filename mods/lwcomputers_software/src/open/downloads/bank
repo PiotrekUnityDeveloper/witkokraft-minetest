@@ -1,0 +1,777 @@
+
+local app_args = {...}
+local appFrame = win.create_app_frame ()
+
+
+local APP_TITLE         = "Mine Bank"
+
+local ID_OK             = 1
+
+local ID_MENUBTN        = 101
+local ID_ACCLIST        = 102
+local ID_ADDACC         = 103
+local ID_ACCBAL         = 104
+local ID_TRANS          = 105
+local ID_ACCLIMIT       = 106
+local ID_DELACC         = 107
+local ID_LOCKSCRN       = 108
+
+local ID_TRANSFROM      = 201
+local ID_TRANSTO        = 202
+local ID_TRANSAMOUNT    = 203
+
+local IDM_ONE           = 1001
+local IDM_TWO           = 1002
+local IDM_THREE         = 1003
+
+local IDM_ADDACC        = 1001
+local IDM_ACCBAL        = 1002
+local IDM_TRANS         = 1003
+local IDM_ACCLIMIT      = 1004
+local IDM_DELACC        = 1005
+local IDM_LOCKSCRN      = 1006
+
+
+local IDM_QUITAPP       = 1007
+
+local ID_BANK_FRAME     = 8217
+
+
+
+local function round (n)
+	return (math.modf ((n * 100) + 0.5)) / 100
+end
+
+
+
+local function cash_string (amount)
+	local dollars, cents = math.modf (amount)
+
+	return string.format ("%01d.%02d", dollars, ((cents * 100) + 0.01))
+end
+
+
+
+-- transferDlg ---------------------------------------------------------
+local transferDlg = win.popupFrame:base()
+
+
+function transferDlg:on_create (from)
+	self:dress ("Transfer")
+
+	self.trans_from = win.inputWindow:new (self, ID_TRANSFROM, 1, 2, 20, from, "From")
+	self.trans_to = win.inputWindow:new (self, ID_TRANSTO, 1, 4, 20, nil, "To")
+	self.trans_amount = win.inputWindow:new (self, ID_TRANSAMOUNT, 1, 6, 8, nil, "Amount")
+	win.buttonWindow:new (self, ID_OK, 17, 6, " Ok ")
+
+	self.trans_from:set_focus ()
+
+	self:move (nil, nil, 22, 8)
+
+	return true
+end
+
+
+function transferDlg:on_event (event, p1, p2, p3, p4, p5)
+	if event == "btn_click" then
+		if p1:get_id () == ID_OK then
+			if self.trans_from:get_text ():len () < 1 then
+				self.trans_from:set_error (true)
+				self.trans_from:set_focus ()
+			elseif self.trans_to:get_text ():len () < 1 then
+				self.trans_to:set_error (true)
+				self.trans_to:set_focus ()
+			elseif not tonumber (self.trans_amount:get_text ()) then
+				self.trans_amount:set_error (true)
+				self.trans_amount:set_focus ()
+			else
+				self:close (ID_OK)
+			end
+
+			return true
+		end
+	end
+
+	return false
+end
+
+
+
+function transferDlg:on_child_focus (child, blurred)
+	if win.popupFrame.on_child_focus (self, child, blurred) then
+		return true
+	end
+
+	if child.set_sel then
+		child:set_sel (0, -1, false)
+	end
+end
+
+
+
+function transferDlg:on_child_blur (child, focused)
+	if win.popupFrame.on_child_blur (self, child, focused) then
+		return true
+	end
+
+	if child.set_sel then
+		child:set_sel (0, 0, false)
+	end
+end
+
+-- end transferDlg -----------------------------------------------------
+
+
+
+function appFrame:msg_action (msg)
+	if msg.recipient_name or msg.recipient_id then
+		if type (msg.data) == "table" then
+			if msg.context and msg.data.application then
+				local action = msg.context
+				local data = msg.data
+
+				if action == "mine_bank_transfer" then
+					if data.account and data.pin and data.to and data.amount then
+						if data.pin ~= self:get_pin (data.account) then
+							return "invalid_pin"
+						end
+
+						return action
+					end
+				elseif action == "mine_bank_balance" then
+					if data.account and data.pin then
+						if data.pin ~= self:get_pin (data.account) then
+							return "invalid_pin"
+						end
+
+						return action
+					end
+				elseif action == "mine_bank_change_pin" then
+					if data.account and data.pin and data.new_pin then
+						if data.pin ~= self:get_pin (data.account) then
+							return "invalid_pin"
+						end
+
+						return action
+					end
+				end
+			end
+		end
+	end
+
+	return ""
+end
+
+
+
+function appFrame:on_receive (msg)
+	local action = self:msg_action (msg)
+
+	if action == "invalid_pin" then
+		self:send_message (msg.sender_id, msg.data.application,
+								 "bank_declined",
+								 { message = "Invalid pin" },
+								 self.connection_name)
+		return true
+
+	elseif action == "mine_bank_transfer" then
+		if self:transfer (msg.data.account, msg.data.to, msg.data.amount) then
+			self:send_message (msg.sender_id, msg.data.application,
+									 "bank_approved",
+									 { message = "Transaction approved" },
+									 self.connection_name)
+		else
+			self:send_message (msg.sender_id, msg.data.application,
+									 "bank_declined",
+									 { message = "Transaction declined" },
+									 self.connection_name)
+		end
+
+		return true
+
+	elseif action == "mine_bank_balance" then
+		local balance = self:get_balance (msg.data.account)
+
+		if balance then
+			self:send_message (msg.sender_id, msg.data.application,
+									"bank_approved",
+									 { message = "Balance: "..cash_string (balance) },
+									 self.connection_name)
+		else
+			self:send_message (msg.sender_id, msg.data.application,
+									 "bank_declined",
+									 { message = "Declined" },
+									 self.connection_name)
+		end
+
+		return true
+
+	elseif action == "mine_bank_change_pin" then
+		if self:set_pin (msg.data.account, msg.data.new_pin) then
+			self:send_message (msg.sender_id, msg.data.application,
+									 "bank_approved",
+									 { message = "Pin changed" },
+									 self.connection_name)
+		else
+			self:send_message (msg.sender_id, msg.data.application,
+									 "bank_declined",
+									 { message = "Declined" },
+									 self.connection_name)
+		end
+
+		return true
+
+	end
+
+	return false
+end
+
+
+
+function appFrame:on_sent (msg, success)
+end
+
+
+
+function appFrame:on_event (event, p1, p2, p3, p4, p5)
+	if event == "btn_click" then
+		if p1:get_id () == ID_MENUBTN then
+			self:on_menu ()
+			return true
+		end
+
+		if p1:get_id () == ID_ADDACC then
+			self:on_add_account ()
+			return true
+		end
+
+		if p1:get_id () == ID_DELACC then
+			self:on_remove_account ()
+			return true
+		end
+
+		if p1:get_id () == ID_ACCBAL then
+			self:on_account_balance ()
+			return true
+		end
+
+		if p1:get_id () == ID_ACCLIMIT then
+			self:on_account_limit ()
+			return true
+		end
+
+		if p1:get_id () == ID_TRANS then
+			self:on_transfer ()
+			return true
+		end
+
+		if p1:get_id () == ID_LOCKSCRN then
+			self:get_desktop ():lock_screen ()
+			return true
+		end
+
+	elseif event == "menu_cmd" then
+		return self:on_command (p1)
+	end
+
+	return false
+end
+
+
+
+function appFrame:on_idle (idle_count)
+	return false
+end
+
+
+
+function appFrame:on_alarm (alarm_id)
+	return false
+end
+
+
+
+function appFrame:on_timer (timer_id)
+	return false
+end
+
+
+
+function appFrame:on_destroy_wnd ()
+end
+
+
+
+function appFrame:on_child_key (wnd, key, ctrl, alt, shift)
+	if win.applicationFrame.on_child_key (self, wnd, key, ctrl, alt, shift) then
+		return true
+	end
+
+	if ctrl and not alt and not shift then
+		if key == keys.KEY_N then
+			return self:on_command (IDM_ADDACC)
+		end
+
+		if key == keys.KEY_B then
+			return self:on_command (IDM_ACCBAL)
+		end
+
+		if key == keys.KEY_T then
+			return self:on_command (IDM_TRANS)
+		end
+
+		if key == keys.KEY_L then
+			return self:on_command (IDM_ACCLIMIT)
+		end
+
+		if key == keys.KEY_D then
+			return self:on_command (IDM_DELACC)
+		end
+	end
+
+	return false
+end
+
+
+
+function appFrame:on_frame_activate (active)
+end
+
+
+
+function appFrame:on_quit ()
+	if self.connection_name then
+		self:comm_close (self.connection_name)
+	end
+
+	return false
+end
+
+
+
+function appFrame:on_menu ()
+	local menu = win.menuWindow:new (self)
+
+	menu:add_string ("New      Ctrl+N",      IDM_ADDACC)
+	menu:add_string ("Balance  Ctrl+B",      IDM_ACCBAL)
+	menu:add_string ("Transfer Ctrl+T",      IDM_TRANS)
+	menu:add_string ("Limit    Ctrl+L",      IDM_ACCLIMIT)
+	menu:add_string ("Delete   Ctrl+D",      IDM_DELACC)
+	menu:add_string ("Lock     Ctrl+Alt+K",  IDM_LOCKSCRN)
+	menu:add_string ("-------------------")
+	menu:add_string ("Quit App",             IDM_QUITAPP)
+
+	menu:track (0, 1)
+end
+
+
+
+function appFrame:on_command (cmd_id)
+	if cmd_id == IDM_ADDACC then
+		self:on_add_account ()
+		return true
+	end
+
+	if cmd_id == IDM_ACCBAL then
+		self:on_account_balance ()
+		return true
+	end
+
+	if cmd_id == IDM_TRANS then
+		self:on_transfer ()
+		return true
+	end
+
+	if cmd_id == IDM_ACCLIMIT then
+		self:on_account_limit ()
+		return true
+	end
+
+	if cmd_id == IDM_DELACC then
+		self:on_remove_account ()
+		return true
+	end
+
+	if cmd_id == IDM_LOCKSCRN then
+		self:get_desktop ():lock_screen ()
+		return true
+	end
+
+	if cmd_id == IDM_QUITAPP then
+		self:quit_app ()
+		return true
+	end
+
+	return false
+end
+
+
+
+function appFrame:on_move ()
+	self.app_acc_list:move (1, 2, self.width - 13, self.height - 3)
+	self.app_add_acc:move (self.width - 11, 2)
+	self.app_acc_bal:move (self.width - 11, 4)
+	self.app_trans:move (self.width - 11, 6)
+	self.app_acc_limit:move (self.width - 11, 8)
+	self.app_del_acc:move (self.width - 11, 10)
+	self.app_lock_scrn:move (self.width - 11, 12)
+
+	return false
+end
+
+
+
+function appFrame:on_create ()
+	local instance = self:get_desktop ():get_wnd_by_id (ID_BANK_FRAME)
+	if instance then
+		instance:set_active_top_frame ()
+		return false
+	end
+
+	self:set_id (ID_BANK_FRAME)
+	self:dress (APP_TITLE)
+
+	local menuBtn = win.buttonWindow:new (self, ID_MENUBTN, 0, 0, "Menu")
+	menuBtn:set_colors (menuBtn:get_colors ().frame_text,
+							  menuBtn:get_colors ().title_back,
+							  menuBtn:get_colors ().frame_back)
+	menuBtn:move (nil, nil, nil, nil, win.WND_TOP)
+
+	self.app_accounts = { }
+
+	self.app_acc_list = win.listWindow:new (self, ID_ACCLIST, 1, 2, self.width - 10, self.height - 3)
+	self.app_add_acc = win.buttonWindow:new (self, ID_ADDACC, self.width - 11, 2,       "   New    ")
+	self.app_acc_bal = win.buttonWindow:new (self, ID_ACCBAL, self.width - 11, 4,       "  Balance ")
+	self.app_trans = win.buttonWindow:new (self, ID_TRANS, self.width - 11, 6,          " Transfer ")
+	self.app_acc_limit = win.buttonWindow:new (self, ID_ACCLIMIT, self.width - 11, 8,   "   Limit  ")
+	self.app_del_acc = win.buttonWindow:new (self, ID_DELACC, self.width - 11, 10,      "  Delete  ")
+	self.app_lock_scrn = win.buttonWindow:new (self, ID_LOCKSCRN, self.width - 11, 12,  "   Lock   ")
+
+	self.app_acc_list:set_focus ()
+
+	fs.mkdir ("/data")
+
+	self:load_list ()
+
+	self:set_active_top_frame ()
+
+	local ini = fs.load_ini (self:get_app_path ()..".ini")
+	if ini then
+		self.banknetwork = ini:find ("banknetwork")
+	end
+	self.banknetwork = tostring (self.banknetwork or "mine_bank_network")
+
+	local con = self:comm_open (nil, 5)
+	if not con then
+		self:msgbox ("Connection", "Could not connect to modem!", term.colors.red)
+	end
+	self.connection_name = con:get_name ()
+	self:want_messages (self.banknetwork, self.connection_name)
+
+	return true
+end
+
+
+
+function appFrame:load_list ()
+	local sel = self.app_acc_list:get_cur_sel ()
+
+	self:load_accounts ()
+	self.app_acc_list:reset_content ()
+
+	for k, v in pairs (self.app_accounts) do
+		self.app_acc_list:add_string (k, v)
+	end
+
+	self.app_acc_list:sort ()
+	self.app_acc_list:set_cur_sel (sel)
+end
+
+
+
+local function validate_new_name (name)
+	return (not appFrame:find_account (name)) and name:len () > 0
+end
+
+
+
+function appFrame:on_add_account ()
+	local name = cmndlg.input (self, "New Account", "New account name",
+										"", "Account name", nil, validate_new_name)
+	if name then
+		self:add_account (name)
+		self:load_list ()
+	end
+end
+
+
+
+function appFrame:on_remove_account ()
+	local name = self.app_acc_list:get_string ()
+	if name then
+		if cmndlg.confirm (self, "Remove Account",
+								 "Are you sure you want to remove account: \"".. name.."\"",
+								  false, term.colors.orange) then
+			self:remove_account (name)
+			self:load_list ()
+		end
+	end
+end
+
+
+
+function appFrame:on_account_balance ()
+	local name = self.app_acc_list:get_string ()
+	if name then
+		local amount = cmndlg.input (self, "Balance",
+											  "Set balance for "..name,
+											  cash_string (self:get_balance (name)),
+											  "Balance")
+		if amount then
+			appFrame:set_balance (name, amount)
+			self:load_list ()
+		end
+	end
+end
+
+
+
+function appFrame:on_account_limit ()
+	local name = self.app_acc_list:get_string ()
+	if name then
+		local amount = cmndlg.input (self, "Limit",
+											  "Set limit for "..name,
+											  cash_string (self:get_limit (name)),
+											  "Limit")
+		if amount then
+			appFrame:set_limit (name, amount)
+			self:load_list ()
+		end
+	end
+end
+
+
+
+function appFrame:on_transfer ()
+	local dlg = transferDlg:new (self)
+
+	if dlg:do_modal (self.app_acc_list:get_string ()) == ID_OK then
+		local from = dlg.trans_from:get_text ()
+		local to = dlg.trans_to:get_text ()
+		local amount = tonumber (dlg.trans_amount:get_text ())
+
+		if not self:transfer (from, to, amount) then
+			self:msgbox ("Transaction failed",
+							 string.format ("Transaction %s to %s for %f failed!",
+												 from, to, amount),
+							 term.colors.red)
+		end
+	end
+end
+
+
+
+function appFrame:load_accounts ()
+	local result = false
+	local file = io.open ("/data/accounts.dat", "r")
+	if file then
+		local success, accounts = pcall (utils.deserialize, file:read ("*a"))
+		if success and type (accounts) == "table" then
+			self.app_accounts = accounts
+			result = true
+		end
+
+		file:close ()
+	end
+
+	return result
+end
+
+
+
+function appFrame:save_accounts ()
+	local result = false
+	local file = io.open ("/data/accounts.dat", "w")
+	if file then
+		file:write (utils.serialize (self.app_accounts))
+		result = true
+
+		file:close ()
+	end
+
+	return result
+end
+
+
+
+function appFrame:load_transaction (message)
+	local mode = "a"
+	if not fs.file_exists ("/data/trans.log") then
+		mode = "w"
+	end
+
+	local file = io.open ("/data/trans.log", mode)
+	if file then
+		file:write (message.."\n\n")
+		file:close ()
+	end
+end
+
+
+
+function appFrame:find_account (name)
+	name = string.lower (tostring (name or ""))
+
+	for k, v in pairs (self.app_accounts) do
+		if k == name then
+			return true
+		end
+	end
+
+	return false
+end
+
+
+
+function appFrame:add_account (name)
+	name = string.lower (tostring (name or ""))
+
+	if not self:find_account (name) then
+		self.app_accounts[name] =
+		{
+			balance = 0,
+			limit = 0,
+			pin = "1234"
+		}
+		self:save_accounts ()
+
+		return true
+	end
+
+	return false
+end
+
+
+
+function appFrame:set_balance (name, balance)
+	name = string.lower (tostring (name or ""))
+
+	if self:find_account (name) then
+		self.app_accounts[name].balance = round (tonumber (balance or 0) or 0)
+		self:save_accounts ()
+
+		return true
+	end
+
+	return false
+end
+
+
+
+function appFrame:get_balance (name)
+	name = string.lower (tostring (name or ""))
+
+	if self:find_account (name) then
+		return self.app_accounts[name].balance
+	end
+
+	return nil
+end
+
+
+
+function appFrame:set_limit (name, limit)
+	name = string.lower (tostring (name or ""))
+
+	if self:find_account (name) then
+		self.app_accounts[name].limit = round (tonumber (limit or 0) or 0)
+		self:save_accounts ()
+
+		return true
+	end
+
+	return false
+end
+
+
+
+function appFrame:get_limit (name)
+	name = string.lower (tostring (name or ""))
+
+	if self:find_account (name) then
+		return self.app_accounts[name].limit
+	end
+
+	return nil
+end
+
+
+
+function appFrame:set_pin (name, pin)
+	name = string.lower (tostring (name or ""))
+
+	if self:find_account (name) then
+		self.app_accounts[name].pin = tostring(pin or "")
+		self:save_accounts ()
+
+		return true
+	end
+
+	return false
+end
+
+
+
+function appFrame:get_pin (name)
+	name = string.lower (tostring (name or ""))
+
+	if self:find_account (name) then
+		return self.app_accounts[name].pin
+	end
+
+	return nil
+end
+
+
+
+function appFrame:remove_account (name)
+	name = string.lower (tostring (name or ""))
+
+	if self:find_account (name) then
+		self.app_accounts[name] = nil
+		self:save_accounts ()
+
+		return true
+	end
+
+	return false
+end
+
+
+
+function appFrame:transfer (from, to, amount)
+	from = string.lower (tostring (from or ""))
+	to = string.lower (tostring (to or ""))
+	amount = tonumber (amount or 0) or 0
+
+	if self:find_account (from) and self:find_account (to) then
+		if (self.app_accounts[from].balance + self.app_accounts[from].limit) >= amount then
+			self.app_accounts[from].balance = round (self.app_accounts[from].balance - amount)
+			self.app_accounts[to].balance = round (self.app_accounts[to].balance + amount)
+			self:save_accounts ()
+			self:load_transaction (string.format ("%s to %s for %f at %s - ok",
+															  from, to, amount,
+															  os.date ("%Y/%m/%d %H:%M:%S")))
+			return true
+		end
+	end
+
+	self:load_transaction (string.format ("%s to %s for %f at %s - failed",
+													  from, to, amount,
+													  os.date ("%Y/%m/%d %H:%M:%S")))
+	return false
+end
+
+
+
+appFrame:run_app ()

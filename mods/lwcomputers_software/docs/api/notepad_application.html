@@ -1,0 +1,174 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>NotePad</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>NotePad - WIN</h1>
+    <b>NotePad</b><br>
+    <br>
+    File: <i>/apps/notepad</i><br>
+    <br>
+    Plain text editor application.<br>
+    <br>
+    <img src="images/notepad.png" alt="Notepad application"
+      moz-do-not-send="true" width="658" height="382" border="1"><br>
+    <br>
+    <b>Menu</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">New </td>
+          <td valign="top">Ctrl+N </td>
+          <td valign="top">Create a new document. </td>
+        </tr>
+        <tr>
+          <td valign="top">Open </td>
+          <td valign="top">Ctrl+O </td>
+          <td valign="top">Open an existing file. </td>
+        </tr>
+        <tr>
+          <td valign="top">Save </td>
+          <td valign="top">Ctrl+S </td>
+          <td valign="top">Save the document to the current file if
+            modified. </td>
+        </tr>
+        <tr>
+          <td valign="top">Save as </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top">Save the document to a new file. </td>
+        </tr>
+        <tr>
+          <td valign="top">Print </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top">If a range is selected, print it. If not,
+            print the whole document. </td>
+        </tr>
+        <tr>
+          <td valign="top">Undo </td>
+          <td valign="top">Ctrl+Z </td>
+          <td valign="top">Undo the last editing action. </td>
+        </tr>
+        <tr>
+          <td valign="top">Redo </td>
+          <td valign="top">Ctrl+Y </td>
+          <td valign="top">Redo the last undo. </td>
+        </tr>
+        <tr>
+          <td valign="top">Cut</td>
+          <td valign="top">Ctrl+X</td>
+          <td valign="top">Remove the current selection and place it on
+            the clipboard.</td>
+        </tr>
+        <tr>
+          <td valign="top">Copy</td>
+          <td valign="top">Ctrl+C</td>
+          <td valign="top">Copy the current selection to the clipboard.</td>
+        </tr>
+        <tr>
+          <td valign="top">Paste</td>
+          <td valign="top">Ctrl+V</td>
+          <td valign="top">Paste the contents of the clipboard into the
+            document, replacing any selected range.</td>
+        </tr>
+        <tr>
+          <td valign="top">Sys Copy<br>
+          </td>
+          <td valign="top">Ctrl+Alt+C<br>
+          </td>
+          <td valign="top">System's copy, copy selection to clipboard in
+            slot.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">Sys Paste<br>
+          </td>
+          <td valign="top">Ctrl+Alt+V<br>
+          </td>
+          <td valign="top">System's paste, paste from clipboard in slot
+            replacing any selection.</td>
+        </tr>
+        <tr>
+          <td valign="top">Find</td>
+          <td valign="top">Ctrl+F</td>
+          <td valign="top">Opens the Find dialog, to search the document
+            for a text string.</td>
+        </tr>
+        <tr>
+          <td valign="top">Next</td>
+          <td valign="top">F3</td>
+          <td valign="top">Finds the next instance of the find text
+            without opening the find dialog.</td>
+        </tr>
+        <tr>
+          <td valign="top">Replace</td>
+          <td valign="top">Ctrl+H</td>
+          <td valign="top">Opens the Replace dialog, to replace
+            instances of a text string with another.</td>
+        </tr>
+        <tr>
+          <td valign="top">Quit</td>
+          <td valign="top">Ctrl+Alt+X</td>
+          <td valign="top">Quit the application.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Also supports:<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">Ctrl+A</td>
+          <td valign="top">Select the whole document.</td>
+        </tr>
+        <tr>
+          <td valign="top">Shift+navigation keys</td>
+          <td valign="top">Select range.</td>
+        </tr>
+        <tr>
+          <td valign="top">Ctrl+navigation keys</td>
+          <td valign="top">Move without selecting.</td>
+        </tr>
+        <tr>
+          <td valign="top">Shift+Click<br>
+          </td>
+          <td valign="top">Select range.<br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    The status bar shows the one based line and column position on the
+    left, and "mod" on the right if the document is modified without
+    saving.<br>
+    <br>
+    In the Find dialog, Ctrl+F finds the next instance, if any.<br>
+    <br>
+    In the Replace dialog, Ctrl+F finds the next instance, Ctrl+R
+    replaces one and finds the next, and Ctrl+A replaces all following
+    instances and dismisses the dialog.<br>
+    <br>
+    The file /apps/notepad.ini contains settings for the notepad
+    application. The only setting supported is tab, which specifies an
+    integer for the character width of a tab. This is initially set to
+    2.<br>
+    <br>
+    A file path can optionally be given as an argument on the command
+    line of the file to open.<br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="default_applications.html">Default
+
+
+      applications</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

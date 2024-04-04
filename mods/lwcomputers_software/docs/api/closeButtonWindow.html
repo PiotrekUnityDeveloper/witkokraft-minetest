@@ -1,0 +1,189 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>closeButtonWindow</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>win.closeButtonWindow - WIN</h1>
+    Class <b>closeButtonWindow</b><br>
+    Inherits from <a moz-do-not-send="true" href="buttonWindow.html">buttonWindow</a>.<br>
+    <br>
+    The closeButtonWindow class provides a button control window with a
+    single character label of the <a moz-do-not-send="true"
+      href="desktopTheme.html">theme's close_btn character</a> value.
+    Its colors are initialized from the theme but may be customized
+    after creation. A <a moz-do-not-send="true"
+      href="events.html#frame_close">frame_close</a> event is sent to
+    the parent window when it is left clicked/touched/enter key pressed
+    while active.<br>
+    <br>
+    To create a closeButtonWindow use it's new method:<br>
+    <tt><font color="#000066">local</font> btn =
+      win.closeButtonWindow:new (parent, x, y)</tt><br>
+    <br>
+    <br>
+    <b>Properties</b><br>
+    <br>
+    none&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <br>
+    <br>
+    <b>Methods</b><br>
+    <ul id="mozToc">
+      <!--mozToc h3 1-->
+      <li><a href="#mozTocId482240">closeButtonWindow:constructor</a></li>
+      <li><a href="#mozTocId509105">closeButtonWindow:on_left_click</a></li>
+      <li><a href="#mozTocId215159">closeButtonWindow:on_touch</a></li>
+    </ul>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId482240" class="mozTocH3"></a><a
+        name="closeButtonWindow:constructor"></a>win.closeButtonWindow:constructor</h3>
+    <i> btn closeButtonWindow:constructor (parent, x, y)</i><br>
+    <br>
+    Constructs and returns the instantiated close button window.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">parent </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">Parent window, typically a frame. </td>
+        </tr>
+        <tr>
+          <td valign="top">x </td>
+          <td valign="top">number </td>
+          <td valign="top">Parent relative x position. </td>
+        </tr>
+        <tr>
+          <td valign="top">y</td>
+          <td valign="top">number</td>
+          <td valign="top">Parent relative y position.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">btn </td>
+          <td valign="top">closeButtonWindow </td>
+          <td valign="top">The instantiated close button window. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId509105" class="mozTocH3"></a><a
+        name="closeButtonWindow:on_left_click"></a>win.closeButtonWindow:on_left_click</h3>
+    <i> result closeButtonWindow:on_left_click (x, y, count)</i><br>
+    <br>
+    Calls the base window implementation and sends a <a
+      moz-do-not-send="true" href="events.html#frame_close">frame_close</a>
+    event to the parent <a moz-do-not-send="true" href="window.html">window</a>.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">x </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative x position. </td>
+        </tr>
+        <tr>
+          <td valign="top">y </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative y position. </td>
+        </tr>
+        <tr>
+          <td valign="top">count<br>
+          </td>
+          <td valign="top">number</td>
+          <td valign="top">The number of times this same position was
+            repeatedly clicked, with each successive click within the <i>double_click_time</i>.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Result from base call. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true"
+      href="window.html#window:on_left_click">window:on_left_click</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId215159" class="mozTocH3"></a><a
+        name="closeButtonWindow:on_touch"></a>win.closeButtonWindow:on_touch</h3>
+    <i> result closeButtonWindow:on_touch (x, y)</i><br>
+    <br>
+    Calls the base window implementation and sends a <a
+      moz-do-not-send="true" href="events.html#frame_close">frame_close</a>
+    event to the parent <a moz-do-not-send="true" href="window.html">window</a>.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">x </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative x position. </td>
+        </tr>
+        <tr>
+          <td valign="top">y </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative y position. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Result from base call. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:on_touch">window:on_touch</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

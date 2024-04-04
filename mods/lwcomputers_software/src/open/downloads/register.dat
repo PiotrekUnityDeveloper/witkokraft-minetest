@@ -1,0 +1,10 @@
+return {
+	["d1"] = { item = "", price = 0.0, qty = -1 },
+	["d2"] = { item = "", price = 0.0, qty = -1 },
+	["d3"] = { item = "", price = 0.0, qty = -1 },
+	["d4"] = { item = "", price = 0.0, qty = -1 },
+	["d5"] = { item = "", price = 0.0, qty = -1 },
+	["d6"] = { item = "", price = 0.0, qty = -1 },
+	["d7"] = { item = "", price = 0.0, qty = -1 },
+	["d8"] = { item = "", price = 0.0, qty = -1 },
+}

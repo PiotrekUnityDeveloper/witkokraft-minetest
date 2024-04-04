@@ -1,0 +1,765 @@
+
+local app_args = {...}
+local appFrame = win.create_app_frame()
+
+
+local APP_TITLE         = "Register"
+
+local ID_OK             = 1
+
+local ID_MENUBTN        = 101
+local ID_TALLY          = 102
+local ID_ITEMS          = 103
+local ID_NEW            = 104
+local ID_PAY            = 105
+
+local ID_TRANSACC       = 201
+local ID_TRANSPIN       = 202
+local ID_TRANSAMOUNT    = 203
+local ID_STOCK          = 204
+local ID_EDIT           = 205
+local ID_ITEM           = 206
+local ID_QTY            = 207
+local ID_PRICE          = 208
+local ID_OK             = 209
+
+local IDM_NEW           = 1001
+local IDM_PAY           = 1002
+--local IDM_INIT          = 1003
+local IDM_STOCK         = 1004
+local IDM_QUITAPP       = 1005
+local IDM_PRINT         = 1006
+
+local ID_REGISTER_FRAME = 18427
+
+local CONTEXT_DESPENCE_ITEM    = "context_despence_item"
+
+
+
+-- transferDlg ---------------------------------------------------------
+
+local transferDlg = win.popupFrame:base ()
+
+
+
+function transferDlg:on_create (account, amount)
+	self:dress ("Transfer")
+
+	if amount then
+		amount = appFrame:money_string (amount)
+	end
+
+	self.trans_account = win.inputWindow:new (self, ID_TRANSACC, 1, 2, 20, account, "Account")
+	self.trans_pin = win.inputWindow:new (self, ID_TRANSPIN, 1, 4, 20, nil, "Pin")
+	self.trans_amount = win.inputWindow:new (self, ID_TRANSAMOUNT, 1, 6, 8, amount, "Amount")
+	win.buttonWindow:new (self, ID_OK, 17, 6, " Ok ")
+
+	self.trans_pin:set_mask_char ("*")
+
+	self.trans_account:set_focus ()
+
+	self:move (nil, nil, 22, 8)
+
+	return true
+end
+
+
+
+function transferDlg:on_event (event, p1, p2, p3, p4, p5)
+	if event == "btn_click" then
+		if p1:get_id () == ID_OK then
+			if self.trans_account:get_text ():len () < 1 then
+				self.trans_account:set_error (true)
+				self.trans_account:set_focus ()
+			elseif not tonumber (self.trans_amount:get_text ()) then
+				self.trans_amount:set_error (true)
+				self.trans_amount:set_focus ()
+			else
+				self:close (ID_OK)
+			end
+
+			return true
+		end
+	end
+
+	return false
+end
+
+
+
+function transferDlg:on_child_focus (child, blurred)
+	if win.popupFrame.on_child_focus (self, child, blurred) then
+		return true
+	end
+
+	if child.set_sel then
+		child:set_sel (0, -1, false)
+	end
+end
+
+
+
+function transferDlg:on_child_blur (child, focused)
+	if win.popupFrame.on_child_blur (self, child, focused) then
+		return true
+	end
+
+	if child.set_sel then
+		child:set_sel (0, 0, false)
+	end
+end
+
+-- end transferDlg -----------------------------------------------------
+
+
+
+-- itemDlg -------------------------------------------------------------
+
+local itemDlg = win.popupFrame:base ()
+
+function itemDlg:on_create (dropper)
+	self:dress ("Item")
+
+	self.item_dropper = dropper
+	local item = appFrame.app_items[dropper]
+
+	self.item_item = win.inputWindow:new (self, ID_ITEM, 1, 2, 15, item.item, "Item")
+	self.item_qty = win.inputWindow:new (self, ID_QTY, 1, 4, 6,
+													 tostring (item.qty or ""),
+													 "Qty")
+	self.item_price = win.inputWindow:new (self, ID_PRICE, 1, 6, 6,
+														appFrame:money_string (item.price),
+														"Price")
+
+	win.buttonWindow:new (self, ID_OK, 12, 6, " Ok ")
+
+	self.item_item:set_focus ()
+
+	if self:get_colors ().popup_back == term.colors.yellow then
+		self:set_bg_color (term.colors.orange)
+	else
+		self:set_bg_color (term.colors.yellow)
+	end
+
+	self:move (nil, nil, 17, 8)
+
+	return true
+end
+
+
+
+function itemDlg:on_event (event, p1, p2, p3, p4, p5)
+	if event == "btn_click" then
+		if p1:get_id () == ID_OK then
+			local item = appFrame.app_items[self.item_dropper]
+
+			item.item = self.item_item:get_text ()
+			item.qty = math.floor (tonumber (self.item_qty:get_text ()) or 0)
+			item.price = tonumber (self.item_price:get_text ()) or 0
+
+			self:close (ID_OK)
+
+			return true
+		end
+	end
+
+	return false
+end
+
+
+
+function itemDlg:on_child_focus (child, blurred)
+	if win.popupFrame.on_child_focus (self, child, blurred) then
+		return true
+	end
+
+	if child.set_sel then
+		child:set_sel (0, -1, false)
+	end
+end
+
+
+
+function itemDlg:on_child_blur (child, focused)
+	if win.popupFrame.on_child_blur (self, child, focused) then
+		return true
+	end
+
+	if child.set_sel then
+		child:set_sel (0, 0, false)
+	end
+end
+
+-- end itemDlg ---------------------------------------------------------
+
+
+
+-- stockDlg ------------------------------------------------------------
+
+local stockDlg = win.popupFrame:base ()
+
+function stockDlg:on_create ()
+	self:dress ("Stock")
+
+	self.stock_items = win.listWindow:new (self, ID_STOCK, 1, 2, 34, 12)
+	win.buttonWindow:new (self, ID_EDIT, 29, 14, " Edit ")
+
+	local tmp = { }
+
+	for dropper, item in pairs (appFrame.app_items) do
+		tmp[#tmp + 1] = dropper
+	end
+
+	table.sort (tmp)
+
+	for i = 1, #tmp, 1 do
+		self.stock_items:add_string (stockDlg:item_string (tmp[i]), { dropper = tmp[i] })
+	end
+
+	self.stock_items:set_focus ()
+
+	self:move (nil, nil, 36, 16)
+
+	return true
+end
+
+
+
+function stockDlg:on_event (event, p1, p2, p3, p4, p5)
+	if event == "btn_click" then
+		if p1:get_id () == ID_EDIT then
+			self:on_edit_item ()
+			return true
+		end
+
+	elseif event == "list_double_click" then
+		if p1:get_id () == ID_STOCK then
+			self:on_edit_item ()
+			return true
+		end
+	end
+
+	return false
+end
+
+
+
+function stockDlg:on_edit_item ()
+	local index = self.stock_items:get_cur_sel ()
+
+	if index > 0 then
+		local item = self.stock_items:get_data (index)
+
+		itemDlg:new (self):do_modal (item.dropper)
+		self.stock_items:set_string (stockDlg:item_string (item.dropper), index)
+	end
+end
+
+
+
+function stockDlg:item_string (dropper)
+	local item = appFrame.app_items[dropper].item:sub (1, 13)
+	local qty = tostring (appFrame.app_items[dropper].qty or "")
+	local drop = dropper:sub (1, 13)
+
+	if drop:len () < 13 then
+		drop = drop..string.rep (" ", 13 - drop:len ())
+	end
+
+	if item:len () < 13 then
+		item = item..string.rep (" ", 13 - item:len ())
+	end
+
+	if qty:len () < 5 then
+		qty = string.rep (" ", 5 - qty:len ())..qty
+	end
+
+	return string.format ("%s %s %s", drop, item, qty)
+end
+
+-- end stockDlg --------------------------------------------------------
+
+
+
+function appFrame:on_print_data ()
+	return win.printData:new (self.app_printer, 0, 0, 0, self.app_retailer.." Receipt", nil)
+end
+
+
+
+function appFrame:on_print_page (gdi, page, data)
+	local width, height = gdi:get_page_size ()
+
+	if page == 1 then
+		local text = self.app_retailer.." Receipt"
+
+		if (width - text:len ()) >= 2 then
+			text = string.rep (" ", math.floor ((width - text:len ()) / 2))..text
+		end
+
+		if self.last_account then
+			text = text..string.format ("\n\nSale to: %s\n%s",
+												 self.last_account,
+												 os.date ("%Y-%m-%d %I:%M %P"))
+		else
+			text = text..string.format("\n\nSale:\n%s", os.date ("%Y-%m-%d %I:%M %P"))
+		end
+		text = text.."\n\n"..self.app_item:get_text ().."\n"..
+									self:item_string ("Total", self.app_amount, " ")
+		data.data = string.wrap (text, width - 2)
+	end
+
+	local top_line = (page - 1) * height
+	local last_line = top_line + height - 1
+
+	if last_line > #data.data then
+		last_line = #data.data
+	end
+
+	for line = top_line, last_line, 1 do
+		gdi:write (data.data[line + 1], 1, line - top_line)
+	end
+
+	return last_line < #data.data
+end
+
+
+
+function appFrame:on_receive (msg)
+	if msg.application == self.app_app_id and type (msg.data) == "table" then
+		if msg.data.message then
+			if msg.context == "bank_approved" then
+				self:msgbox ("Approved", "Transaction approved.")
+
+				if self.app_printer then
+					self:print_doc ()
+				end
+
+				self:new_sale ()
+
+			elseif msg.context == "bank_declined" then
+				self:msgbox ("Declined", "Transaction declined.\r"..msg.data.message, term.colors.orange)
+			end
+		end
+	end
+
+	return false
+end
+
+
+
+function appFrame:on_sent (msg, success)
+	if not success then
+		self:msgbox ("Error", "Failed to send "..msg.context, term.colors.red)
+	end
+end
+
+
+
+function appFrame:on_event (event, p1, p2, p3, p4, p5)
+	if event == "btn_click" then
+		if p1:get_id () == ID_MENUBTN then
+			self:on_menu ()
+			return true
+		end
+
+		if p1:get_id () == ID_NEW then
+			return self:on_command (IDM_NEW)
+		end
+
+		if p1:get_id () == ID_PAY then
+			return self:on_command (IDM_PAY)
+		end
+
+	elseif event == "menu_cmd" then
+		return self:on_command (p1)
+
+	elseif event == "digilines" then
+		self:on_digilines  (p1, p2)
+		return true
+	end
+
+	return false
+end
+
+
+
+function appFrame:on_idle (idle_count)
+	return false
+end
+
+
+
+function appFrame:on_alarm (alarm_id)
+	return false
+end
+
+
+
+function appFrame:on_timer (timer_id)
+	return false
+end
+
+
+
+function appFrame:on_move ()
+	self.app_item:move (1, 3, self.width - 2, self.height - 5)
+	self.app_total:move (1, self.height - 2)
+	self.app_tally:move (8, self.height - 2)
+
+	return false
+end
+
+
+
+function appFrame:on_destroy_wnd ()
+end
+
+
+
+function appFrame:on_child_key (wnd, key, ctrl, alt, shift)
+	if win.applicationFrame.on_child_key (self, wnd, key, ctrl, alt, shift) then
+		return true
+	end
+
+	if ctrl and not alt and not shift then
+		if key == keys.KEY_N then
+			return self:on_command (IDM_NEW)
+		end
+
+		if key == keys.KEY_P then
+			return self:on_command (IDM_PAY)
+		end
+
+		if key == keys.KEY_T then
+			return self:on_command (IDM_PRINT)
+		end
+
+		--if key == keys.KEY_I then
+			--return self:on_command (IDM_INIT)
+		--end
+
+		if key == keys.KEY_S then
+			return self:on_command (IDM_STOCK)
+		end
+	end
+
+	return false
+end
+
+
+
+function appFrame:on_frame_activate (active)
+end
+
+
+
+function appFrame:on_quit ()
+	if self.app_connection_name then
+		self:comm_close (self.app_connection_name)
+	end
+
+	return false
+end
+
+
+
+function appFrame:on_menu ()
+	local menu = win.menuWindow:new (self)
+
+	menu:add_string ("New        Ctrl+N", IDM_NEW)
+	menu:add_string ("Pay        Ctrl+P", IDM_PAY)
+	menu:add_string ("-----------------")
+	menu:add_string ("Print      Ctrl+T", IDM_PRINT)
+	menu:add_string ("-----------------")
+	--menu:add_string ("Initialise Ctrl+I", IDM_INIT)
+	menu:add_string ("Stock      Ctrl+S", IDM_STOCK)
+	menu:add_string ("-----------------")
+	menu:add_string ("Quit",              IDM_QUITAPP)
+
+	menu:track (0, 1)
+end
+
+
+
+function appFrame:on_command (cmdId)
+	if cmdId == IDM_NEW then
+		self:on_new_sale ()
+		return true
+	end
+
+	if cmdId == IDM_PAY then
+		self:on_pay ()
+		return true
+	end
+
+	if cmdId == IDM_PRINT then
+		self:on_print ()
+		return true
+	end
+
+	--if cmdId == IDM_INIT then
+		--self:on_init ()
+		--return true
+	--end
+
+	if cmdId == IDM_STOCK then
+		self:on_stock ()
+		return true
+	end
+
+	if cmdId == IDM_QUITAPP then
+		self:quit_app ()
+		return true
+	end
+
+	return false
+end
+
+
+
+function appFrame:on_create ()
+	local instance = self:get_desktop ():get_wnd_by_id (ID_REGISTER_FRAME, false)
+	if instance then
+		instance:set_active_top_frame ()
+		return false
+	end
+
+	self:set_id (ID_REGISTER_FRAME)
+	self:dress (APP_TITLE)
+
+	local menuBtn = win.buttonWindow:new (self, ID_MENUBTN, 0, 0, "Menu")
+	menuBtn:set_colors (menuBtn:get_colors ().frame_text,
+							  menuBtn:get_colors ().title_back,
+							  menuBtn:get_colors ().frame_back)
+	menuBtn:move (nil, nil, nil, nil, win.WND_TOP)
+
+	win.buttonWindow:new (self, ID_NEW, 1, 1, " New ")
+	win.buttonWindow:new (self, ID_PAY, 7, 1, " Pay ")
+	self.app_item = win.textWindow:new (self, ID_ITEMS, 1, 3, self.width - 2, self.height - 5)
+	self.app_item:set_color (self:get_colors ().wnd_text)
+	self.app_item:set_bg_color (self:get_colors ().wnd_back)
+	self.app_total = win.labelWindow:new (self, 0, 1, self.height - 2, "Total:")
+	self.app_tally = win.labelWindow:new (self, ID_TALLY, 8, self.height - 2, "          ")
+	self.app_amount = 0
+
+	if not self:on_init () then
+		return false
+	end
+
+	local con = self:comm_open (nil, 5)
+	if not con then
+		self:msgbox ("Connection", "Could not connect to modem!", term.colors.red)
+		return false
+	end
+
+	self:want_event ("digilines")
+
+	self.app_connection_name = con:get_name ()
+	self.app_app_id = APP_TITLE..tostring (math.random (1, 65535))
+	self:want_messages (self.app_app_id, self.app_connection_name)
+	self:want_messages (self.app_banknetwork, self.app_connection_name)
+
+	self:new_sale ()
+
+	self:set_active_top_frame ()
+
+	return true
+end
+
+
+
+function appFrame:on_init ()
+	return self:load_init () and self:load_items ()
+end
+
+
+
+function appFrame:load_init ()
+	local ini = fs.load_ini (self:get_app_path ()..".ini")
+	if ini then
+		self.app_retailer = ini:find ("retailer")
+		self.app_account = ini:find ("account")
+		self.app_printer = ini:find ("printer")
+		self.app_bankname = ini:find ("bankname")
+		self.app_banknetwork = ini:find ("banknetwork")
+	end
+
+	self.app_banknetwork = tostring (self.app_banknetwork or "mine_bank_network")
+	self.app_bankname = tostring (self.app_bankname or "mineBank")
+
+	if not self.app_retailer then
+		self.app_retailer = "Retailer"
+	end
+
+	self:set_title (self.app_retailer)
+
+	if not self.app_account then
+		self:msgbox ("Account", "No retail account set in init file!", term.colors.red)
+		return false
+	end
+
+	return true
+end
+
+
+
+function appFrame:load_items ()
+	local file = io.open (self:get_app_path ()..".dat", "r")
+
+	if file then
+		local success, data = pcall (utils.deserialize, file:read ("*a"))
+
+		if success and type (data) == "table" then
+			self.app_items = data
+			return true
+		end
+	end
+
+	self:msgbox ("Error", "Could not load data file "..self:get_app_path ()..".dat", term.colors.red)
+	return false
+end
+
+
+
+function appFrame:save_items ()
+	local success, raw = pcall (utils.serialize, self.app_items)
+	if success and type (raw) == "string" then
+		local file = io.open (self:get_app_path ()..".dat", "w")
+		if file then
+			file:write (raw)
+			file:close ()
+			return
+		end
+	end
+
+	self:msgbox ("File Error", "Could not write data file "..self:get_app_path ()..".dat", term.colors.red)
+end
+
+
+
+function appFrame:new_sale ()
+	self.app_amount = 0
+	self.app_tally:set_text ("$0.00")
+	self.app_item:set_text ()
+end
+
+
+
+function appFrame:on_new_sale ()
+	if self.app_amount ~= 0 then
+		if not cmndlg.confirm (self, "Clear Sale", "Clear the current sale?",
+									  false, term.colors.orange) then
+			return
+		end
+	end
+
+	if self.app_printer then
+		self.last_account = cmndlg.input (self, "Print", "Account and Ok to print", "", "Account")
+
+		if self.last_account then
+			self:print_doc ()
+		end
+	end
+
+	self:new_sale ()
+end
+
+
+
+function appFrame:money_string (amount)
+	local dollars, cents = math.modf (amount)
+	return string.format ("%01d.%02d", dollars, ((cents * 100) + 0.01))
+end
+
+
+
+function appFrame:item_string (item, price, spacer)
+	price = " $"..self:money_string (price)
+	item = (tostring (item) or "")
+	spacer = spacer or "."
+
+	if price:len () < 8 then
+		price = string.rep (spacer, 8 - price:len())..price
+	end
+
+	if item:len () < 14 then
+		item = item..string.rep (spacer, 14 - item:len ())
+	elseif item:len () > 14 then
+		item = item:sub (1, 14)
+	end
+
+	return item..price
+end
+
+
+
+function appFrame:add_item (item, price)
+	self.app_amount = self.app_amount + price
+	self.app_tally:set_text ("$"..self:money_string (self.app_amount))
+	self.app_item:set_text (string.format ("%s%s\r", self.app_item:get_text (), self:item_string (item, price)))
+	local x, y = self.app_item:get_scroll_size ()
+	self.app_item:set_scroll_org (0, y)
+end
+
+
+
+function appFrame:on_digilines  (msg, dropper)
+	if type (msg) == "table" and msg.action == "drop" then
+		local item = self.app_items[dropper]
+
+		if item then
+			if item.qty > 0 then
+				self:add_item (item.item, item.price)
+				item.qty = item.qty - 1
+				self:save_items ()
+			elseif item.qty < 0 then
+				self:add_item (item.item, item.price)
+			end
+
+			return true
+		end
+	end
+
+	return false
+end
+
+
+
+function appFrame:on_pay ()
+	if self.app_amount ~= 0 then
+		local dlg = transferDlg:new (self)
+
+		if dlg:do_modal (nil, self.app_amount) == ID_OK then
+			self.last_account = dlg.trans_account:get_text ()
+			self:send_message (self.app_bankname, self.app_banknetwork, "mine_bank_transfer",
+									 {
+										 application = self.app_app_id,
+										 account = dlg.trans_account:get_text (),
+										 pin = dlg.trans_pin:get_text (),
+										 to = self.app_account,
+										 amount = dlg.trans_amount:get_text ()
+									 },
+									 self.app_connection_name)
+		end
+	end
+end
+
+
+
+function appFrame:on_stock ()
+	stockDlg:new (self):do_modal ()
+	self:save_items ()
+end
+
+
+
+function appFrame:on_print ()
+	if self.app_printer then
+		self:print_doc ()
+	end
+end
+
+
+
+appFrame:run_app ()

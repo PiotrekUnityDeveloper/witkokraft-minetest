@@ -1,0 +1,1126 @@
+
+if fs.file_exists ("/server.cfg", false) then
+	dofile ("/server.cfg")
+end
+
+
+
+local function syslog (entry)
+	local file = io.open ("/server.log", (fs.file_exists ("/server.log") and "a") or "w")
+
+	if file then
+		file:write (entry.."\n\n")
+		file:close ()
+	end
+end
+
+
+
+local function print_msg (msg)
+	if win then
+		if win.syslog then
+			win.syslog (msg)
+
+			return
+		end
+	end
+
+	print ("%s", msg)
+end
+
+
+
+if SERVER_VERSION then
+	print_msg ("Server already running\n")
+
+	return
+end
+
+SERVER_VERSION = 1.0
+
+if not SERVER_NETWORK then
+	SERVER_NETWORK = "wide_area_network"
+end
+
+if not SERVER_TIMEOUT then
+	SERVER_TIMEOUT = 5
+end
+
+if not SERVER_PASSWORD then
+	SERVER_PASSWORD = "admin"
+end
+
+if not SERVER_ROOT then
+	SERVER_ROOT = "/public"
+end
+
+if not ACCOUNTS_ROOT then
+	ACCOUNTS_ROOT = "/accounts"
+end
+
+
+
+local function rm_dir (path)
+	local removed = 0
+	local list = fs.ls (path)
+
+	if not list then
+		return false, removed, msg
+	end
+
+	for i = 1, #list do
+		local full = path.."/"..list[i]
+
+		if fs.file_type (full) == "dir" then
+			local result, count, msg = rm_dir (full)
+
+			removed = removed + count
+
+			if not result then
+				return false, removed, msg
+			end
+		end
+
+		local result, msg = fs.remove (full)
+
+		if not result then
+			return false, removed, msg
+		end
+
+		removed = removed + 1
+	end
+
+	return true, removed
+end
+
+
+
+local function delete_path (path, recurse)
+	path = tostring (path or "")
+
+	local mounts, msg = fs.ls ()
+
+	if not mounts then
+		return false, 0, msg
+	end
+
+	for i = 1, #mounts do
+		if path == mounts[i] then
+			if i == 1 then
+				return false, 0, "can't remove root"
+			else
+				return false, 0, "can't remove mount"
+			end
+		end
+	end
+
+	if path:sub (-1) == "/" then
+		return false, 0, "invalid path ("..path..")"
+	end
+
+	if not fs.file_exists (path) then
+		return false, 0, "not found ("..path..")"
+	end
+
+
+	if fs.file_type (path) == "file" then
+		local result, msg = fs.remove (path)
+
+		if not result then
+			return false, 0, msg
+		end
+
+		return true, 1
+	end
+
+	if fs.file_type (path) == "dir" then
+		local removed = 0
+
+		if recurse then
+			local result, count, msg = rm_dir (path)
+
+			removed = removed + count
+
+			if not result then
+				return false, removed, msg
+			end
+		end
+
+		local result, msg = fs.remove (path)
+
+		if not result then
+			return false, removed, msg
+		end
+
+		removed = removed + 1
+
+		return true, removed
+	end
+
+	return false, 0, "invalid path ("..path..")"
+end
+
+
+
+local COMMTIME = 0.5
+
+local comm_timer = nil
+local comm_time = os.clock()
+local os_get_event = os.get_event
+local os_peek_event = os.peek_event
+
+
+
+local function read_binary_file (path)
+	local file = io.open (path, "rb")
+
+	if file then
+		local contents = file:read ("*a")
+		file:close ()
+
+		if contents then
+			return contents
+		end
+	end
+
+	return ""
+end
+
+
+
+
+
+local __classBase = { }
+
+
+function __classBase:constructor ( ... )
+	return self
+end
+
+
+function __classBase:new ( ... )
+	local obj = { }
+
+	setmetatable (obj, self)
+	self.__index = self
+
+	return obj:constructor ( ... )
+end
+
+
+function __classBase:base ()
+	local obj = { }
+
+	setmetatable (obj, self)
+	self.__index = self
+
+	return obj
+end
+
+
+
+
+
+local comm = __classBase:base ()
+
+
+function comm:constructor (name, timeout)
+	self.comm__name = name
+	self.comm__timeout = timeout or 5
+	self.comm__interests = {}
+	self.comm__processing = {}
+
+	return self
+end
+
+
+function comm:get_name ()
+	return self.comm__name
+end
+
+
+function comm:set_name (name)
+	self.comm__name = name
+end
+
+
+function comm:get_timeout ()
+	return self.comm__timeout
+end
+
+
+function comm:set_timeout (timeout)
+	self.comm__timeout = timeout or 5
+end
+
+
+function comm:transmit (message)
+	local id = message.recipient_id or message.recipient_name
+
+	if type (id) == "string" then
+		id = wireless.lookup_id (id)
+
+		if not id then
+			return false
+		end
+	end
+
+	return wireless.send_message (utils.serialize (message), id)
+end
+
+
+function comm:register (group, application, receive, sent)
+	self.comm__interests[#self.comm__interests + 1] =
+	{
+		application = application,
+		receive = receive,
+		sent = sent,
+		group = group
+	}
+end
+
+
+function comm:unregister (group, application, receive, sent)
+	for i = #self.comm__interests, 1, -1 do
+		local interest = self.comm__interests[i]
+		if interest.group == group and
+			(interest.application == application or not application) and
+			(interest.receive == receive or not receive) and
+			(interest.sent == sent or not sent) then
+
+			table.remove(self.comm__interests, i)
+		end
+	end
+end
+
+
+function comm:copy_msg (msg)
+	return utils.deserialize (utils.serialize (msg))
+end
+
+
+function comm:call_sent_handlers (msg, result)
+	for i = 1, #self.comm__interests, 1 do
+		if self.comm__interests[i].application == msg.application then
+			local success, err = pcall(self.comm__interests[i].sent, msg, result)
+
+			if not success then
+				syslog ("comm "..self:get_name ().." call to sent handler failed: "..tostring (err))
+			end
+		end
+	end
+end
+
+
+function comm:is_duplicate (msg)
+	for i = 1, #self.comm__processing, 1 do
+		local process = self.comm__processing[i]
+
+		if process.msg.message_id == msg.message_id then
+			if process.status == "received" then
+
+				return true
+			end
+		end
+	end
+
+	return false
+end
+
+
+function comm:is_confirmation (msg)
+	if msg.context == "confirm" then
+		for i = #self.comm__processing, 1, -1 do
+			local process = self.comm__processing[i]
+
+			if process.status == "send" then
+				if process.msg.message_id == msg.message_id then
+					self:call_sent_handlers (process.msg, true)
+
+					table.remove(self.comm__processing, i)
+				end
+			end
+		end
+
+		return true
+	end
+
+	return false
+end
+
+
+function comm:is_from_me (msg)
+	return ((tonumber (msg.sender_id) or 0) == os.computer_id () or
+					tostring (msg.sender_name) == os.get_name ())
+end
+
+
+function comm:is_for_me (msg, exclusive)
+	if msg.recipient_id then
+		return (tonumber (msg.recipient_id) or 0) == os.computer_id ()
+	elseif msg.recipient_name then
+		return tostring (msg.recipient_name or "") == os.get_name ()
+	elseif exclusive then
+		return false
+	end
+
+	return (not self:is_from_me (msg))
+end
+
+
+function comm:call_receive_handlers (msg)
+	local received = false
+	local copy = self:copy_msg (msg)
+
+	for i = 1, #self.comm__interests, 1 do
+		if self.comm__interests[i].application == msg.application then
+			local success, result = pcall(self.comm__interests[i].receive, copy)
+
+			if not success then
+				syslog("comm "..self:get_name ().." call to receive handler failed: "..tostring (result))
+			else
+				received = result
+			end
+		end
+	end
+
+	return received
+end
+
+
+function comm:send_confirmation (msg)
+	if msg.recipient_name or msg.recipient_id then
+		local copy = self:copy_msg (msg)
+
+		copy.context = "confirm"
+		copy.recipient_name = copy.sender_name
+		copy.recipient_id = copy.sender_id
+		copy.sender_name = os.get_name ()
+		copy.sender_id = os.computer_id ()
+		copy.sequence = -1
+
+		if not self:transmit (copy) then
+			syslog("comm "..self:get_name ().." no modem for confirmation to "..tostring (msg.sender_name))
+		end
+	end
+end
+
+
+function comm:receive (message)
+	local success, msg = pcall (utils.deserialize, message)
+
+	if success and type (msg) == "table" then
+		if msg.message_id and msg.application and msg.context then
+			if self:is_for_me (msg) then
+				if not self:is_confirmation (msg) then
+					if not self:is_duplicate (msg) then
+						if self:call_receive_handlers (msg) then
+							self.comm__processing[#self.comm__processing + 1] =
+							{
+								time_stamp = os.clock (),
+								status = "received",
+								msg = msg
+							}
+
+							self:send_confirmation (msg)
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+
+function comm:send (recipient, application, context, data)
+	local msg = { }
+	local method = "send"
+
+	if recipient then
+		if type (recipient) == "number" then
+			msg.recipient_id = recipient
+
+			if msg.recipient_id == os.computer_id () then
+				return
+			end
+		else
+			msg.recipient_name = tostring (recipient or "")
+
+			if msg.recipient_name == os.get_name () then
+				return
+			end
+		end
+	else
+		method = "broadcast"
+	end
+
+	msg.context = context
+	msg.application = application
+	msg.data = data
+	msg.sender_id = os.computer_id ()
+	msg.sender_name = os.get_name ()
+	msg.message_id = math.random (1, 65535)
+	msg.sequence = 0
+
+	self.comm__processing[#self.comm__processing + 1] =
+	{
+		time_stamp = os.clock(),
+		status = method,
+		msg = msg
+	}
+
+	return msg.message_id
+end
+
+
+function comm:process ()
+	for i = #self.comm__processing, 1, -1 do
+		local process = self.comm__processing[i]
+
+		if process.status == "received" then
+			if (os.clock () - process.time_stamp) > (self:get_timeout () * 2) then
+				table.remove (self.comm__processing, i)
+			end
+
+		elseif process.status == "send" or process.status == "broadcast" then
+			if (os.clock () - process.time_stamp) > self:get_timeout () then
+				if process.status == "send" then
+					self:call_sent_handlers (process.msg, false)
+				end
+
+				table.remove (self.comm__processing, i)
+			else
+				process.msg.sequence = process.msg.sequence + 1
+
+				if self:transmit (process.msg) then
+					if process.status == "broadcast" then
+						if process.msg.sequence == 1 then
+							self:call_sent_handlers (process.msg, true)
+						end
+					end
+				else
+					syslog("comm "..self:get_name ().." no modem to send message")
+				end
+			end
+
+		end
+	end
+end
+
+
+
+
+
+local connection = comm:new ("server", SERVER_TIMEOUT)
+
+
+
+local function file_not_found (path)
+	return string.format ("\nFile \"%s\" not found!\n\nEnsure the path is entered correctly.", path)
+end
+
+
+
+local function account_folder (account)
+	return ACCOUNTS_ROOT.."/"..account
+end
+
+
+
+local function read_account (account)
+	local file = io.open (account_folder (account).."/account.dat", "r")
+
+	if file then
+		local res, data = pcall (utils.deserialize, file:read ("*a"))
+
+		file:close ()
+
+		if res then
+			return data
+		end
+	end
+
+	return nil
+end
+
+
+
+local function save_account (account, data)
+	local res, raw = pcall (utils.serialize, data)
+
+	if res then
+		local file = io.open (account_folder (account).."/account.dat", "w")
+
+		if file then
+			file:write (raw)
+			file:close()
+
+			return true
+		end
+	end
+
+	return false
+end
+
+
+
+local function validate_password (account, password)
+	local data = read_account (account)
+
+	if data then
+		return data.password == password
+	end
+
+	return false
+end
+
+
+
+function set_account_password (account, password)
+	local data = read_account (account)
+
+	if data then
+		data.password = password
+
+		return save_account (account, data)
+	end
+
+	return false
+end
+
+
+
+function create_account (account, password)
+	if not fs.file_exists (account_folder (account), true) then
+		local acc_dir = account_folder (account)
+
+		if fs.mkdir (acc_dir) and fs.mkdir (acc_dir.."/emails") then
+			local data =
+			{
+				password = tostring (password or "1234")
+			}
+
+			return save_account (account, data)
+		end
+	end
+
+	return false
+end
+
+
+
+function delete_account (account)
+	if fs.file_exists (account_folder (account), true) then
+		delete_path (account_folder (account), true)
+
+		return not fs.file_exists (account_folder (account))
+	end
+
+	return false
+end
+
+
+
+local function read_email (account, name)
+	local file = io.open (account_folder (account).."/emails/"..name, "r")
+
+	if file then
+		local res, data = pcall (utils.deserialize, file:read ("*a"))
+
+		file:close ()
+
+		if res then
+			return data
+		end
+	end
+
+	return nil
+end
+
+
+
+local function save_email (account, email)
+	local res, data = pcall (utils.serialize, email)
+
+	if res then
+		local name = account_folder (account)..
+							"/emails/email"..
+							tostring (math.random (1, 65535))
+
+		local file = io.open (name, "w")
+
+		if file then
+			file:write (data)
+			file:close()
+			return true
+		end
+	end
+
+	return false
+end
+
+
+
+local function delete_email (account, name)
+	delete_path (account_folder (account).."/emails/"..name)
+end
+
+
+
+local function list_email (account)
+	local files = fs.ls (account_folder (account).."/emails")
+
+	if files then
+		for i = #files, 1, -1 do
+			if files[i]:sub (1, 5) ~= "email" then
+				table.remove (files, i)
+			end
+		end
+
+		return files
+	end
+
+	return nil
+end
+
+
+
+local function request_type (msg)
+	if (msg.recipient_id or msg.recipient_name) and
+			type(msg.data) == "table" then
+		if msg.context == "http_request" or
+				msg.context == "ftp_request" then
+			if msg.data.path and msg.data.application then
+				return "file_request"
+			end
+
+		elseif msg.context == "email_request" then
+			if msg.data.account and msg.data.password and
+					msg.data.application and
+					fs.file_exists (account_folder (msg.data.account), true) then
+				return msg.context
+			end
+
+		elseif msg.context == "email_delete" then
+			if msg.data.account and msg.data.password and
+					msg.data.id and
+					fs.file_exists (account_folder (msg.data.account), true) then
+				return msg.context
+			end
+
+		elseif msg.context == "account_password" then
+			if msg.data.account and msg.data.password and
+					msg.data.new_password and
+					fs.file_exists (account_folder (msg.data.account), true) then
+				return msg.context
+			end
+
+		elseif msg.context == "email_send" then
+			if msg.data.account and type(msg.data.email) == "table" and
+					fs.file_exists (account_folder (msg.data.account), true) then
+				if msg.data.email.recipient and msg.data.email.sender and
+						msg.data.email.message then
+					return msg.context
+				end
+			end
+
+		elseif msg.context == "create_account" then
+			if msg.data.account and msg.data.password then
+				return msg.context
+			end
+
+		elseif msg.context == "delete_account" then
+			if msg.data.account and msg.data.password then
+				return msg.context
+			end
+
+		elseif msg.context == "reset_password" then
+			if msg.data.account and msg.data.password then
+				return msg.context
+			end
+
+		elseif msg.context == "file_upload" then
+			if msg.data.path and msg.data.content and msg.data.password then
+				return msg.context
+			end
+
+		elseif msg.context == "file_delete" then
+			if msg.data.path and msg.data.password then
+				return msg.context
+			end
+
+		elseif msg.context == "listing_request" then
+			if msg.data.path and msg.data.application and
+															msg.data.password then
+				return msg.context
+			end
+
+		elseif msg.context == "directory_create" then
+			if msg.data.path and msg.data.password then
+				return msg.context
+			end
+
+		end
+	end
+
+	return ""
+end
+
+
+
+local function on_file_request (msg)
+	local path = tostring (msg.data.path or "")
+	local context = "http_response"
+
+	if msg.context == "ftp_request" then
+		context = "ftp_response"
+	end
+
+	if string.sub (path, 1, 1) ~= "/" then
+		path = "/"..path
+	end
+
+	if string.sub (path, -1, -1) ~= "/" then
+		if fs.file_exists (SERVER_ROOT..path, true) then
+			path = path.."/"
+		end
+	end
+
+	if string.sub (path, -1, -1) == "/" then
+		if fs.file_exists (SERVER_ROOT..path.."index.html", false) then
+			path = path.."index.html"
+		elseif fs.file_exists (SERVER_ROOT..path.."index.htm", false) then
+			path = path.."index.htm"
+		elseif fs.file_exists (SERVER_ROOT..path.."index.txt", false) then
+			path = path.."index.txt"
+		end
+	end
+
+	local local_path = SERVER_ROOT..path
+	local domain_path = tostring (os.get_name ())..path
+	local data = { path = domain_path }
+
+	data.content = read_binary_file (local_path)
+
+	if not data.content then
+		if context == "ftp_response" then
+			return false
+		end
+
+		data.content = file_not_found (domain_path)
+	end
+
+	connection:send (msg.sender_id or msg.sender_name,
+						  msg.data.application, context, data)
+	return true
+end
+
+
+
+local function on_email_send (msg)
+	return save_email (msg.data.account, msg.data.email)
+end
+
+
+
+local function on_account_password (msg)
+	if validate_password (msg.data.account, msg.data.password) then
+		return set_account_password (msg.data.account, msg.data.new_password)
+	end
+
+	return false
+end
+
+
+
+local function on_email_request (msg)
+	if validate_password (msg.data.account, msg.data.password) then
+		local files = list_email (msg.data.account)
+
+		if files then
+			for i = 1, #files, 1 do
+				local data =
+				{
+					account = msg.data.account,
+					id = files[i],
+					email = read_email (msg.data.account, files[i])
+				}
+
+				connection:send (msg.sender_id or msg.sender_name,
+									  msg.data.application, "email_response", data)
+			end
+
+			return true
+		end
+	end
+
+	return false
+end
+
+
+
+local function on_email_delete (msg)
+	if validate_password (msg.data.account, msg.data.password) then
+		delete_email (msg.data.account, msg.data.id)
+
+		return true
+	end
+
+	return false
+end
+
+
+
+local function on_create_account (msg)
+	if msg.data.password == SERVER_PASSWORD then
+		return create_account (msg.data.account, msg.data.client_password)
+	end
+
+	return false
+end
+
+
+
+local function on_delete_account (msg)
+	if msg.data.password == SERVER_PASSWORD then
+		return delete_account (msg.data.account)
+	end
+
+	return false
+end
+
+
+
+local function on_reset_password (msg)
+	if msg.data.password == SERVER_PASSWORD then
+		return set_account_password (msg.data.account,
+											  tostring (msg.data.client_password or "1234"))
+	end
+
+	return false
+end
+
+
+
+local function on_file_upload (msg)
+	if msg.data.password == SERVER_PASSWORD then
+		local path = tostring (msg.data.path or "")
+
+		if path:sub (1, 1) ~= "/" then
+			path = "/"..path
+		end
+
+		local file = io.open (SERVER_ROOT..path, "w")
+		if file then
+			file:write (tostring (msg.data.content))
+			file:close ()
+			return true
+		end
+	end
+
+	return false
+end
+
+
+
+local function on_file_delete (msg)
+	if msg.data.password == SERVER_PASSWORD then
+		local path = tostring (msg.data.path or "")
+
+		if path:sub (1, 1) ~= "/" then
+			path = "/"..path
+		end
+
+		if fs.file_exists (SERVER_ROOT..path) then
+			delete_path (SERVER_ROOT..path, true)
+
+			return not fs.file_exists (SERVER_ROOT..path)
+		end
+	end
+
+	return false
+end
+
+
+
+local function on_listing_request (msg)
+	if msg.data.password == SERVER_PASSWORD then
+		local path = tostring (msg.data.path or "")
+
+		if path:sub (-1, -1) == "/" then
+			path = path:sub (1, -2)
+		end
+
+		if path: len () > 1 and path:sub (1, 1) ~= "/" then
+			path = "/"..path
+		end
+
+		if fs.file_exists (SERVER_ROOT..path, true) then
+			local listing = fs.ls (SERVER_ROOT..path)
+
+			if listing then
+				if path:sub (-1, -1) ~= "/" then
+					path = path.."/"
+				end
+
+				local data =
+				{
+					path = path,
+					files = { },
+					folders = { }
+				}
+
+				for i = 1, #listing, 1 do
+					if fs.file_exists (SERVER_ROOT..path..listing[i], true) then
+						data.folders[#data.folders + 1] = listing[i]
+					else
+						data.files[#data.files + 1] = listing[i]
+					end
+				end
+
+				connection:send (msg.sender_id or msg.sender_name,
+									  msg.data.application, "listing_response", data)
+
+				return true
+			end
+		end
+	end
+
+	return false
+end
+
+
+
+local function on_directory_create (msg)
+	if msg.data.password == SERVER_PASSWORD then
+		local path = tostring (msg.data.path or "")
+
+		if path:sub (1, 1) ~= "/" then
+			path = "/"..path
+		end
+
+		if not fs.file_exists (SERVER_ROOT..path) then
+			fs.mkdir (SERVER_ROOT..path)
+
+			return fs.file_exists (SERVER_ROOT..path, true)
+		end
+	end
+
+	return false
+end
+
+
+
+local function receive (msg)
+	local request = request_type (msg)
+
+	if request == "file_request" then
+		return on_file_request (msg)
+	elseif request == "account_password" then
+		return on_account_password (msg)
+	elseif request == "email_request" then
+		return on_email_request (msg)
+	elseif request == "email_delete" then
+		return on_email_delete (msg)
+	elseif request == "email_send" then
+		return on_email_send (msg)
+	elseif request == "file_upload" then
+		return on_file_upload (msg)
+	elseif request == "file_delete" then
+		return on_file_delete (msg)
+	elseif request == "listing_request" then
+		return on_listing_request (msg)
+	elseif request == "directory_create" then
+		return on_directory_create (msg)
+	elseif request == "create_account" then
+		return on_create_account (msg)
+	elseif request == "delete_account" then
+		return on_delete_account (msg)
+	elseif request == "reset_password" then
+		return on_reset_password (msg)
+	end
+
+	return false
+end
+
+
+
+local function sent (msg, success)
+end
+
+
+connection:register (nil, SERVER_NETWORK, receive, sent)
+
+
+-- system overrides -----------------------------------------------------
+
+
+
+os.get_event = function (target)
+	while true do
+		local event = { os_peek_event ("timer") }
+
+		if #event > 0 and event[1] == "timer" and event[2] == comm_timer then
+			connection:process ()
+			comm_timer = os.start_timer (COMMTIME)
+			comm_time = os.clock ()
+			os.remove_event ("timer")
+		end
+
+		if not comm_timer or (os.clock() - comm_time) >= COMMTIME then
+			connection:process ()
+			comm_timer = os.start_timer (COMMTIME)
+			comm_time = os.clock ()
+			comm_run = true
+		end
+
+		event = { os_peek_event (target) }
+
+		if #event > 0 then
+			if event[1] == "wireless" then
+				connection:receive (event[2])
+			end
+
+			return os.remove_event (target)
+		end
+
+		os.sleep (os.clock_speed () - 0.02)
+	end
+end
+
+
+
+os.peek_event = function (target)
+	local event = { os_peek_event ("timer") }
+
+	if #event > 0 and event[1] == "timer" and event[2] == comm_timer then
+		connection:process ()
+		comm_timer = os.start_timer (COMMTIME)
+		comm_time = os.clock ()
+		os.remove_event ("timer")
+	end
+
+	if not comm_timer or (os.clock() - comm_time) >= COMMTIME then
+		connection:process ()
+		comm_timer = os.start_timer (COMMTIME)
+		comm_time = os.clock ()
+		comm_run = true
+	end
+
+	event = { os_peek_event (target) }
+
+	if #event > 0 then
+		if event[1] == "wireless" then
+			connection:receive (event[2])
+		end
+
+		return unpack (event)
+	end
+
+	return nil
+end
+
+
+
+
+print_msg ("Server started\n")

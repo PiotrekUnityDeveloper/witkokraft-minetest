@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>Browse</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>Browse - WIN</h1>
+    <b>Browse</b><br>
+    <br>
+    File: <i>/apps/browse</i><br>
+    <br>
+    A browser application. <a moz-do-not-send="true"
+      href="html_api.html">Html</a> and plain text files can be viewed,
+    locally or from a <a moz-do-not-send="true" href="server.html">server</a>.
+    A file can also be downloaded from a server using the ftp protocol.<br>
+    <br>
+    <img src="images/browse.png" alt="Browse application."
+      moz-do-not-send="true" width="658" height="382" border="1"><br>
+    <br>
+    <b>Menu</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">Open </td>
+          <td valign="top">Ctrl+O </td>
+          <td valign="top">Open a local file. </td>
+        </tr>
+        <tr>
+          <td valign="top">Save as </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top">Save the current document to a local file.
+            The format of the file will be either html or plain text,
+            consistent with the source of the document. </td>
+        </tr>
+        <tr>
+          <td valign="top">Print </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top">Print the current document. </td>
+        </tr>
+        <tr>
+          <td valign="top">Print BW<br>
+          </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top">Print the text of the current document. </td>
+        </tr>
+        <tr>
+          <td valign="top">Back </td>
+          <td valign="top">Ctrl+left </td>
+          <td valign="top">Reload the prior document in the viewing
+            history. </td>
+        </tr>
+        <tr>
+          <td valign="top">Forward </td>
+          <td valign="top">Ctrl+right </td>
+          <td valign="top">Reload the next document in the viewing
+            history. </td>
+        </tr>
+        <tr>
+          <td valign="top">Show/Hide bar </td>
+          <td valign="top">Ctrl+N </td>
+          <td valign="top">Toggle the visibility of the address bar. </td>
+        </tr>
+        <tr>
+          <td valign="top">Quit</td>
+          <td valign="top">Ctrl+Alt+X</td>
+          <td valign="top">Quits the application.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    A file can be loaded by entering its address in the address field
+    and hitting enter, or clicking the send, "&gt;", button. Protocols
+    http, ftp and file are supported. If no protocol is stated, http or
+    file is used as appropriate.<br>
+    <br>
+    Pressing the up and down arrow keys while the address field is
+    active scrolls through the addresses of accessed files.<br>
+    <br>
+    When a link is clicked the target page is loaded.<br>
+    <br>
+    The file <i>/apps/browse.ini</i> contains settings for the network
+    the browse application connects to. The settings in the file
+    downloaded are the defaults used if the file is not present, but
+    they may be altered if using a custom network. For the browse
+    application to download pages/files a server on the same network
+    must be running. The default settings for the browse application are
+    also the defaults for the server program. The settings for the
+    browse application, which are name=value pairs:<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">network</td>
+          <td valign="top">string</td>
+          <td valign="top">the network's application id (defaut
+            "wide_area_network").<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">timeout</td>
+          <td valign="top">number</td>
+          <td valign="top">the timeout count for the connection (default
+            5).<br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    An address can optionally be given as an argument on the command
+    line of the file to open. An additional first argument of -a can be
+    given for the address bar to be initially hidden.<br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="default_applications.html">Default
+
+      applications</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

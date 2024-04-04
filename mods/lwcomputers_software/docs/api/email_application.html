@@ -1,0 +1,180 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>Email</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>Email - WIN</h1>
+    <b>Email</b><br>
+    <br>
+    Files: <i>/apps/email</i>, <i>/apps/emread</i>, <i>/apps/emwrite</i><br>
+    <br>
+    Email client, reader and writer applications.<br>
+    <br>
+    <img src="images/email.png" alt="Email client application."
+      moz-do-not-send="true" width="658" height="382" border="1"><br>
+    <br>
+    <img src="images/emread.png" alt="Email reader application."
+      moz-do-not-send="true" width="658" height="382" border="1"><br>
+    <br>
+    <img src="images/emwrite.png" alt="Email writer application."
+      moz-do-not-send="true" width="658" height="382" border="1"><br>
+    <br>
+    <b>Menu<br>
+    </b><br>
+    <i>email</i><br>
+    <b></b>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">Get Emails </td>
+          <td valign="top">Ctrl+G </td>
+          <td valign="top">Retrieves any emails from the server into the
+            inbox folder. </td>
+        </tr>
+        <tr>
+          <td valign="top">New Email </td>
+          <td valign="top">Ctrl+N </td>
+          <td valign="top">Opens emwrite to compose a new email message.
+            If a message is selected in the client the relevant address
+            is pre-filled in the recipient field of the new message. </td>
+        </tr>
+        <tr>
+          <td valign="top">Open </td>
+          <td valign="top">Ctrl+O </td>
+          <td valign="top">Opens the message selected in the client with
+            emread. </td>
+        </tr>
+        <tr>
+          <td valign="top">Delete </td>
+          <td valign="top">Del </td>
+          <td valign="top">Deletes the selected message. </td>
+        </tr>
+        <tr>
+          <td valign="top">Account </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top">Opens a dialog to enter the server email
+            account connection settings. </td>
+        </tr>
+        <tr>
+          <td valign="top">Change Password </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top">Opens a dialog to change the account password
+            on the server. If changed it should also be updated in the
+            Account settings. </td>
+        </tr>
+        <tr>
+          <td valign="top">Quit App </td>
+          <td valign="top">Ctrl+Alt+X </td>
+          <td valign="top">Quits the application. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <i>emread</i><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">Open</td>
+          <td valign="top">Ctrl+O</td>
+          <td valign="top">Open an email message file.</td>
+        </tr>
+        <tr>
+          <td valign="top">Print</td>
+          <td valign="top">Ctrl+P</td>
+          <td valign="top">Print the current email message.</td>
+        </tr>
+        <tr>
+          <td valign="top">Copy</td>
+          <td valign="top">Ctrl+C</td>
+          <td valign="top">Copies the email contents to the clipboard.</td>
+        </tr>
+        <tr>
+          <td valign="top">Quit App</td>
+          <td valign="top">Ctrl+Alt+X</td>
+          <td valign="top">Quits the application.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <i>emwrite</i><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">Send</td>
+          <td valign="top">Ctrl+S</td>
+          <td valign="top">Send the email message. If successfully sent,
+            the application quits after saving the message to the email
+            sent folder.</td>
+        </tr>
+        <tr>
+          <td valign="top">Quit App</td>
+          <td valign="top">Ctrl+Alt+X</td>
+          <td valign="top">Quits the application without sending.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    An email account is required on a server for the email application
+    to function correctly. The file <i>/apps/email.ini</i> contains the
+    email account settings to connect to the server. This file should be
+    edited through the Account option on the email client's menu. If no
+    password is specified in the Account settings the password is
+    prompted for at each action.<br>
+    <br>
+    The email messages are stored at <i>/apps/data/emails/inbox</i> and
+    <i>/apps/data/emails/sent</i>. These folders are created by the
+    email client if they don't exist.<br>
+    <br>
+    The emread application can optionally be given a file path as an
+    argument on the command line of the email file to open.<br>
+    <br>
+    The emwrite application can optionally be given an email address as
+    an argument on the command line to fill in the Recipient field.<br>
+    <br>
+    The controls in the emwrite application also respond to the
+    following short cut keys:<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">Ctrl+X</td>
+          <td valign="top">Clipboard cut.</td>
+        </tr>
+        <tr>
+          <td valign="top">Ctrl+C</td>
+          <td valign="top">Clipboard copy.</td>
+        </tr>
+        <tr>
+          <td valign="top">Ctrl+V</td>
+          <td valign="top">Clipboard paste.</td>
+        </tr>
+        <tr>
+          <td valign="top">Ctrl+Alt+V</td>
+          <td valign="top">System's paste.</td>
+        </tr>
+        <tr>
+          <td valign="top">Ctrl+Z</td>
+          <td valign="top">Undo (message control only).</td>
+        </tr>
+        <tr>
+          <td valign="top">Ctrl+Y</td>
+          <td valign="top">Redo (message control only).</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="default_applications.html">Default
+
+      applications</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

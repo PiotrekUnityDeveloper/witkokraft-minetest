@@ -1,0 +1,451 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>editUndo</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>editUndo - WIN</h1>
+    Class <b>editUndo</b><br>
+    Inherits from <a moz-do-not-send="true" href="__classBase.html">__classBase</a>.<br>
+    <br>
+    The editUndo class is locally defined in the win API, and is used by
+    the <a moz-do-not-send="true" href="editWindow.html">editWindow</a>
+    class to record editing actions for the undo/redo mechanism.<br>
+    <br>
+    <b>Properties</b><br>
+    <br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">eu__cache</td>
+          <td valign="top">table</td>
+          <td valign="top">Recorded editing actions.</td>
+        </tr>
+        <tr>
+          <td valign="top">eu__index</td>
+          <td valign="top">number</td>
+          <td valign="top">Current undo/redo index.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Methods</b><br>
+    <ul id="mozToc">
+      <!--mozToc h3 1-->
+      <li><a href="#mozTocId284813">editUndo:can_redo</a></li>
+      <li><a href="#mozTocId661562">editUndo:can_undo</a></li>
+      <li><a href="#mozTocId590114">editUndo:constructor</a></li>
+      <li><a href="#mozTocId46169">editUndo:end_action</a></li>
+      <li><a href="#mozTocId967960">editUndo:record</a></li>
+      <li><a href="#mozTocId646886">editUndo:redo</a></li>
+      <li><a href="#mozTocId675820">editUndo:reset</a></li>
+      <li><a href="#mozTocId246658">editUndo:undo</a></li>
+    </ul>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId284813" class="mozTocH3"></a><a
+        name="editUndo:can_redo"></a>editUndo:can_redo</h3>
+    <i> result editUndo:can_redo ()</i><br>
+    <br>
+    Returns if a redo record is available.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if a redo record is available, false if
+            not. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#editUndo:can_undo">editUndo:can_undo</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId661562" class="mozTocH3"></a><a
+        name="editUndo:can_undo"></a>editUndo:can_undo</h3>
+    <i> result editUndo:can_undo ()</i><br>
+    <br>
+    Returns if an undo record is available.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if an undo record is available, false if
+            not. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#editUndo:can_redo">editUndo:can_redo</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId590114" class="mozTocH3"></a><a
+        name="editUndo:constructor"></a>editUndo:constructor</h3>
+    <i> obj editUndo:constructor ()</i><br>
+    <br>
+    Constructor for editUndo object.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">obj </td>
+          <td valign="top">editUndo </td>
+          <td valign="top">The instantiated editUndo object. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId46169" class="mozTocH3"></a><a
+        name="editUndo:end_action"></a>editUndo:end_action</h3>
+    <i>editUndo:end_action ()</i><br>
+    <br>
+    Ensures the last grouped editing action is closed.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="editUndo.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId967960" class="mozTocH3"></a><a
+        name="editUndo:record"></a>editUndo:record</h3>
+    <i> editUndo:record (pos, inserted, removed, action)</i><br>
+    <br>
+    Records the editing action, grouping the action when appropriate.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">pos </td>
+          <td valign="top">number </td>
+          <td valign="top">The character position where the editing
+            action begins. </td>
+        </tr>
+        <tr>
+          <td valign="top">inserted </td>
+          <td valign="top">table </td>
+          <td valign="top">The segment inserted in the edit action as a
+            table of string lines. </td>
+        </tr>
+        <tr>
+          <td valign="top">removed</td>
+          <td valign="top">table</td>
+          <td valign="top">The segment removed in the edit action as a
+            table of string lines.</td>
+        </tr>
+        <tr>
+          <td valign="top">action</td>
+          <td valign="top">number</td>
+          <td valign="top">The editing action. <tt>win.EU_TYPE</tt>, <tt>win.EU_DELETE</tt>
+            and <tt>win.EU_BACKSPACE</tt> actions are grouped if
+            appropriate.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Record cache trimming and action grouping are handled by the call.
+    Valid actions are:<br>
+    <tt> win.EU_REPLACE&nbsp;&nbsp;&nbsp;&nbsp; = 0</tt><br>
+    <tt> win.EU_TYPE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = 1</tt><br>
+    <tt> win.EU_DELETE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = 2</tt><br>
+    <tt> win.EU_BACKSPACE&nbsp;&nbsp; = 3</tt><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="editUndo.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId646886" class="mozTocH3"></a><a
+        name="editUndo:redo"></a>editUndo:redo</h3>
+    <i> record editUndo:redo ()</i><br>
+    <br>
+    Returns the editing action for the next redo operation if available,
+    updating the current editing record index.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">record </td>
+          <td valign="top">table/nil </td>
+          <td valign="top">The editing action data for the redo
+            operation. If none is available nil is returned. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If a record is returned the table has the following keys:<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">pos</td>
+          <td valign="top">number</td>
+          <td valign="top">The character position where the editing
+            action begins.</td>
+        </tr>
+        <tr>
+          <td valign="top">inserted</td>
+          <td valign="top">table</td>
+          <td valign="top">The segment inserted in the edit action as a
+            table of string lines.</td>
+        </tr>
+        <tr>
+          <td valign="top">removed</td>
+          <td valign="top">table</td>
+          <td valign="top">The segment removed in the edit action as a
+            table of string lines.</td>
+        </tr>
+        <tr>
+          <td valign="top">action</td>
+          <td valign="top">number</td>
+          <td valign="top">Always <tt>win.EU_REPLACE</tt>.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    See <a moz-do-not-send="true" href="#editUndo:undo">editUndo:undo</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="editUndo.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId675820" class="mozTocH3"></a><a
+        name="editUndo:reset"></a>editUndo:reset</h3>
+    <i> editUndo:reset ()</i><br>
+    <br>
+    Removes all editing records.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="editUndo.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId246658" class="mozTocH3"></a><a
+        name="editUndo:undo"></a>editUndo:undo</h3>
+    <i> record editUndo:undo ()</i><br>
+    <br>
+    Returns the editing action for the next undo operation if available,
+    updating the current editing record index.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">record </td>
+          <td valign="top">table/nil </td>
+          <td valign="top">The editing action data for the undo
+            operation. If none is available nil is returned. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If a record is returned the table has the following keys:<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">pos</td>
+          <td valign="top">number</td>
+          <td valign="top">The character position where the editing
+            action begins.</td>
+        </tr>
+        <tr>
+          <td valign="top">inserted</td>
+          <td valign="top">table</td>
+          <td valign="top">The segment inserted in the edit action as a
+            table of string lines.</td>
+        </tr>
+        <tr>
+          <td valign="top">removed</td>
+          <td valign="top">table</td>
+          <td valign="top">The segment removed in the edit action as a
+            table of string lines.</td>
+        </tr>
+        <tr>
+          <td valign="top">action</td>
+          <td valign="top">number</td>
+          <td valign="top">Always <tt>win.EU_REPLACE</tt>.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    See <a moz-do-not-send="true" href="#editUndo:redo">editUndo:redo</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="editUndo.html#top">top</a><br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

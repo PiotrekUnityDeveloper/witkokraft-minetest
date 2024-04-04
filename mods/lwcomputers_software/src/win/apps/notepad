@@ -1,0 +1,790 @@
+
+local app_args = { ... }
+local appFrame = win.create_app_frame ()
+
+local APP_TITLE      = "notePad"
+
+-- control ids
+local ID_MENUBTN     = 100
+local ID_EDITOR      = 101
+
+local ID_FINDTEXT    = 102
+local ID_REPLACETEXT = 103
+local ID_FIND        = 104
+local ID_REPLACE     = 105
+local ID_REPLACEALL  = 106
+
+-- command ids
+local IDM_NEW        = 1001
+local IDM_OPEN       = 1002
+local IDM_SAVE       = 1003
+local IDM_SAVEAS     = 1004
+local IDM_PRINT      = 1005
+local IDM_UNDO       = 1006
+local IDM_REDO       = 1007
+local IDM_CUT        = 1008
+local IDM_COPY       = 1009
+local IDM_PASTE      = 1010
+local IDM_FIND       = 1011
+local IDM_FINDNEXT   = 1012
+local IDM_REPLACE    = 1013
+local IDM_QUITAPP    = 1014
+local IDM_SYSCOPY    = 1015
+local IDM_SYSPASTE   = 1016
+
+
+
+local function merge_path (name, path)
+	path = tostring(path or "")
+	name = tostring (name or "")
+
+	if path:len () > 1 then
+		return path:sub (1, -(fs.path_name (path):len () + 1))..name
+	else
+		return "/"..name
+	end
+end
+
+
+-- findDlg class -------------------------------------------------------
+local findDlg = win.popupFrame:base ()
+
+function findDlg:on_create (find_text)
+	local width = math.floor(self:get_owner ().width / 2)
+	self:dress ("Find")
+
+	self.fd_find = win.inputWindow:new (self, ID_FINDTEXT, 1, 2,
+													width - 2, find_text, "Find")
+	win.buttonWindow:new (self, ID_FIND, width - 5, 3, "Find")
+
+	self.fd_find:set_sel (0, -1)
+	self.fd_find:set_focus ()
+
+	self:move (self:get_owner ().width - width, 0, width, 5)
+
+	return true
+end
+
+
+function findDlg:on_event (event, p1, p2, p3, p4, p5, ...)
+	if event == "btn_click" then
+		if p1:get_id () == ID_FIND then
+			self:get_owner ():send_event ("find_next", self.fd_find:get_text ())
+
+			return true
+		end
+	end
+
+	return false
+end
+
+
+function findDlg:on_child_key (wnd, key, ctrl, alt, shift)
+	if win.popupFrame.on_child_key (self, wnd, key, ctrl, alt, shift) then
+		return true
+	end
+
+	if ctrl and not alt and not shift then
+		if key == keys.KEY_F then
+			self:get_owner ():send_event ("find_next", self.fd_find:get_text ())
+
+			return true
+		end
+	end
+
+	return false
+end
+-- end findDlg class ---------------------------------------------------
+
+
+-- replaceDlg class ----------------------------------------------------
+local replaceDlg = win.popupFrame:base ()
+
+function replaceDlg:on_create (find_text, replace_text)
+	local width = math.floor (self:get_owner ().width / 2)
+	self:dress ("Replace")
+
+	self.rd_find = win.inputWindow:new (self, ID_FINDTEXT, 1, 2,
+													width - 2, find_text, "Find")
+
+	self.rd_replace = win.inputWindow:new (self, ID_REPLACETEXT, 1, 4,
+														width - 2, replace_text, "Replace")
+
+	win.buttonWindow:new(self, ID_FIND, width - 17, 5, "Find")
+	win.buttonWindow:new(self, ID_REPLACE, width - 12, 5, "Replace")
+	win.buttonWindow:new(self, ID_REPLACEALL, width - 4, 5, "All")
+
+	self.rd_replace:set_sel (0, -1)
+	self.rd_replace:set_focus ()
+
+	self:move(self:get_owner ().width - width, 0, width, 7)
+
+	return true
+end
+
+
+function replaceDlg:on_event (event, p1, p2, p3, p4, p5, ...)
+	if event == "btn_click" then
+		if p1:get_id () == ID_FIND then
+			self:get_owner ():send_event ("find_next", self.rd_find:get_text ())
+
+			return true
+		end
+
+		if p1:get_id () == ID_REPLACE then
+			self:get_owner ():send_event ("replace_one", self.rd_find:get_text (),
+															self.rd_replace:get_text ())
+
+			return true
+		end
+
+		if p1:get_id () == ID_REPLACEALL then
+			self:get_owner ():send_event ("replace_all", self.rd_find:get_text (),
+															self.rd_replace:get_text ())
+			self:close (win.ID_CLOSE)
+
+			return true
+		end
+
+	end
+
+	return false
+end
+
+
+function replaceDlg:on_child_key (wnd, key, ctrl, alt, shift)
+	if win.popupFrame.on_child_key (self, wnd, key, ctrl, alt, shift) then
+		return true
+	end
+
+	if ctrl and not alt and not shift then
+		if key == keys.KEY_F then
+			self:get_owner ():send_event ("find_next", self.rd_find:get_text ())
+
+			return true
+		end
+
+		if key == keys.KEY_R then
+			self:get_owner ():send_event ("replace_one", self.rd_find:get_text (),
+															self.rd_replace:get_text ())
+
+			return true
+		end
+
+		if key == keys.KEY_A then
+			self:get_owner ():send_event ("replace_all", self.rd_find:get_text (),
+															self.rd_replace:get_text ())
+			self:close (win.ID_CLOSE)
+
+			return true
+		end
+
+	end
+
+	return false
+end
+-- end replaceDlg class ------------------------------------------------
+
+
+function appFrame:on_menu (x, y)
+	local menu = win.menuWindow:new (self)
+
+	x = x or 0
+	y = y or 1
+
+	menu:add_string ("New       Ctrl+N", IDM_NEW)
+	menu:add_string ("Open      Ctrl+O", IDM_OPEN)
+	if self.app_editor:get_modified () then
+		menu:add_string ("Save      Ctrl+S", IDM_SAVE)
+	end
+	menu:add_string ("Save as",        IDM_SAVEAS)
+	menu:add_string ("Print",          IDM_PRINT)
+	menu:add_string ("--------------------")
+
+	local do_sep = false
+	if self.app_editor:can_undo () then
+		menu:add_string ("Undo      Ctrl+Z", IDM_UNDO)
+		do_sep = true
+	end
+	if self.app_editor:can_redo () then
+		menu:add_string ("Redo      Ctrl+Y", IDM_REDO)
+		do_sep = true
+	end
+	if do_sep then
+		menu:add_string ("--------------------")
+	end
+
+	do_sep = false
+	local ss, se = self.app_editor:get_sel ()
+	if ss ~= se then
+		menu:add_string ("Cut       Ctrl+X", IDM_CUT)
+		menu:add_string ("Copy      Ctrl+C", IDM_COPY)
+		do_sep = true
+	end
+	if (self:get_clipboard ()) == win.CB_TEXT then
+		menu:add_string ("Paste     Ctrl+V", IDM_PASTE)
+		do_sep = true
+	end
+	if do_sep then
+		menu:add_string ("--------------------")
+	end
+
+	do_sep = false
+	if os.has_clipboard () then
+		if ss ~= se then
+			menu:add_string ("Sys Copy  Ctrl+Alt+C", IDM_SYSCOPY)
+			do_sep = true
+		end
+		menu:add_string ("Sys Paste Ctrl+Alt+V", IDM_SYSPASTE)
+		do_sep = true
+		if do_sep then
+			menu:add_string ("--------------------")
+		end
+	end
+
+	menu:add_string ("Find      Ctrl+F", IDM_FIND)
+	if self.app_find_text:len() > 0 then
+		menu:add_string ("Next        F3", IDM_FINDNEXT)
+	end
+	menu:add_string ("Replace   Ctrl+H", IDM_REPLACE)
+	menu:add_string ("--------------------")
+
+	menu:add_string ("Quit",           IDM_QUITAPP)
+
+	menu:track (x, y)
+end
+
+
+function appFrame:on_command (cmd_id)
+	if cmd_id == IDM_NEW then
+		self:on_new_file ()
+
+		return true
+	end
+
+	if cmd_id == IDM_OPEN then
+		self:on_open_file ()
+
+		return true
+	end
+
+	if cmd_id == IDM_SAVE then
+		if self.app_editor:get_modified () then
+			self:save_file ()
+		end
+
+		return true
+	end
+
+	if cmd_id == IDM_SAVEAS then
+		self:on_save_file_as ()
+
+		return true
+	end
+
+	if cmd_id == IDM_PRINT then
+		self:print_doc ()
+
+		return true
+	end
+
+	if cmd_id == IDM_UNDO then
+		self.app_editor:undo ()
+		self.app_editor:set_focus ()
+
+		return true
+	end
+
+	if cmd_id == IDM_REDO then
+		self.app_editor:redo ()
+		self.app_editor:set_focus ()
+
+		return true
+	end
+
+	if cmd_id == IDM_CUT then
+		self.app_editor:cut ()
+		self.app_editor:set_focus ()
+
+		return true
+	end
+
+	if cmd_id == IDM_COPY then
+		self.app_editor:copy ()
+		self.app_editor:set_focus ()
+
+		return true
+	end
+
+	if cmd_id == IDM_PASTE then
+		self.app_editor:paste ()
+		self.app_editor:set_focus ()
+
+		return true
+	end
+
+	if cmd_id == IDM_SYSCOPY then
+		self:sys_copy ()
+		self.app_editor:set_focus ()
+
+		return true
+	end
+
+	if cmd_id == IDM_SYSPASTE then
+		self:sys_paste ()
+		self.app_editor:set_focus ()
+
+		return true
+	end
+
+	if cmd_id == IDM_FIND then
+		self:find ()
+		self.app_editor:set_focus ()
+
+		return true
+	end
+
+	if cmd_id == IDM_FINDNEXT then
+		self:find_next ()
+		self.app_editor:set_focus ()
+
+		return true
+	end
+
+	if cmd_id == IDM_REPLACE then
+		self:replace ()
+		self.app_editor:set_focus ()
+
+		return true
+	end
+
+	if cmd_id == IDM_QUITAPP then
+		self:quit_app ()
+
+		return true
+	end
+
+	return false
+end
+
+
+function appFrame:on_event (event, p1, p2, p3, p4, p5, ...)
+	if event == "btn_click" then
+		if p1:get_id () == ID_MENUBTN then
+			self:on_menu ()
+			return true
+		end
+
+	elseif event == "menu_cmd" then
+		return self:on_command (p1)
+
+	elseif event == "selection_change" then
+		if p1:get_id () == ID_EDITOR then
+			local ss, se = p1:get_sel ()
+			local ln, cr = p1:line_from_char (se)
+
+			self.app_cur_pos:set_text (string.format ("l:%d c:%d", (ln + 1), (cr + 1)))
+
+			return true
+		end
+
+	elseif event == "modified" then
+		if p1:get_id () == ID_EDITOR then
+			self.app_mod:set_text ((p1:get_modified () and "mod") or "")
+
+			return true
+		end
+
+	elseif event == "find_next" then
+		self:find_next (p1)
+
+	elseif event == "replace_one" then
+		self:replace_one (p1, p2)
+
+	elseif event == "replace_all" then
+		self:replace_all (p1, p2)
+
+		return true
+	end
+
+	return false
+end
+
+
+function appFrame:new_file ()
+	self.app_editor:set_text ()
+	self.app_editor:set_focus ()
+	self.app_cur_file = "untitled"
+	self.app_cur_path = nil
+	self:update_title ()
+end
+
+
+function appFrame:on_new_file ()
+	if self.app_editor:get_modified () then
+		if not cmndlg.confirm (self,
+									  "Modified", "\""..self.app_cur_file..
+									  "\" is not saved.\nRenew anyway?") then
+			return
+		end
+	end
+
+	self:new_file ()
+end
+
+
+function appFrame:open_file (path)
+	local file = io.open (path, "r")
+
+	if file then
+		self.app_editor:set_text (file:read ("*a"))
+		file:close()
+		self.app_editor:set_sel (0, 0)
+		self.app_cur_path = path
+		self.app_last_path = path
+		self.app_cur_file = fs.path_name (self.app_cur_path)
+		self:update_title ()
+	else
+		self:msgbox ("File Error", "Could not read file "..path, colors.red)
+	end
+end
+
+
+function appFrame:on_open_file ()
+	if self.app_editor:get_modified () then
+		if not cmndlg.confirm (self,
+									  "Modified", "\""..self.app_cur_file..
+									  "\" is not saved.\nOpen file anyway?") then
+			return
+		end
+	end
+
+	local path = cmndlg.open_file (self, merge_path (self.app_cur_file, self.app_last_path))
+
+	if path then
+		self:open_file (path)
+	end
+end
+
+
+function appFrame:save_file_as (path)
+	local file = io.open (path, "w")
+
+	if file then
+		file:write (self.app_editor:get_text ())
+		file:close()
+		self.app_editor:set_modified (false)
+		self.app_cur_path = path
+		self.app_last_path = path
+		self.app_cur_file = fs.path_name (self.app_cur_path)
+		self:update_title ()
+	else
+		self:msgbox ("File Error", "Could not write file "..path, colors.red)
+	end
+end
+
+
+function appFrame:on_save_file_as ()
+	local path = cmndlg.save_file (self, merge_path (self.app_cur_file, self.app_last_path))
+
+	if path then
+		self:save_file_as (path)
+	end
+end
+
+
+function appFrame:save_file ()
+	if self.app_cur_path then
+		self:save_file_as (self.app_cur_path)
+	else
+		self:on_save_file_as ()
+	end
+end
+
+
+function appFrame:sys_copy ()
+	if os.has_clipboard () then
+		local contents = self.app_editor:get_selected_text ()
+
+		if contents and contents:len () > 0 then
+			os.copy_to_clipboard (contents)
+		end
+	end
+end
+
+
+function appFrame:sys_paste ()
+	if os.has_clipboard () then
+		local contents = os.paste_from_clipboard ()
+
+		if contents then
+			self.app_editor:replace_sel (contents, true)
+		end
+	end
+end
+
+
+function appFrame:find ()
+	local dlg = findDlg:new (self)
+	local find_text = self.app_editor:get_selected_text ()
+
+	if find_text:len() < 1 then
+		find_text = self.app_find_text
+	end
+
+	dlg:do_modal (find_text)
+end
+
+
+function appFrame:find_next (find_text, from)
+	find_text = tostring (find_text or self.app_find_text)
+
+	if find_text:len () > 0 then
+		self.app_find_text = find_text
+
+		local ss, se = self.app_editor:get_sel (true)
+		local edit_text = self.app_editor:get_text ()
+		local first, last = edit_text:find (self.app_find_text, from or se)
+
+		if first then
+			self.app_editor:set_sel (first - 1, last)
+			return first - 1, last
+		end
+	end
+
+	return nil
+end
+
+
+function appFrame:replace ()
+	local dlg = replaceDlg:new (self)
+	local find_text = self.app_editor:get_selected_text ()
+
+	if find_text:len () < 1 then
+		find_text = self.app_find_text
+	end
+
+	dlg:do_modal (find_text, self.app_replace_text)
+end
+
+
+function appFrame:replace_one (find_text, replace_text)
+	self.app_replace_text = tostring (replace_text or "")
+	local first, last = appFrame:find_next (find_text, (self.app_editor:get_sel (true)))
+
+	if first then
+		self.app_editor:set_sel (first, last, false)
+		self.app_editor:replace_sel (self.app_replace_text, false)
+		self.app_editor:set_sel (first, first + self.app_replace_text:len ())
+		appFrame:find_next (find_text)
+	end
+end
+
+
+function appFrame:replace_all (find_text, replace_text)
+	self.app_replace_text = tostring (replace_text or "")
+	find_text = tostring (find_text or self.app_find_text)
+
+	if find_text:len () > 0 then
+		self.app_find_text = find_text
+
+		local invoked = os.clock ()
+		local edit_text = self.app_editor:get_text ()
+		local first, last = edit_text:find (self.app_find_text, (self.app_editor:get_sel (true)), true)
+		while first do
+			if (os.clock () - invoked) > 0.2 then
+				os.sleep (0.1)
+				invoked = os.clock ()
+			end
+
+			self.app_editor:set_sel (first - 1, last, false)
+			self.app_editor:replace_sel (self.app_replace_text, false)
+			edit_text = edit_text:sub (1, first - 1)..self.app_replace_text..edit_text:sub (last + 1)
+			last = first - 1 + self.app_replace_text:len ()
+			self.app_editor:set_sel (first - 1, last)
+			first, last = edit_text:find (self.app_find_text, last)
+		end
+	end
+end
+
+
+function appFrame:on_print_page (gdi, page, data)
+	local width, height = gdi:get_page_size ()
+
+	if not data.data.lines then
+		data.data.lines = string.wrap (data.data.raw, width)
+	end
+
+	local top_line = ((page - 1) * height) + 1
+	local last_line = (((top_line + height) > #data.data.lines) and #data.data.lines) or
+							top_line + height
+
+	for line = top_line, last_line, 1 do
+		gdi:write (data.data.lines[line], 0, line - top_line)
+	end
+
+	return (last_line < #data.data.lines)
+end
+
+
+function appFrame:on_print_data ()
+	local pages;
+	local title = self.app_cur_file
+	local data = { }
+	local ss, se = self.app_editor:get_sel (true)
+
+	if ss == se then
+		local width, height = string.wrap_size (string.wrap (self.app_editor:get_text (), 40))
+		pages = math.ceil (height / 30)
+		title = self.app_cur_file
+		data.raw = self.app_editor:get_text ()
+	else
+		pages = nil
+		title = self.app_cur_file.." (range)"
+		data.raw = self.app_editor:get_selected_text ()
+	end
+
+	return win.applicationFrame.on_print_data (self, title, data, pages)
+end
+
+
+function appFrame:on_quit ()
+	if self.app_editor:get_modified () then
+		if not cmndlg.confirm (self,
+									  "Modified", "\""..self.app_cur_file..
+									  "\" is not saved.\nQuit anyway?") then
+			return true
+		end
+	end
+
+	return false
+end
+
+
+function appFrame:update_title ()
+	self:set_title (self.app_cur_file..":"..APP_TITLE)
+end
+
+
+function appFrame:on_move ()
+	self.app_editor:move (1, 1, self.width - 2, self.height - 2)
+	self.app_cur_pos:move (1, self.height - 1)
+	self.app_mod:move (self.width - 4, self.height - 1)
+
+	return false
+end
+
+
+function appFrame:on_child_key (wnd, key, ctrl, alt, shift)
+	if key == keys.KEY_TAB then
+		if not ctrl and not alt and not shift and wnd == self.app_editor then
+			return false
+		end
+	end
+
+	if win.applicationFrame.on_child_key (self, wnd, key, ctrl, alt, shift) then
+		return true
+	end
+
+	if ctrl and not alt and not shift then
+		if key == keys.KEY_N then
+			return self:on_command (IDM_NEW)
+		end
+
+		if key == keys.KEY_O then
+			return self:on_command (IDM_OPEN)
+		end
+
+		if key == keys.KEY_S then
+			return self:on_command (IDM_SAVE)
+		end
+
+		if key == keys.KEY_F then
+			return self:on_command (IDM_FIND)
+		end
+
+		if key == keys.KEY_H then
+			return self:on_command (IDM_REPLACE)
+		end
+
+	elseif not ctrl and alt and not shift then
+		if key == keys.KEY_M then
+			self:on_menu ()
+			return true
+		end
+
+	elseif not ctrl and not alt and not shift then
+		if key == keys.KEY_F3 then
+			return self:on_command (IDM_FINDNEXT)
+		end
+
+	elseif ctrl and alt and not shift then
+		if key == keys.KEY_C then
+			return self:on_command (IDM_SYSCOPY)
+		end
+
+	end
+
+	return false
+end
+
+
+function appFrame:on_child_right_click (child, x, y)
+	if child == self.app_editor then
+		self.app_editor:set_focus ()
+		self:on_menu (self:screen_to_wnd (x, y))
+
+		return true
+	end
+
+	return false
+end
+
+
+function appFrame:on_create ()
+	self:dress (APP_TITLE)
+
+	local menuBtn = win.buttonWindow:new (self, ID_MENUBTN, 0, 0, "Menu")
+	menuBtn:set_colors (menuBtn:get_colors ().frame_text,
+							  menuBtn:get_colors ().title_back,
+							  menuBtn:get_colors ().frame_back)
+	menuBtn:move (nil, nil, nil, nil, win.WND_TOP)
+
+	self.app_editor = win.editWindow:new (self, ID_EDITOR, 1, 1, self.width - 2, self.height - 2)
+	self.app_editor:set_colors (self:get_colors ().input_text,
+										 self:get_colors ().input_back,
+										 self:get_colors ().input_back,
+										 self:get_colors ().input_banner,
+										 self:get_colors ().input_error)
+	self.app_editor:set_focus ()
+
+	self.app_cur_pos = win.labelWindow:new (self, 0, 1, self.height - 1, "l:1 c:1        ")
+	self.app_mod = win.labelWindow:new (self, 0, self.width - 4, self.height - 1, "    ")
+
+	self.app_cur_path = nil
+	self.app_last_path = nil
+	self.app_cur_file = "untitled"
+
+	self.app_find_text = ""
+	self.app_replace_text = ""
+
+	local ini = fs.load_ini (self:get_app_path ()..".ini")
+	local tab_size = 2
+	if ini then
+		tab_size = tonumber (ini:find ("tab")) or 2
+	end
+	self.app_editor:set_tab_width (tab_size)
+
+	if #app_args > 0 then
+		self:open_file (app_args[1])
+	else
+		self:new_file ()
+	end
+
+	self:set_active_top_frame ()
+
+	return true
+end
+
+
+appFrame:run_app ()

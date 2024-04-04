@@ -1,0 +1,872 @@
+
+local app_args = { ... }
+local appFrame = win.create_app_frame ()
+
+
+local APP_TITLE         = "Manager"
+
+local ID_OK             = 1
+
+local ID_DESKTOP        = 100
+local ID_DTSELECT       = 101
+local ID_APPLIST        = 102
+local ID_ADD            = 103
+local ID_DELETE         = 104
+local ID_EDIT           = 105
+local ID_MOVEUP         = 106
+local ID_MOVEDOWN       = 107
+local ID_THEME          = 108
+local ID_STARTUP        = 109
+local ID_SYSTEM         = 110
+local ID_LABEL          = 111
+local ID_LOG            = 112
+local ID_CLEAN          = 113
+local ID_VERSION        = 114
+
+local ID_NAME           = 200
+local ID_PATH           = 201
+local ID_PATHBROWSE     = 202
+local ID_ARGS           = 203
+
+local ID_DTLIST         = 300
+
+local ID_DEFTHEME       = 400
+local ID_COLORDEMO      = 401
+local ID_COLORLIST      = 402
+
+local ID_DTMANAGE_FRAME = 34176
+
+local DT_STARTUP_FILE   =
+[[
+; auto-run at startup
+;run=fullPath [arguments]
+
+; name of desktop
+;home=Home
+
+; start in full screen
+;fullscreen=false
+
+; don't lock this screen
+;nolock=true
+]]
+
+local SYS_STARTUP_FILE  =
+[[
+; system password
+;password=password
+
+; run before starting win
+;pre=path
+
+; apis to load at startup
+api=/apis/html
+
+; comm
+;comm=system
+;systemtime=5
+]]
+
+
+
+local function safe_color (color)
+	return (color == term.colors.orange and term.colors.yellow) or term.colors.orange
+end
+
+
+-- selectDesktop class -------------------------------------------------
+local selectDesktop = win.popupFrame:base ()
+
+function selectDesktop:on_create (desktop)
+	self:dress ("Desktop")
+
+	local rt = self:get_desktop ():get_work_area ()
+	local width = rt.width * 0.8
+
+	self.sd_desktops = win.listWindow:new (self, ID_DTLIST, 1, 2, width - 2, 5)
+	win.buttonWindow:new (self, ID_OK, width - 5, 7, " Ok ")
+
+	local dirs = self:get_workspace ():desktops ()
+	for i = 1, #dirs, 1 do
+		self.sd_desktops:add_string (dirs[i])
+	end
+
+	self.sd_desktops:set_cur_sel (self.sd_desktops:find (desktop, 0, true))
+	self.sd_desktops:set_focus ()
+
+	self:move (nil, nil, width, 9)
+
+	return true
+end
+
+
+function selectDesktop:on_event (event, p1, p2, p3, p4, p5, ...)
+	if event == "btn_click" then
+		if p1:get_id () == ID_OK then
+			if self.sd_desktops:get_string () then
+				self:close (ID_OK)
+			end
+
+			return true
+		end
+
+	elseif event == "list_double_click" then
+		if p1:get_id () == ID_DTLIST then
+			self:send_event ("btn_click", self:get_wnd_by_id (ID_OK))
+			return true
+		end
+
+	end
+
+	return false
+end
+-- end selectDesktop class ---------------------------------------------
+
+
+
+-- editItem class ------------------------------------------------------
+local editItem = win.popupFrame:base ()
+
+function editItem:on_create (title, name, path, args)
+	self:dress (title)
+
+	local rt = self:get_desktop ():get_work_area ()
+	local width = rt.width * 0.8
+
+	self.ei_name = win.inputWindow:new (self, ID_NAME, 1, 2, width - 2,
+													tostring (name or ""), "Name")
+	self.ei_name:set_focus ()
+	self.ei_path = win.inputWindow:new (self, ID_PATH, 1, 4, width - 3,
+													tostring (path or ""), "Path")
+	win.buttonWindow:new (self, ID_PATHBROWSE, width - 2, 4, "@")
+	self.ei_args = win.inputWindow:new (self, ID_ARGS, 1, 6, width - 2,
+													tostring (args or ""), "Arguments")
+	win.buttonWindow:new (self, ID_OK, width - 5, 7, " Ok ")
+
+	self:move (nil, nil, width, 9)
+
+	return true
+end
+
+
+function editItem:on_event (event, p1, p2, p3, p4, p5, ...)
+	if event == "btn_click" then
+		if p1:get_id () == ID_OK then
+			self:close (ID_OK)
+			return true
+		end
+
+		if p1:get_id () == ID_PATHBROWSE then
+			local path = cmndlg.open_file (self, self.ei_path:get_text ())
+			if path then
+				self.ei_path:set_text (path)
+			end
+
+			return true
+		end
+	end
+
+	return false
+end
+-- end editItem class --------------------------------------------------
+
+
+
+-- editTheme class -----------------------------------------------------
+local editTheme = win.popupFrame:base ()
+
+function editTheme:on_create (desktop)
+	self:dress ("Theme")
+
+	self.et_desktop = desktop
+	self.et_theme = self:load_theme ()
+	self.et_colors_top = 0
+
+	local rt = self:get_desktop ():get_work_area ()
+
+	self.et_demo = win.labelWindow:new (self, ID_COLORDEMO, 1, 1, "     ")
+	self.et_default = win.buttonWindow:new (self, ID_DEFTHEME, 1, 1, " Default ")
+	self.et_ok = win.buttonWindow:new (self, ID_OK, 1, 1, " Save ")
+	self:build_controls ()
+
+	self:move (nil, nil, 27, rt.height)
+
+	return true
+end
+
+
+function editTheme:build_controls ()
+	local rt = self:get_desktop ():get_work_area ()
+	local id = ID_COLORLIST + 1
+	local keys = { }
+	self.et_colors_top = 2
+
+	local wnd = self:get_wnd_by_id (id)
+	while wnd do
+		wnd:destroy_wnd ()
+		id = id + 1
+		wnd = self:get_wnd_by_id (id)
+	end
+
+	wnd = self:get_wnd_by_id (ID_COLORLIST)
+	if wnd then
+		wnd:destroy_wnd ()
+	end
+	wnd = nil
+
+	id = ID_COLORLIST + 1
+
+	for k, v in pairs (self.et_theme) do
+		if k ~= "color" then
+			keys[#keys + 1] = k
+		end
+	end
+
+	table.sort (keys)
+
+	for i = 1, #keys, 1 do
+		win.labelWindow:new (self, id, 1, self.et_colors_top,
+									keys[i]):set_bg_color (self:get_colors ().popup_back)
+		win.inputWindow:new (self, id + 1, 21, self.et_colors_top, 5,
+									self.et_theme[keys[i]])
+		self.et_colors_top = self.et_colors_top + 1
+		id = id + 2
+	end
+
+	self.et_colors = win.listWindow:new (self, ID_COLORLIST, 1, self.et_colors_top + 1, 25,
+													 rt.height - self.et_colors_top - 3)
+	for k, v in pairs (self.et_theme.color) do
+		self.et_colors:add_string (k, v)
+	end
+	self.et_colors:sort ()
+
+	self.et_demo:move (1, rt.height - 2, nil, nil, win.WND_BOTTOM)
+	self.et_default:move (10, rt.height - 2, nil, nil, win.WND_BOTTOM)
+	self.et_ok:move (20, rt.height - 2, nil, nil, win.WND_BOTTOM)
+
+	wnd = self:get_wnd_by_id (ID_COLORLIST + 2)
+	if wnd then
+		wnd:set_focus ()
+	end
+
+	self.et_colors:set_cur_sel (1)
+end
+
+
+function editTheme:on_resize ()
+	local rt = self:get_desktop ():get_work_area ()
+
+	self:move (nil, nil, nil, rt.height)
+	self.et_colors:move (nil, nil, nil, rt.height - self.et_colors_top - 3)
+	self.et_demo:move (1, rt.height - 2, nil, nil, win.WND_BOTTOM)
+	self.et_default:move (10, rt.height - 2, nil, nil, win.WND_BOTTOM)
+	self.et_ok:move (20, rt.height - 2, nil, nil, win.WND_BOTTOM)
+
+	return false
+end
+
+
+function editTheme:on_event (event, p1, p2, p3, p4, p5, ...)
+	if event == "btn_click" then
+		if p1:get_id () == ID_OK then
+			if self:save_theme () then
+				self:close (ID_OK)
+			else
+				self:msg_box ("Error", "Could not save theme.", term.colors.red)
+			end
+
+			return true
+		end
+
+		if p1:get_id () == ID_DEFTHEME then
+			self.et_theme = win.desktopTheme:new ()
+			self:build_controls ()
+			return true
+		end
+
+	elseif event == "selection_change" then
+		if p1:get_id () == ID_COLORLIST then
+			if self.et_colors:get_cur_sel () > 0 then
+				self.et_demo:set_bg_color (self.et_colors:get_data ())
+			end
+
+			return true
+		end
+
+	elseif event == "list_double_click" then
+		if p1:get_id () == ID_COLORLIST then
+			if self.et_colors:get_cur_sel () > 0 then
+				local color = cmndlg.color (self, self.et_colors:get_data (),
+													 safe_color (self:get_colors ().popup_back))
+				if color then
+					self.et_colors:set_data (color)
+					self.et_demo:set_bg_color (color)
+					self.et_theme.color[self.et_colors:get_string ()] = color
+				end
+			end
+
+			return true
+		end
+
+	elseif event == "input_change" then
+		if p1:get_id () > ID_COLORLIST then
+			local label = self:get_wnd_by_id (p1:get_id () - 1)
+
+			if label then
+				local key = label:get_text ()
+
+				if type(self.et_theme[key]) == "number" then
+					self.et_theme[key] = tonumber (p1:get_text ()) or 0
+				elseif type(self.et_theme[key]) == "string" then
+					self.et_theme[key] = p1:get_text ()
+				end
+			end
+
+			return true
+		end
+
+	end
+
+	return false
+end
+
+
+function editTheme:load_theme ()
+	local path = "/win/devices/"..self.et_desktop.."/theme.ini"
+	local theme = nil
+
+	if fs.file_exists (path, false) then
+		local file = io.open (path, "r")
+
+		if file then
+			local data = file:read ("*a")
+
+			if data then
+				theme = utils.deserialize (data)
+			end
+
+			file:close ()
+		end
+	end
+
+	if not theme then
+		theme = win.desktopTheme:new ()
+	end
+
+	return theme
+end
+
+
+function editTheme:save_theme ()
+	local path = "/win/devices/"..self.et_desktop.."/theme.ini"
+	local result = false
+	local file = io.open (path, "w")
+
+	if file then
+		local data = utils.serialize (self.et_theme)
+
+		if data then
+			file:write (data)
+
+			result = true
+		end
+
+		file:close ()
+	end
+
+	return result
+end
+-- end editTheme class -------------------------------------------------
+
+
+
+function appFrame:on_event (event, p1, p2, p3, p4, p5, ...)
+	if event == "btn_click" then
+		if p1:get_id () == ID_DTSELECT then
+			self:select_desktop ()
+			return true
+		end
+
+		if p1:get_id () == ID_ADD then
+			self:add_item ()
+			return true
+		end
+
+		if p1:get_id () == ID_DELETE then
+			self:delete_item ()
+			return true
+		end
+
+		if p1:get_id () == ID_EDIT then
+			self:edit_item ()
+			return true
+		end
+
+		if p1:get_id () == ID_MOVEUP then
+			self:move_item_up ()
+			return true
+		end
+
+		if p1:get_id () == ID_MOVEDOWN then
+			self:move_item_down ()
+			return true
+		end
+
+		if p1:get_id () == ID_THEME then
+			self:edit_theme ()
+			return true
+		end
+
+		if p1:get_id () == ID_STARTUP then
+			self:open_startup ()
+			return true
+		end
+
+		if p1:get_id () == ID_SYSTEM then
+			self:open_system ()
+			return true
+		end
+
+		if p1:get_id () == ID_LABEL then
+			self:set_label ()
+			return true
+		end
+
+		if p1:get_id () == ID_LOG then
+			self:open_log ()
+			return true
+		end
+
+		if p1:get_id () == ID_CLEAN then
+			self:clean_sys ()
+			return true
+		end
+
+	elseif event == "list_double_click" then
+		if p1:get_id () == ID_APPLIST then
+			self:send_event ("btn_click", self:get_wnd_by_id (ID_EDIT))
+			return true
+		end
+
+	end
+
+	return false
+end
+
+
+function appFrame:on_quit ()
+	self:save_desktop ()
+
+	return false
+end
+
+
+function appFrame:on_move ()
+	local width = self.width - 2
+	local top = (self.height < 14 and 1) or 2
+	local left = (self.width - width) / 2
+
+	self.app_desktop:move (left, top, width - 1)
+
+	local wnd = self:get_wnd_by_id (ID_DTSELECT)
+	if wnd then
+		wnd:move (left + width - 1, top)
+	end
+
+	self.app_app_list:move (left, top + 2, width - 8,
+								  math.max (self.height - top - 3, 9))
+
+	left = width + left - 7
+	wnd = self:get_wnd_by_id (ID_ADD)
+	if wnd then
+		wnd:move (left, top + 2)
+	end
+
+	wnd = self:get_wnd_by_id (ID_DELETE)
+	if wnd then
+		wnd:move (left, top + 3)
+	end
+
+	wnd = self:get_wnd_by_id (ID_EDIT)
+	if wnd then
+		wnd:move (left, top + 4)
+	end
+
+	wnd = self:get_wnd_by_id (ID_MOVEUP)
+	if wnd then
+		wnd:move (left, top + 5)
+	end
+
+	wnd = self:get_wnd_by_id (ID_MOVEDOWN)
+	if wnd then
+		wnd:move (left, top + 6)
+	end
+
+	wnd = self:get_wnd_by_id (ID_THEME)
+	if wnd then
+		wnd:move (left, top + 8)
+	end
+
+	wnd = self:get_wnd_by_id (ID_STARTUP)
+	if wnd then
+		wnd:move (left, top + 9)
+	end
+
+	wnd = self:get_wnd_by_id (ID_SYSTEM)
+	if wnd then
+		wnd:move (left, top + 10)
+	end
+
+	wnd = self:get_wnd_by_id (ID_LABEL)
+	if wnd then
+		wnd:move (left, top + 11)
+	end
+
+	wnd = self:get_wnd_by_id (ID_LOG)
+	if wnd then
+		wnd:move (left, top + 12)
+	end
+
+	wnd = self:get_wnd_by_id (ID_CLEAN)
+	if wnd then
+		wnd:move (left, top + 13)
+	end
+
+	wnd = self:get_wnd_by_id (ID_VERSION)
+	if wnd then
+		wnd:move (1, self.height - 1)
+	end
+
+	return false
+end
+
+
+function appFrame:on_child_key (wnd, key, ctrl, alt, shift)
+	if win.applicationFrame.on_child_key (self, wnd, key, ctrl, alt, shift) then
+		return true
+	end
+
+	return false
+end
+
+
+function appFrame:on_create ()
+	local instance = self:get_desktop ():get_wnd_by_id (ID_DTMANAGE_FRAME, false)
+	if instance then
+		instance:set_active_top_frame ()
+		return false
+	end
+
+	self:set_id (ID_DTMANAGE_FRAME)
+	self:dress (APP_TITLE..":"..tostring (os.computer_id ()))
+
+	self.app_loaded_desktop = nil
+	self.app_modified = false
+
+	local width = self.width - 2
+	local top = (self.height < 14 and 1) or 2
+	local left = (self.width - width) / 2
+
+	self.app_desktop = win.labelWindow:new (self, ID_DESKTOP, left, top, self:get_dir ())
+	self.app_desktop:move (nil, nil, width - 1)
+	self.app_desktop:set_color (self:get_colors ().wnd_text)
+	self.app_desktop:set_bg_color (self:get_colors ().wnd_back)
+
+	win.buttonWindow:new (self, ID_DTSELECT, left + width - 1, top, "@")
+	self.app_app_list = win.listWindow:new (self, ID_APPLIST, left, top + 2,
+														width - 8, math.max(self.height - top - 3, 9))
+	self.app_app_list:set_focus ()
+	win.labelWindow:new (self, ID_VERSION, 1, self.height - 1,
+								"WIN "..tostring(win.version()))
+
+	left = width + left - 7
+	win.buttonWindow:new (self, ID_ADD, left, top + 2,        "  Add  ")
+	win.buttonWindow:new (self, ID_DELETE, left, top + 3,     " Remove")
+	win.buttonWindow:new (self, ID_EDIT, left, top + 4,       "  Edit ")
+	win.buttonWindow:new (self, ID_MOVEUP, left, top + 5,     "   Up  ")
+	win.buttonWindow:new (self, ID_MOVEDOWN, left, top + 6,   "  Down ")
+	win.buttonWindow:new (self, ID_THEME, left, top + 8,      " Theme ")
+	win.buttonWindow:new (self, ID_STARTUP, left, top + 9,    "Startup")
+	win.buttonWindow:new (self, ID_SYSTEM, left, top + 10,    " System")
+	win.buttonWindow:new (self, ID_LABEL, left, top + 11,     "  Name ")
+	win.buttonWindow:new (self, ID_LOG, left, top + 12,       "  Log  ")
+	win.buttonWindow:new (self, ID_CLEAN, left, top + 13,     " Clean ")
+
+	self:load_app_list ()
+
+	self:set_active_top_frame ()
+
+	return true
+end
+
+
+function appFrame:load_app_list ()
+	self:save_desktop ()
+	self.app_loaded_desktop = self.app_desktop:get_text ()
+	self.app_app_list:reset_content ()
+
+	local lines = { }
+	local line, last_line;
+	local file = io.open ("/win/devices/"..self.app_loaded_desktop.."/desktop.ini", "r")
+
+	if file then
+		line = file:read ("*l")
+
+		while line do
+			lines[#lines + 1] = line
+			line = file:read ("*l")
+		end
+
+		file:close ()
+
+		last_line = math.floor (#lines / 5) * 5
+
+		for line = 1, last_line, 5 do
+			local app =
+			{
+				name = lines[line],
+				path = lines[line + 1],
+				arguments = lines[line + 2],
+				dummy1 = lines[line + 3],
+				dummy2 = lines[line + 4]
+			}
+			self.app_app_list:add_string (app.name, app)
+		end
+	end
+
+	if self.app_app_list:count() > 0 then
+		self.app_app_list:set_cur_sel (1)
+	end
+end
+
+
+function appFrame:save_desktop ()
+	if self.app_loaded_desktop and self.app_modified then
+		if cmndlg.confirm (self:get_active_frame (), "Save",
+								 "Save desktop "..self.app_loaded_desktop.."?", true) then
+			local path = "/win/devices/"..self.app_loaded_desktop.."/desktop.ini"
+
+			if fs.file_exists (path..".bak", false) then
+				fs.remove (path..".bak")
+			end
+
+			fs.copy_file (path, path..".bak")
+
+			local file = io.open (path, "w")
+
+			if file then
+				for i = 1, self.app_app_list:count(), 1 do
+					local app = self.app_app_list:get_data (i)
+
+					file:write (app.name.."\n")
+					file:write (app.path.."\n")
+					file:write (app.arguments.."\n")
+					file:write (app.dummy1.."\n")
+					file:write (app.dummy2.."\n")
+				end
+
+				file:close ()
+			end
+		end
+	end
+end
+
+
+function appFrame:delete_item ()
+	local item = self.app_app_list:get_cur_sel ()
+
+	if item > 0 then
+		if cmndlg.confirm (self, "Remove", "Remove "..self.app_app_list:get_string ().."?") then
+			self.app_app_list:remove_string (item)
+			self.app_modified = true
+		end
+	end
+end
+
+
+function appFrame:move_item_up ()
+	local item = self.app_app_list:get_cur_sel ()
+
+	if item > 1 then
+		local str, data = self.app_app_list:get_string (), self.app_app_list:get_data ()
+
+		self.app_app_list:remove_string (item)
+		self.app_app_list:add_string (str, data, item - 1)
+		self.app_app_list:set_cur_sel (item - 1)
+		self.app_modified = true
+	end
+end
+
+
+function appFrame:move_item_down ()
+	local item = self.app_app_list:get_cur_sel ()
+
+	if item < self.app_app_list:count() then
+		local str, data = self.app_app_list:get_string (), self.app_app_list:get_data ()
+
+		self.app_app_list:remove_string (item)
+		self.app_app_list:add_string (str, data, item + 1)
+		self.app_app_list:set_cur_sel (item + 1)
+		self.app_modified = true
+	end
+end
+
+
+function appFrame:add_item ()
+	local dlg = editItem:new (self)
+	if dlg:do_modal ("New App") == ID_OK then
+		local data =
+		{
+			name = dlg.ei_name:get_text (),
+			path = dlg.ei_path:get_text (),
+			arguments = dlg.ei_args:get_text (),
+			dummy1 = "",
+			dummy2 = ""
+		}
+		self.app_app_list:add_string (data.name, data)
+		self.app_modified = true
+	end
+end
+
+
+function appFrame:edit_item ()
+	local item = self.app_app_list:get_cur_sel ()
+
+	if item > 0 then
+		local data = self.app_app_list:get_data (item)
+		local dlg = editItem:new (self)
+
+		if dlg:do_modal ("Edit App", data.name, data.path, data.arguments) == ID_OK then
+			data =
+			{
+				name = dlg.ei_name:get_text (),
+				path = dlg.ei_path:get_text (),
+				arguments = dlg.ei_args:get_text (),
+				dummy1 = "",
+				dummy2 = ""
+			}
+			self.app_app_list:remove_string (item)
+			self.app_app_list:add_string (data.name, data, item)
+			self.app_app_list:set_cur_sel (item)
+			self.app_modified = true
+		end
+	end
+end
+
+
+function appFrame:select_desktop ()
+	local dlg = selectDesktop:new (self)
+
+	if dlg:do_modal (self.app_desktop:get_text ()) == ID_OK then
+		self.app_desktop:set_text (dlg.sd_desktops:get_string ())
+		self:load_app_list ()
+	end
+end
+
+
+function appFrame:open_startup ()
+	if self.app_loaded_desktop then
+		local path = "/win/devices/"..self.app_loaded_desktop.."/startup.ini"
+
+		if not fs.file_exists (path, false) then
+			local file = io.open (path, "w")
+
+			if not file then
+				self:msg_box ("Error", "Error creating "..path, term.colors.red)
+				return
+			end
+
+			file:write (DT_STARTUP_FILE)
+			file:close ()
+		end
+
+		self:get_desktop ():run_app ("/apps/notepad", path)
+	end
+end
+
+
+function appFrame:open_system ()
+	local path = "/win.ini"
+
+	if not fs.file_exists (path, false) then
+		local file = io.open (path, "w")
+
+		if not file then
+			self:msg_box ("Error", "Error creating "..path, term.colors.red)
+			return
+		end
+
+		file:write (SYS_STARTUP_FILE)
+		file:close ()
+	end
+
+	self:get_desktop ():run_app ("/apps/notepad", path)
+end
+
+
+function appFrame:open_log ()
+	local path = "/win.log"
+
+	if not fs.file_exists (path, false) then
+		local file = io.open (path, "w")
+
+		if not file then
+			self:msg_box ("Error", "Error creating "..path, term.colors.red)
+			return
+		end
+
+		file:close()
+	end
+
+	self:get_desktop ():run_app ("/apps/notepad", path)
+end
+
+
+function appFrame:clean_sys ()
+	if cmndlg.confirm (self, "Clean",
+							 "This action will permanently alter/erase files. Continue?",
+							 false, term.colors.orange) then
+
+		local path = "/win.log"
+		local file = io.open (path, "w")
+
+		if not file then
+			self:msg_box ("Error", "Error cleaning "..path, term.colors.red)
+			return
+		end
+
+		file:close ()
+
+		path = "/tmp"
+		if fs.file_exists (path, true) then
+			fs.rm (path, true)
+			fs.mkdir (path)
+		end
+	end
+end
+
+
+function appFrame:edit_theme ()
+	if self.app_loaded_desktop then
+		local dlg = editTheme:new (self)
+
+		if dlg:do_modal (self.app_loaded_desktop) == ID_OK then
+		end
+	end
+end
+
+
+function appFrame:set_label ()
+	local name = cmndlg.input (self, "Computer Name", "Enter the computer's name",
+										os.get_name () or "", "Name")
+	if name then
+		if name:len () < 1 then
+			os.set_name ()
+		else
+			os.set_name (name)
+		end
+	end
+end
+
+
+appFrame:run_app ()

@@ -1,0 +1,208 @@
+
+local app_args = {...}
+local appFrame = win.create_app_frame ()
+
+
+local APP_TITLE      = "chat"
+
+local ID_MENUBTN     = 101
+local ID_PARTNER     = 102
+local ID_EXCLUSIVE   = 103
+local ID_SAY         = 104
+local ID_SEND        = 105
+local ID_RESPONSE    = 106
+
+local IDM_CLEARMSGS  = 1001
+local IDM_QUITAPP    = 1002
+
+
+
+function appFrame:on_receive(msg)
+	if msg.application == APP_TITLE and msg.context == "message" then
+		local partner = self.app_partner:get_text ()
+		local exclusive = (partner:len () > 0 and  self.app_exclusive:get_checked ())
+
+		if (exclusive and msg.sender_name == partner) or not exclusive then
+			local name = (msg.recipient_name and "["..msg.sender_name.."]") or msg.sender_name
+
+			self.app_response:set_text (string.format ("%s%s: %s\n\n",
+																	 self.app_response:get_text (),
+																	 name, msg.data))
+
+			local cx, cy = self.app_response:get_scroll_size ()
+
+			self.app_response:set_scroll_org (0, cy)
+
+			return true
+		end
+	end
+
+	return false
+end
+
+
+function appFrame:on_sent (msg, success)
+	local result = ""
+
+	if not success then
+		result = "<failed> "
+	end
+
+	if msg.recipient_name then
+		self.app_response:set_text (string.format ("%s%s%s [%s]: %s\n\n",
+																 self.app_response:get_text (),
+																 result, msg.sender_name,
+																 msg.recipient_name, msg.data))
+	else
+		self.app_response:set_text (string.format ("%s%s%s: %s\n\n",
+																 self.app_response:get_text (),
+																 result, msg.sender_name, msg.data))
+	end
+
+	local cx, cy = self.app_response:get_scroll_size ()
+
+	self.app_response:set_scroll_org (0, cy)
+
+	return true
+end
+
+
+function appFrame:on_send_msg ()
+	if self.app_say:get_text ():len () > 0 then
+		local recipient = self.app_partner:get_text ()
+
+		if recipient:len () < 1 then
+			recipient = nil
+		end
+
+		self:send_message (recipient, APP_TITLE, "message", self.app_say:get_text ())
+		self.app_say:set_sel (0, -1)
+		self.app_say:set_focus ()
+	end
+end
+
+
+function appFrame:on_event (event, p1, p2, p3, p4, p5, ...)
+	if event == "btn_click" then
+		if p1:get_id () == ID_MENUBTN then
+			self:on_menu ()
+			return true
+		end
+
+		if p1:get_id () == ID_SEND then
+			self:on_send_msg ()
+
+			return true
+		end
+
+	elseif event == "menu_cmd" then
+		return self:on_command (p1)
+	end
+
+	return false
+end
+
+
+function appFrame:on_move ()
+	self.app_partner:move (nil, nil, self.width - 9)
+	self.app_exclusive:move (self.width - 7)
+	self.app_response:move (nil, nil, self.width - 2, self.height - 7)
+	self.app_say:move (nil, self.height - 2, self.width - 3)
+	self.app_send:move (self.width - 2, self.height - 2)
+
+	return false
+end
+
+
+function appFrame:on_child_key (wnd, key, ctrl, alt, shift)
+	if win.applicationFrame.on_child_key (self, wnd, key, ctrl, alt, shift) then
+		return true
+	end
+
+	if ctrl and not alt and not shift then
+		if key == keys.KEY_M then
+			return self:on_command (IDM_CLEARMSGS)
+		end
+
+	elseif not ctrl and not alt and not shift then
+		if key == keys.KEY_ENTER then
+			if wnd == self.app_say then
+				self:on_send_msg ()
+				return true
+			end
+		end
+	end
+
+	return false
+end
+
+
+function appFrame:on_quit ()
+	self:unwant_messages ()
+	return false
+end
+
+
+function appFrame:on_menu ()
+	local menu = win.menuWindow:new (self)
+
+	menu:add_string ("Clear Msgs Ctrl+M", IDM_CLEARMSGS)
+	menu:add_string ("-----------------")
+	menu:add_string ("Quit App",          IDM_QUITAPP)
+
+	menu:track (0, 1)
+end
+
+
+function appFrame:on_command (cmd_id)
+	if cmd_id == IDM_CLEARMSGS then
+		self.app_response:set_text ()
+		return true
+	end
+
+	if cmd_id == IDM_QUITAPP then
+		self:quit_app ()
+		return true
+	end
+
+	return false
+end
+
+
+function appFrame:on_create ()
+	self:dress (string.format ("%s [%s]", APP_TITLE, os.get_name ()))
+
+	local menuBtn = win.buttonWindow:new (self, ID_MENUBTN, 0, 0, "Menu")
+	menuBtn:set_colors (menuBtn:get_colors ().frame_text,
+							  menuBtn:get_colors ().title_back,
+							  menuBtn:get_colors ().frame_back)
+	menuBtn:move (nil, nil, nil, nil, win.WND_TOP)
+
+
+	self.app_partner = win.inputWindow:new (self, ID_PARTNER, 1, 2,
+														 self.width - 9, "", "Recipient")
+	self.app_exclusive = win.checkWindow:new (self, ID_EXCLUSIVE,
+															self.width - 7, 2, "Only", true)
+	self.app_response = win.textWindow:new (self, ID_RESPONSE, 1, 4,
+														 self.width - 2, self.height - 7, "")
+	self.app_response:set_bg_color (term.colors.white)
+	self.app_say = win.inputWindow:new (self, ID_SAY, 1, self.height - 2,
+													self.width - 3, "", "Message")
+	self.app_send = win.buttonWindow:new (self, ID_SEND, self.width - 2,
+													  self.height - 2, ">")
+	self.app_say:set_focus ()
+
+	self:set_active_top_frame ()
+
+	if not self:comm_enabled () then
+		self:msgbox ("Connection", "No modem connection found to use!", term.colors.red)
+		return false
+	end
+
+	self:want_messages (APP_TITLE)
+
+	return true
+end
+
+
+appFrame:run_app ()

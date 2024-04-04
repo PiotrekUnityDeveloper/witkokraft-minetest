@@ -1,0 +1,126 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>Explore</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>Explore - WIN</h1>
+    <b>Explore</b><br>
+    <br>
+    File: <i>/apps/fexplore</i><br>
+    <br>
+    File explorer application.<br>
+    <br>
+    <img moz-do-not-send="true" src="images/fexplore.png" alt="Explore
+      application." width="658" height="382" border="1"><br>
+    <br>
+    <b>Menu</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">Up</td>
+          <td valign="top">Ctrl+up</td>
+          <td valign="top">Navigates up a directory level if available.</td>
+        </tr>
+        <tr>
+          <td valign="top">New</td>
+          <td valign="top">Ctrl+N</td>
+          <td valign="top">Creates a new directory in the current one,
+            if possible.</td>
+        </tr>
+        <tr>
+          <td valign="top">Open</td>
+          <td valign="top">Ctrl+O</td>
+          <td valign="top">Opens the selected item. If a file, opens in
+            the applicable application. If a folder, opens that folder
+            in a new instance of Explore.</td>
+        </tr>
+        <tr>
+          <td valign="top">Run</td>
+          <td valign="top">Ctrl+P</td>
+          <td valign="top">Runs the selected file. If the file does not
+            contain <i>win.create_app_frame</i> and <i>run_app</i>, it
+            is run as a console program, otherwise as a WIN application.</td>
+        </tr>
+        <tr>
+          <td valign="top">Rename</td>
+          <td valign="top">Ctrl+R</td>
+          <td valign="top">Rename the selected file or directory.</td>
+        </tr>
+        <tr>
+          <td valign="top">Delete</td>
+          <td valign="top">Del</td>
+          <td valign="top">Deletes the selected file or directory.</td>
+        </tr>
+        <tr>
+          <td valign="top">Label</td>
+          <td valign="top">Ctrl+L</td>
+          <td valign="top">Set the label of the disk, in the drive of
+            the selected mount point.</td>
+        </tr>
+        <tr>
+          <td valign="top">Copy</td>
+          <td valign="top">Ctrl+C</td>
+          <td valign="top">Copy the selected file or folder to the
+            clipboard.</td>
+        </tr>
+        <tr>
+          <td valign="top">Paste</td>
+          <td valign="top">Ctrl+V</td>
+          <td valign="top">Paste the file or folder on the clipboard to
+            the current directory. If pasting to the same directory, the
+            name is appended with an underscore and integer to form a
+            unique named copy.</td>
+        </tr>
+        <tr>
+          <td valign="top">Quit</td>
+          <td valign="top">Ctrl+Alt+X</td>
+          <td valign="top">Quits the application.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Names in the list that begin with / are folders, otherwise files.
+    The slash is only indicative, not part of the literal folder's name.<br>
+    <br>
+    The status bar shows the free space of the selected or current
+    media. If a file is selected it also shows the size of the file. If
+    a folder, the number of items in the folder.<br>
+    <br>
+    Double clicking on the up symbol ("..", when applicable) navigates
+    up one directory level. On a folder navigates to that folder. On a
+    file, the file is opened in the applicable application.<br>
+    <br>
+    The file <i>/apps/fexplore.asc</i> is a value pair (name=value)
+    file format of file type to application associations. Each key must
+    be on a separate line. Blank lines and lines beginning with ; are
+    ignored. The name should be the DOS like file extension (after the
+    last dot) and the value is the full path to the program file to open
+    that file type with. The name &lt;default&gt; is the application to
+    use if an association does not exist. The &lt;console&gt; is the
+    full path to the application to run none WIN programs.<br>
+    <br>
+    The pre-installed default is <a moz-do-not-send="true"
+      href="notepad_application.html">notepad</a>.<br>
+    The extensions html and htm open with <a moz-do-not-send="true"
+      href="browse_application.html">browse</a>.<br>
+    The email extension opens with <a moz-do-not-send="true"
+      href="email_application.html">emread</a>.<br>
+    The console is <a moz-do-not-send="true"
+      href="cmd_application.html">cmd</a>.<br>
+    <br>
+    A folder path can optionally be given as an argument on the command
+    line of the initial folder's contents to view.<br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="default_applications.html">Default
+      applications</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

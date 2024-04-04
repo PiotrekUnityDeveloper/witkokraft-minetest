@@ -1,0 +1,587 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>checkWindow</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>win.checkWindow - WIN</h1>
+    Class <b>checkWindow</b><br>
+    Inherits from <a moz-do-not-send="true" href="window.html">window</a>.<br>
+    <br>
+    The checkWindow class provides a check box and a string label with a
+    height of 1 and width of the length of the label + 2. Its colors are
+    initialized from the theme but may be customized after creation. A <a
+      moz-do-not-send="true" href="events.html#check_change">check_change</a>
+    event is sent to the parent with a first parameter of this check
+    window object when its check state is changed by any means
+    (programmatically or by the user).<br>
+    <br>
+    To create a checkWindow use it's new method:<br>
+    <tt><font color="#000066">local</font> chk = win.checkWindow:new
+      (parent, id, x, y, label, checked)</tt><br>
+    <br>
+    <br>
+    <b>Properties</b><br>
+    <br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">check__checked</td>
+          <td valign="top">boolean</td>
+          <td valign="top">Holds the check state.</td>
+        </tr>
+        <tr>
+          <td valign="top">check__colors</td>
+          <td valign="top">table</td>
+          <td valign="top">Color table.</td>
+        </tr>
+        <tr>
+          <td valign="top">check__colors.text</td>
+          <td valign="top">number</td>
+          <td valign="top">Label text color.</td>
+        </tr>
+        <tr>
+          <td valign="top">check__colors.back</td>
+          <td valign="top">number</td>
+          <td valign="top">Label blurred background color.</td>
+        </tr>
+        <tr>
+          <td valign="top">check__colors.focus</td>
+          <td valign="top">number</td>
+          <td valign="top">Label focused background color.</td>
+        </tr>
+        <tr>
+          <td valign="top">check__colors.check_text</td>
+          <td valign="top">number</td>
+          <td valign="top">Check box text color.</td>
+        </tr>
+        <tr>
+          <td valign="top">check__colors.check_back</td>
+          <td valign="top">number</td>
+          <td valign="top">Check box blurred background color.</td>
+        </tr>
+        <tr>
+          <td valign="top">check__colors.check_focus</td>
+          <td valign="top">number</td>
+          <td valign="top">Check box focused background color.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Methods</b><br>
+    <ul id="mozToc">
+      <!--mozToc h3 1-->
+      <li><a href="#mozTocId882276">checkWindow:constructor</a></li>
+      <li><a href="#mozTocId665699">checkWindow:draw</a></li>
+      <li><a href="#mozTocId371658">checkWindow:get_checked</a></li>
+      <li><a href="#mozTocId577076">checkWindow:on_blur</a></li>
+      <li><a href="#mozTocId663872">checkWindow:on_focus</a></li>
+      <li><a href="#mozTocId228463">checkWindow:on_key</a></li>
+      <li><a href="#mozTocId556526">checkWindow:on_left_click</a></li>
+      <li><a href="#mozTocId525139">checkWindow:on_touch</a></li>
+      <li><a href="#mozTocId260634">checkWindow:set_checked</a></li>
+      <li><a href="#mozTocId663884">checkWindow:set_colors</a></li>
+    </ul>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId882276" class="mozTocH3"></a><a
+        name="checkWindow:constructor"></a>win.checkWindow:constructor</h3>
+    <i> check checkWindow:constructor (parent, id, x, y, label, checked)</i><br>
+    <br>
+    Constructs and returns the instantiated check box window.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">parent </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">Parent window, typically a frame. </td>
+        </tr>
+        <tr>
+          <td valign="top">id </td>
+          <td valign="top">number </td>
+          <td valign="top">Numeric id value for check box window. </td>
+        </tr>
+        <tr>
+          <td valign="top">x</td>
+          <td valign="top">number</td>
+          <td valign="top">Parent relative x position.</td>
+        </tr>
+        <tr>
+          <td valign="top">y</td>
+          <td valign="top">number</td>
+          <td valign="top">Parent relative y position.</td>
+        </tr>
+        <tr>
+          <td valign="top">label</td>
+          <td valign="top">string</td>
+          <td valign="top">Check box label.</td>
+        </tr>
+        <tr>
+          <td valign="top">checked</td>
+          <td valign="top">boolean</td>
+          <td valign="top">Initial check state. Can be nil for
+            unchecked.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">check </td>
+          <td valign="top">checkWindow </td>
+          <td valign="top">The instantiated check box window. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId665699" class="mozTocH3"></a><a
+        name="checkWindow:draw"></a>win.checkWindow:draw</h3>
+    <i> checkWindow:draw (gdi, bounds)</i><br>
+    <br>
+    Draws the check box control window.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">gdi </td>
+          <td valign="top"><a moz-do-not-send="true" href="GDI.html">GDI</a>
+          </td>
+          <td valign="top">GDI object to use for drawing. </td>
+        </tr>
+        <tr>
+          <td valign="top">bounds </td>
+          <td valign="top"><a moz-do-not-send="true" href="rect.html">rect</a>
+          </td>
+          <td valign="top">Invalidated area of the window. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:draw">window:draw</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId371658" class="mozTocH3"></a><a
+        name="checkWindow:get_checked"></a>win.checkWindow:get_checked</h3>
+    <i> checked checkWindow:get_checked ()</i><br>
+    <br>
+    Returns the current check state of the check box control.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">checked </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if the check box is currently checked,
+            false if not. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#checkWindow:set_checked">checkWindow:set_checked</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId577076" class="mozTocH3"></a><a
+        name="checkWindow:on_blur"></a>win.checkWindow:on_blur</h3>
+    <i> result checkWindow:on_blur (focused)</i><br>
+    <br>
+    Sets blurred background color.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">focused </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">The window gaining focus, it may be nil. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Always false. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:on_blur">window:on_blur</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="checkWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId663872" class="mozTocH3"></a><a
+        name="checkWindow:on_focus"></a>win.checkWindow:on_focus</h3>
+    <i> result checkWindow:on_focus (blurred)</i><br>
+    <br>
+    Sets focused background color.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">blurred </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">The window losing focus, it may be nil. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Always false. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:on_focus">window:on_focus</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="checkWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId228463" class="mozTocH3"></a><a
+        name="checkWindow:on_key"></a>win.checkWindow:on_key</h3>
+    <i> result checkWindow:on_key (key, ctrl, alt, shift)</i><br>
+    <br>
+    Calls <a moz-do-not-send="true" href="#checkWindow:on_left_click">on_left_click</a>
+    handler on enter key.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">key </td>
+          <td valign="top">number </td>
+          <td valign="top">Key code. </td>
+        </tr>
+        <tr>
+          <td valign="top">ctrl</td>
+          <td valign="top">boolean</td>
+          <td valign="top">True if control key is depressed.</td>
+        </tr>
+        <tr>
+          <td valign="top">alt </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if alternate key is depressed. </td>
+        </tr>
+        <tr>
+          <td valign="top">shift</td>
+          <td valign="top">boolean</td>
+          <td valign="top">True if shift key is depressed.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if handled, false if not. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:on_key">window:on_key</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="checkWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId556526" class="mozTocH3"></a><a
+        name="checkWindow:on_left_click"></a>win.checkWindow:on_left_click</h3>
+    <i> result checkWindow:on_left_click (x, y, count)</i><br>
+    <br>
+    Calls the base implementation and toggles the check state of the
+    check box control.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">x </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative x position. </td>
+        </tr>
+        <tr>
+          <td valign="top">y </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative y position. </td>
+        </tr>
+        <tr>
+          <td valign="top">count<br>
+          </td>
+          <td valign="top">number</td>
+          <td valign="top">The number of times this same position was
+            repeatedly clicked, with each successive click within the <i>double_click_time</i>.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Always true. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    A <a moz-do-not-send="true" href="events.html#check_change">check_change</a>
+    event is sent to the parent <a moz-do-not-send="true"
+      href="window.html">window</a>.<br>
+    <br>
+    See <a moz-do-not-send="true"
+      href="window.html#window:on_left_click">window:on_left_click</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="checkWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId525139" class="mozTocH3"></a><a
+        name="checkWindow:on_touch"></a>win.checkWindow:on_touch</h3>
+    <i> result checkWindow:on_touch (x, y)</i><br>
+    <br>
+    Calls the base implementation and toggles the check state of the
+    check box control.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">x </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative x position. </td>
+        </tr>
+        <tr>
+          <td valign="top">y </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative y position. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Always true. <br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    A <a moz-do-not-send="true" href="events.html#check_change">check_change</a>
+    event is sent to the parent <a moz-do-not-send="true"
+      href="window.html">window</a>.<br>
+    <br>
+    See <a moz-do-not-send="true" href="window.html#window:on_touch">window:on_touch</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="checkWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId260634" class="mozTocH3"></a><a
+        name="checkWindow:set_checked"></a>win.checkWindow:set_checked</h3>
+    <i>checkWindow:set_checked (check)</i><br>
+    <br>
+    Sets the check state of the check box.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">checked </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True to set the check box as checked, false
+            for not. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    A <a moz-do-not-send="true" href="events.html#check_change">check_change</a>
+    event is sent to the parent <a moz-do-not-send="true"
+      href="window.html">window</a> if the check state is changed.<br>
+    <br>
+    The window is invalidated.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#checkWindow:get_checked">checkWindow:get_checked</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="checkWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId663884" class="mozTocH3"></a><a
+        name="checkWindow:set_colors"></a>win.checkWindow:set_colors</h3>
+    <i>checkWindow:set_colors (text, background, focus, check_text,
+      check_back, check_focus)</i><br>
+    <br>
+    Sets the colours for the check box control.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">text </td>
+          <td valign="top">number </td>
+          <td valign="top">Label text color. </td>
+        </tr>
+        <tr>
+          <td valign="top">background </td>
+          <td valign="top">number </td>
+          <td valign="top">Label blurred background color. </td>
+        </tr>
+        <tr>
+          <td valign="top">focus</td>
+          <td valign="top">number</td>
+          <td valign="top">Label focused background color.</td>
+        </tr>
+        <tr>
+          <td valign="top">check_text</td>
+          <td valign="top">number</td>
+          <td valign="top">Check box text color.</td>
+        </tr>
+        <tr>
+          <td valign="top">check_back</td>
+          <td valign="top">number</td>
+          <td valign="top">Check box blurred background color.</td>
+        </tr>
+        <tr>
+          <td valign="top">check_focus</td>
+          <td valign="top">number</td>
+          <td valign="top">Check box focused background color.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Invalidation is handled.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="checkWindow.html#top">top</a><br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

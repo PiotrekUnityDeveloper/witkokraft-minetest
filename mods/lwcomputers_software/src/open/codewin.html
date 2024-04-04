@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html;
+      charset=windows-1252">
+    <title>codewin</title>
+    <style>a { text-decoration: none; }</style>
+  </head>
+  <body style="font-family: &quot;Liberation Mono&quot;, mono;
+    font-weight: 600; font-size-adjust: 0.52; letter-spacing: 4px;
+    margin: 0px;" vlink="#0000ff" text="#000000" link="#0000ff"
+    bgcolor="#ffff00" alink="#0000ff">
+    <div style="background-color: #00f000; color: #0000ff;"
+      align="center"><br>
+      Open Software<br>
+      <br>
+    </div>
+    <br>
+    <font color="#808080">codewin</font><br>
+    <br>
+    The codewin api defines the codeWindow control.<br>
+    <br>
+    Requires WIN<br>
+    <br>
+    &nbsp;<a moz-do-not-send="true" href="downloads/codewin"
+      protocol="ftp">Download codewin</a><br>
+    <br>
+    The codeWindow is a multi-line editing window (based on editWindow)
+    with the following features:<br>
+    &nbsp;* Custom language definition.<br>
+    &nbsp;* Syntax highlighting.<br>
+    &nbsp;* Code completion.<br>
+    &nbsp;* Code indexing.<br>
+    &nbsp;* Auto indenting.<br>
+    &nbsp;* Trim end of line spaces.<br>
+    &nbsp;* Auto save flag.<br>
+    <br>
+    The language is defined in a name/value pair file with the following
+    options:<br>
+    <br>
+    <font color="#e00000">; tab spaces</font><br>
+    tab=<font color="#808080">number</font><br>
+    <br>
+    <font color="#e00000">; auto indent on enter</font><br>
+    autoindent=<font color="#808080">boolean</font><br>
+    <br>
+    <font color="#e00000">; trim end of line spaces</font><br>
+    autotrim=<font color="#808080">boolean</font><br>
+    <br>
+    <font color="#e00000">; auto save</font><br>
+    autosave=<font color="#808080">boolean</font><br>
+    <br>
+    <font color="#e00000">; use code completion</font><br>
+    autocomplete=<font color="#808080">boolean</font><br>
+    <br>
+    <font color="#e00000">; colors - must be number values</font><br>
+    keywords=<font color="#808080">number</font><br>
+    nouns=<font color="#808080">number</font><br>
+    comments=<font color="#808080">number</font><br>
+    strings=<font color="#808080">number</font><br>
+    operators=<font color="#808080">number</font><br>
+    numbers=<font color="#808080">number</font><br>
+    <br>
+    <font color="#e00000">; keywords - as many as needed</font><br>
+    keyword=<font color="#808080">word</font><br>
+    <br>
+    <font color="#e00000">; indexes - as many as needed</font><br>
+    index=<font color="#808080">pattern</font><br>
+    <br>
+    The codeWindow control has the following methods:<br>
+    <br>
+    <font color="#808080">boolean codeWindow:get_auto_indent ()</font><br>
+    &nbsp;Returns the auto indent setting.<br>
+    <br>
+    <font color="#808080">nil codeWindow:set_auto_indent (boolean)</font><br>
+    &nbsp;Sets the auto indent setting.<br>
+    <br>
+    <font color="#808080">boolean codeWindow:get_auto_trim ()</font><br>
+    &nbsp;Returns the auto trim spaces at end of lines setting.<br>
+    <br>
+    <font color="#808080">nil codeWindow:set_auto_trim (boolean)</font><br>
+    &nbsp;Sets the auto trim end of line spaces setting.<br>
+    <br>
+    <font color="#808080">boolean codeWindow:get_auto_save ()</font><br>
+    &nbsp;Returns the auto save flag.<br>
+    <br>
+    <font color="#808080">nil codeWindow:set_auto_save (boolean)</font><br>
+    &nbsp;Sets the auto save flag.<br>
+    <br>
+    <font color="#808080">boolean codeWindow:get_auto_complete ()</font><br>
+    &nbsp;Returns the auto complete setting.<br>
+    <br>
+    <font color="#808080">nil codeWindow:set_auto_complete (boolean)</font><br>
+    &nbsp;Sets the auto complete setting.<br>
+    <br>
+    <font color="#808080">number codeWindow:get_keyword_color ()</font><br>
+    &nbsp;Returns the definition's keyword color.<br>
+    <br>
+    <font color="#808080">number codeWindow:get_noun_color ()</font><br>
+    &nbsp;Returns the definition's noun color.<br>
+    <br>
+    <font color="#808080">number codeWindow:get_comment_color ()</font><br>
+    &nbsp;Returns the definition's comment color.<br>
+    <br>
+    <font color="#808080">number codeWindow:get_string_color ()</font><br>
+    &nbsp;Returns the definition's string color.<br>
+    <br>
+    <font color="#808080">number codeWindow:get_operator_color ()</font><br>
+    &nbsp;Returns the definition's operator color.<br>
+    <br>
+    <font color="#808080">number codeWindow:get_number_color ()</font><br>
+    &nbsp;Returns the definition's number color.<br>
+    <br>
+    <font color="#808080">boolean codeWindow:load_definition (path)</font><br>
+    &nbsp;Loads the definition from the file at <font color="#808080">path</font>.
+    Returns <font color="#808080">true</font> if file was loaded, <font
+      color="#808080">false</font> if not.<br>
+    <br>
+    <font color="#808080">string codeWindow:get_text_with_trim ()</font><br>
+    &nbsp;Returns the full text from the control after stripping end of
+    line spaces if the <font color="#808080">autotrim</font> setting is
+    set.<br>
+    <br>
+    <font color="#808080">table codeWindow:get_indexes ()</font><br>
+    &nbsp;Returns an indexed table with the indexes from the code. Each
+    entry in the returned table has 2 keys;&nbsp; <font color="#808080">text</font>
+    and <font color="#808080">line</font>.<br>
+    &nbsp;The <font color="#808080">text</font> key is a string
+    contains the text from the line matching the index pattern.<br>
+    &nbsp;The <font color="#808080">line</font> key is a number of the
+    line number within the control.<br>
+    &nbsp;Typically the <font color="#808080">text</font> would be
+    displayed to the user as the index, and the <font color="#808080">line</font>
+    is passed to <font color="#808080">codeWindow:gotoLine</font> to
+    navigate to the indexed line.<br>
+    <br>
+    <font color="#808080">nil codeWindow:goto_line (line)</font><br>
+    &nbsp;Scrolls the contents of the control to bring the given line to
+    the center of the control.<br>
+    <br>
+    &nbsp;<a moz-do-not-send="true" href="downloads/codewin"
+      protocol="ftp">Download codewin</a><br>
+    <br>
+    <hr width="75%" size="2" noshade="noshade" color="black">
+    <div align="center">A part of <a moz-do-not-send="true"
+        href="index.html">Open Software</a><br>
+      <br>
+    </div>
+  </body>
+</html>

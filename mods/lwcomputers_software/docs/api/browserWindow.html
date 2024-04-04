@@ -1,0 +1,1024 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>browserWindow</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>html.browserWindow - WIN</h1>
+    Class <b>browserWindow</b><br>
+    Inherits from <a moz-do-not-send="true" href="window.html">window</a>.<br>
+    <br>
+    The browserWindow class provides a display window for a html (or
+    plain text) document.<br>
+    <br>
+    To create a browserWindow use it's new method:<br>
+    <tt><font color="#000066">local</font> view = html.browserWindow:new
+      (parent, id, x, y, width, height)</tt><br>
+    <br>
+    <br>
+    <b>Properties</b><br>
+    <br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">brws__doc</td>
+          <td valign="top"><a moz-do-not-send="true" href="htmlDoc.html">htmlDoc</a></td>
+          <td valign="top">The document object.</td>
+        </tr>
+        <tr>
+          <td valign="top">brws__map</td>
+          <td valign="top"><a moz-do-not-send="true" href="htmlMap.html">htmlMap</a></td>
+          <td valign="top">The mapping object.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Methods</b><br>
+    <ul id="mozToc">
+      <!--mozToc h3 1-->
+      <li><a href="#mozTocId4862">browserWindow:constructor</a></li>
+      <li><a href="#mozTocId344776">browserWindow:doc_type</a></li>
+      <li><a href="#mozTocId529911">browserWindow:draw</a></li>
+      <li><a href="#mozTocId2783">browserWindow:get_html</a></li>
+      <li><a href="#mozTocId863031">browserWindow:get_map</a></li>
+      <li><a href="#mozTocId454515">browserWindow:get_text</a></li>
+      <li><a href="#mozTocId102860">browserWindow:get_title</a></li>
+      <li><a href="#mozTocId761370">browserWindow:lines</a></li>
+      <li><a href="#mozTocId886444">browserWindow:map</a></li>
+      <li><a href="#mozTocId293858">browserWindow:map_node</a></li>
+      <li><a href="#mozTocId172193">browserWindow:merge_address</a></li>
+      <li><a href="#mozTocId652516">browserWindow:node_from_point</a></li>
+      <li><a href="#mozTocId298309">browserWindow:on_left_click</a></li>
+      <li><a href="#mozTocId776988">browserWindow:on_move</a></li>
+      <li><a href="#mozTocId702193">browserWindow:on_touch</a></li>
+      <li><a href="#mozTocId213101">browserWindow:remap</a></li>
+      <li><a href="#mozTocId589324">browserWindow:serialize</a></li>
+      <li><a href="#mozTocId594875">browserWindow:server_not_found</a></li>
+      <li><a href="#mozTocId666578">browserWindow:set_text</a></li>
+      <li><a href="#mozTocId518022">browserWindow:split_address</a></li>
+    </ul>
+    <br>
+    See also <a moz-do-not-send="true" href="html_api.html">HTML API</a>,
+    <a moz-do-not-send="true" href="api_reference.html">API Reference</a>,
+    <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId4862" class="mozTocH3"></a><a
+        name="browserWindow:constructor"></a>html.browserWindow:constructor</h3>
+    <i> wnd browserWindow:constructor (parent, id, x, y, width, height)</i><br>
+    <br>
+    Constructs and returns the instantiated browser window.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">parent </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">Parent window, typically a frame. </td>
+        </tr>
+        <tr>
+          <td valign="top">id </td>
+          <td valign="top">number </td>
+          <td valign="top">Numeric id value for browser window. </td>
+        </tr>
+        <tr>
+          <td valign="top">x</td>
+          <td valign="top">number</td>
+          <td valign="top">Parent relative x position.</td>
+        </tr>
+        <tr>
+          <td valign="top">y</td>
+          <td valign="top">number</td>
+          <td valign="top">Parent relative y position.</td>
+        </tr>
+        <tr>
+          <td valign="top">width</td>
+          <td valign="top">number</td>
+          <td valign="top">The window's width.</td>
+        </tr>
+        <tr>
+          <td valign="top">height</td>
+          <td valign="top">number</td>
+          <td valign="top">The window's height.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">wnd </td>
+          <td valign="top">browserWindow </td>
+          <td valign="top">The instantiated browser window. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId344776" class="mozTocH3"></a><a
+        name="browserWindow:doc_type"></a>html.browserWindow:doc_type</h3>
+    <i> format browserWindow:doc_type ()</i><br>
+    <br>
+    Returns the format that the current document was loaded from.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">format </td>
+          <td valign="top">string </td>
+          <td valign="top">The format of the document; either <font
+              color="#ffcc00">"text"</font> or <font color="#ffcc00">"html"</font>.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId529911" class="mozTocH3"></a><a
+        name="browserWindow:draw"></a>html.browserWindow:draw</h3>
+    <i> browserWindow:draw (gdi, bounds)</i><br>
+    <br>
+    Draws the browser window in its current state.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">gdi </td>
+          <td valign="top"><a moz-do-not-send="true" href="GDI.html">GDI</a>
+          </td>
+          <td valign="top">GDI object to use for drawing. </td>
+        </tr>
+        <tr>
+          <td valign="top">bounds </td>
+          <td valign="top"><a moz-do-not-send="true" href="rect.html">rect</a>
+          </td>
+          <td valign="top">Invalidated area of the window. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId2783" class="mozTocH3"></a><a
+        name="browserWindow:get_html"></a>html.browserWindow:get_html</h3>
+    <i> html browserWindow:get_html ()</i><br>
+    <br>
+    Creates and returns the raw html string representation of the
+    current document.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">html </td>
+          <td valign="top">string </td>
+          <td valign="top">The raw html representation of the document.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    The returned string is suitable for saving to a file.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#browserWindow:serialize">browserWindow:serialize</a>,
+    <a moz-do-not-send="true" href="#browserWindow:get_text">browserWindow:get_text</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="browserWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId863031" class="mozTocH3"></a><a
+        name="browserWindow:get_map"></a>html.browserWindow:get_map</h3>
+    <i> map browserWindow:get_map (width)</i><br>
+    <br>
+    Creates a <a moz-do-not-send="true" href="htmlMap.html">htmlMap</a>
+    object and formats it to the given width, returning it. The returned
+    map object is independent of the browserWindow object.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">width </td>
+          <td valign="top">number </td>
+          <td valign="top">The character width the html document is to
+            be formatted to. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">map </td>
+          <td valign="top"><a moz-do-not-send="true" href="htmlMap.html">htmlMap</a>
+          </td>
+          <td valign="top">The map object. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    This method can be called to gain a map object for drawing to a
+    printer.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="browserWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId454515" class="mozTocH3"></a><a
+        name="browserWindow:get_text"></a>html.browserWindow:get_text</h3>
+    <i> plain browserWindow:get_text ()</i><br>
+    <br>
+    Creates and returns the plain text string representation of the
+    current document.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">plain </td>
+          <td valign="top">string </td>
+          <td valign="top">The plain text representation of the
+            document. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    The returned string is suitable for saving to a file.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#browserWindow:serialize">browserWindow:serialize</a>,
+    <a moz-do-not-send="true" href="#browserWindow:get_html">browserWindow:get_html</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="browserWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId102860" class="mozTocH3"></a><a
+        name="browserWindow:get_title"></a>html.browserWindow:get_title</h3>
+    <i> title browserWindow:get_title (title)</i><br>
+    <br>
+    Returns the title from the html document, or default if the document
+    has none.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">default </td>
+          <td valign="top">string/nil </td>
+          <td valign="top">A default title for the html document. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">title </td>
+          <td valign="top">string/nil </td>
+          <td valign="top">The html document's title. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="browserWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId761370" class="mozTocH3"></a><a
+        name="browserWindow:lines"></a>html.browserWindow:lines</h3>
+    <i> lines browserWindow:lines ()</i><br>
+    <br>
+    Returns the line count of the html document.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">lines </td>
+          <td valign="top">number </td>
+          <td valign="top">The number of lines in the document. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    As the document display is free form, the number of lines can vary
+    when the window changes size.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="browserWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId886444" class="mozTocH3"></a><a
+        name="browserWindow:map"></a>html.browserWindow:map</h3>
+    <i> map browserWindow:map (width, body, color, bgcolor, linkcolor,
+      align)</i><br>
+    <br>
+    Maps the current document and returns the map.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">width </td>
+          <td valign="top">number </td>
+          <td valign="top">The width to format the document to. </td>
+        </tr>
+        <tr>
+          <td valign="top">body </td>
+          <td valign="top">table </td>
+          <td valign="top">The body node of the html document. </td>
+        </tr>
+        <tr>
+          <td valign="top">color</td>
+          <td valign="top">number</td>
+          <td valign="top">The body text color.</td>
+        </tr>
+        <tr>
+          <td valign="top">bgcolor</td>
+          <td valign="top">number</td>
+          <td valign="top">The body background color.</td>
+        </tr>
+        <tr>
+          <td valign="top">linkcolor</td>
+          <td valign="top">number</td>
+          <td valign="top">The body link color.</td>
+        </tr>
+        <tr>
+          <td valign="top">align</td>
+          <td valign="top">string</td>
+          <td valign="top">The body alignment.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">map </td>
+          <td valign="top"><a moz-do-not-send="true" href="htmlMap.html">htmlMap</a>
+          </td>
+          <td valign="top">The map object. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    This method is used internally by the mapping process and not called
+    generally.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="browserWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId293858" class="mozTocH3"></a><a
+        name="browserWindow:map_node"></a>html.browserWindow:map_node</h3>
+    <i>browserWindow:map_node (map, node, color, bgcolor, linkcolor,
+      align, erase)</i><br>
+    <br>
+    Maps the node using the inheritable properties.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">map </td>
+          <td valign="top"><a moz-do-not-send="true" href="htmlMap.html">htmlMap</a>
+          </td>
+          <td valign="top">The map object to record the formatting. </td>
+        </tr>
+        <tr>
+          <td valign="top">node </td>
+          <td valign="top">table </td>
+          <td valign="top">The <a moz-do-not-send="true"
+              href="htmlDoc.html">htmlDoc</a> node to map. </td>
+        </tr>
+        <tr>
+          <td valign="top">color</td>
+          <td valign="top">number</td>
+          <td valign="top">The inheritable text color to use.</td>
+        </tr>
+        <tr>
+          <td valign="top">bgcolor</td>
+          <td valign="top">number</td>
+          <td valign="top">The inheritable background color to use.</td>
+        </tr>
+        <tr>
+          <td valign="top">linkcolor</td>
+          <td valign="top">number</td>
+          <td valign="top">The inheritable link color to use.</td>
+        </tr>
+        <tr>
+          <td valign="top">align</td>
+          <td valign="top">string</td>
+          <td valign="top">The inheritable alignment to use.</td>
+        </tr>
+        <tr>
+          <td valign="top">erase</td>
+          <td valign="top">number/nil</td>
+          <td valign="top">The inheritable erasure color to use.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    This method is used internally by the mapping process and not called
+    generally.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="browserWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId172193" class="mozTocH3"></a><a
+        name="browserWindow:merge_address"></a>html.browserWindow:merge_address</h3>
+    <i> address browserWindow:merge_address (link, ref, protocol)</i><br>
+    <br>
+    Merges a relative address with a full address, and returns the
+    absolute address.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">link </td>
+          <td valign="top">string </td>
+          <td valign="top">The (potentially) relative address to merge,
+            typically from a link. </td>
+        </tr>
+        <tr>
+          <td valign="top">reference </td>
+          <td valign="top">string </td>
+          <td valign="top">The address to merge with, should be starting
+            at a top domain. </td>
+        </tr>
+        <tr>
+          <td valign="top">protocol</td>
+          <td valign="top">string/nil</td>
+          <td valign="top">The preferred protocol.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">address </td>
+          <td valign="top">string </td>
+          <td valign="top">The full, merged address. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If the link address is fully qualified (including protocol, or a
+    local file path beginning with <font color="#ffcc00">"/"</font>) it
+    is returned as is.<br>
+    <br>
+    If the reference address is of <font color="#ffcc00">"file:"</font>
+    protocol or begins with <font color="#ffcc00">"/"</font> then <font
+      color="#ffcc00">"file:"</font> is used, and the protocol parameter
+    is ignored. If not a local path the protocol parameter is used. If
+    the parameter nil <font color="#ffcc00">"http:"</font> is assumed.<br>
+    <br>
+    This method can be used as a static member of the browserWindow
+    class.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#browserWindow:split_address">browserWindow:split_address</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="browserWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId652516" class="mozTocH3"></a><a
+        name="browserWindow:node_from_point"></a>html.browserWindow:node_from_point</h3>
+    <i> node browserWindow:node_from_point (x, y)</i><br>
+    <br>
+    Returns the html node at the given point.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">x </td>
+          <td valign="top">number </td>
+          <td valign="top">The horizontal window relative position. </td>
+        </tr>
+        <tr>
+          <td valign="top">y </td>
+          <td valign="top">number </td>
+          <td valign="top">The vertical window relative position. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">node </td>
+          <td valign="top">table </td>
+          <td valign="top">The node at the given point or nil if none. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="browserWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId298309" class="mozTocH3"></a><a
+        name="browserWindow:on_left_click"></a>html.browserWindow:on_left_click</h3>
+    <i> result browserWindow:on_left_click (x, y, count)</i><br>
+    <br>
+    Calls the base class implementation and sends a <a
+      moz-do-not-send="true" href="events.html#link_click">link_click</a>
+    event to the parent window if a link was clicked.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">x </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative x position. </td>
+        </tr>
+        <tr>
+          <td valign="top">y </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative y position. </td>
+        </tr>
+        <tr>
+          <td valign="top">count<br>
+          </td>
+          <td valign="top">number</td>
+          <td valign="top">The number of times this same position was
+            repeatedly clicked, with each successive click within the <i>double_click_time</i>.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Always true. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true"
+      href="window.html#window:on_left_click">window:on_left_click</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="browserWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId776988" class="mozTocH3"></a><a
+        name="browserWindow:on_move"></a>html.browserWindow:on_move</h3>
+    <i> result browserWindow:on_move ()</i><br>
+    <br>
+    Remaps the document's contents.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Always false. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:on_move">window:on_move</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="browserWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId702193" class="mozTocH3"></a><a
+        name="browserWindow:on_touch"></a>html.browserWindow:on_touch</h3>
+    <i> result browserWindow:on_touch (x, y)</i><br>
+    <br>
+    Calls the base class implementation and sends a <a
+      moz-do-not-send="true" href="events.html#link_click">link_click</a>
+    event to the parent window if a link was touched.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">x </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative x position. </td>
+        </tr>
+        <tr>
+          <td valign="top">y </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative y position. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Always true. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:on_touch">window:on_touch</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="browserWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId213101" class="mozTocH3"></a><a
+        name="html.browserWindow:remap"></a>html.browserWindow:remap</h3>
+    <i> browserWindow:remap ()</i><br>
+    <br>
+    Remaps the html document for the browser window, adjusting the
+    scroll size.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="browserWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId589324" class="mozTocH3"></a><a
+        name="browserWindow:serialize"></a>html.browserWindow:serialize</h3>
+    <i> raw browserWindow:serialize ()</i><br>
+    <br>
+    Serializes the document object into a raw text string. If the
+    document's type is "text" then the returned string is a plain text
+    representation, otherwise html.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">raw </td>
+          <td valign="top">string </td>
+          <td valign="top">The raw text representation of the document.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    The returned string is suitable for saving to a file.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#browserWindow:get_html">browserWindow:get_html</a>,
+    <a moz-do-not-send="true" href="#browserWindow:get_text">browserWindow:get_text</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="browserWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId594875" class="mozTocH3"></a><a
+        name="browserWindow:server_not_found"></a>html.browserWindow:server_not_found</h3>
+    <i>browserWindow:server_not_found (address)</i><br>
+    <br>
+    Displays a server not found page in the browserWindow for the
+    address.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">address </td>
+          <td valign="top">string </td>
+          <td valign="top">The failed address. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="browserWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId666578" class="mozTocH3"></a><a
+        name="browserWindow:set_text"></a>html.browserWindow:set_text</h3>
+    <i>browserWindow:set_text (source)</i><br>
+    <br>
+    Parses the source as the current document for the window.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">source </td>
+          <td valign="top"><a moz-do-not-send="true" href="htmlDoc.html">htmlDoc</a>/string/nil
+          </td>
+          <td valign="top">If a <a moz-do-not-send="true"
+              href="htmlDoc.html">htmlDoc</a> object the document is
+            copied. If a string it may be the raw html document (as
+            loaded from a file) or plain text. If nil the window
+            displays a blank document. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="browserWindow.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId518022" class="mozTocH3"></a><a
+        name="browserWindow:split_address"></a>html.browserWindow:split_address</h3>
+    <i> path, domain, protocol browserWindow:split_address (address)</i><br>
+    <br>
+    Divides an address into its components.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">address </td>
+          <td valign="top">string </td>
+          <td valign="top">The address to separate. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">path </td>
+          <td valign="top">string </td>
+          <td valign="top">The path after the domain, if any. </td>
+        </tr>
+        <tr>
+          <td valign="top">domain </td>
+          <td valign="top">string </td>
+          <td valign="top">The domain, if any. For a local file this
+            will be <font color="#ffcc00">""</font>. </td>
+        </tr>
+        <tr>
+          <td valign="top">protocol</td>
+          <td valign="top">string</td>
+          <td valign="top">The protocol. If missing either <font
+              color="#ffcc00">"file"</font> or <font color="#ffcc00">"http"</font>
+            is returned as appropriate.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    This method can be used as a static member of the browserWindow
+    class.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#browserWindow:merge_address">browserWindow:merge_address</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="browserWindow.html#top">top</a><br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="html_api.html">HTML API</a>,
+    <a moz-do-not-send="true" href="api_reference.html">API Reference</a>,
+    <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

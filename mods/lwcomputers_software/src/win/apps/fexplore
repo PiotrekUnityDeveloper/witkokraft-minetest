@@ -1,0 +1,865 @@
+
+local app_args = { ... }
+local appFrame = win.create_app_frame ()
+
+local APP_TITLE      = "explore"
+
+-- control ids
+local ID_MENUBTN     = 100
+local ID_FILELIST    = 101
+local ID_STATUS      = 102
+
+-- command ids
+local IDM_UPDIR      = 1000
+local IDM_OPEN       = 1001
+local IDM_RUN        = 1002
+local IDM_NEWDIR     = 1003
+local IDM_RENAME     = 1004
+local IDM_LABEL      = 1005
+local IDM_DELETE     = 1006
+local IDM_COPY       = 1007
+local IDM_PASTE      = 1008
+local IDM_QUITAPP    = 1009
+
+
+local TYPE_UP        = 0
+local TYPE_DIR       = 1
+local TYPE_FILE      = 2
+
+
+local function path_folder (path)
+	path = tostring (path or "")
+
+	if path:len () > 1 then
+		if path:sub (-1, -1) == "/" then
+			path = path:sub (1, -2)
+		end
+
+		local last_name = fs.path_name (path)
+		path = path:sub(1, -(last_name:len () + 1))
+	else
+		path = "/"
+	end
+
+	return path
+end
+
+
+
+local function is_sub_of (parent, sub)
+	if parent:sub (-1, -1) ~= "/" then
+		parent = parent.."/"
+	end
+
+	if sub:sub (-1, -1) ~= "/" then
+		sub = sub.."/"
+	end
+
+	while sub ~= "/" do
+		if sub == parent then
+			return true
+		end
+
+		sub = path_folder (sub)
+	end
+
+	return false
+end
+
+
+
+local function can_paste (item_path, to_dir)
+	if fs.file_exists (item_path) then
+		if path_folder (item_path) ~= to_dir then
+			local copy_path = to_dir..fs.path_name (item_path)
+
+			-- cant copy parent folder to sub folder - recursive
+			if is_sub_of (item_path, copy_path) and fs.file_exists (item_path, true) then
+				return false
+			end
+
+			-- cant copy to parent folder of same name - deletes source
+			if is_sub_of (copy_path, item_path) then
+				return false
+			end
+		end
+
+		return true
+	end
+
+	return false
+end
+
+
+
+local function get_drive (path)
+	local list = fs.ls ()
+
+	for i, mount in ipairs (list) do
+		if mount == path then
+			return i - 1
+		end
+	end
+
+	return nil
+end
+
+
+
+local function get_mount (path)
+	local pos = path:find ("/", 2)
+
+	if pos then
+		local mount = path:sub (1, pos - 1)
+
+		if fs.get_drive_id (mount) then
+			return mount
+		end
+	end
+
+	return "/"
+end
+
+
+
+local function get_label (path)
+	local drive = get_drive (path)
+
+	if drive then
+		return fs.get_label (drive)
+	end
+
+	return nil
+end
+
+
+
+function appFrame:on_menu (x, y)
+	local menu = win.menuWindow:new (self)
+	local sep = false
+
+	x = x or 0
+	y = y or 1
+
+	if self.app_items:get_data (1) and
+			self.app_items:get_data (1).type == TYPE_UP and
+			self.app_cur_dir:len() > 1 then
+		menu:add_string ("Up      Ctrl+^", IDM_UPDIR)
+		sep = true
+	end
+
+	menu:add_string ("New     Ctrl+N", IDM_NEWDIR)
+	sep = true
+
+	if self.app_items:get_data () then
+		menu:add_string ("Open    Ctrl+O", IDM_OPEN)
+		sep = true
+	end
+
+	if self.app_items:get_data () then
+		if self.app_items:get_data ().type == TYPE_FILE then
+			menu:add_string ("Run     Ctrl+P", IDM_RUN)
+			sep = true
+		end
+	end
+
+	if self:get_selected_path () then
+		if not get_drive (self:get_selected_path ()) then
+			menu:add_string ("Rename  Ctrl+R", IDM_RENAME)
+			menu:add_string ("Delete  Del",    IDM_DELETE)
+			sep = true
+		end
+	end
+
+	if self:get_selected_path () then
+		if get_drive (self:get_selected_path ()) then
+			menu:add_string ("Label   Ctrl+L", IDM_LABEL)
+			sep = true
+		end
+	end
+
+	if sep then
+		menu:add_string ("--------------")
+		sep = false
+	end
+
+	if self:get_selected_path () then
+		menu:add_string ("Copy    Ctrl+C", IDM_COPY)
+		sep = true
+	end
+
+	local cbType, cbPath = self:get_clipboard ()
+	if cbType == win.CB_TEXT then
+		if can_paste (cbPath, self.app_cur_dir) then
+			menu:add_string ("Paste   Ctrl+V", IDM_PASTE)
+			sep = true
+		end
+	end
+
+	if sep then
+		menu:add_string ("--------------")
+	end
+
+	menu:add_string ("Quit", IDM_QUITAPP)
+
+	menu:track (x, y)
+end
+
+
+function appFrame:on_command (cmdId)
+	if cmdId == IDM_UPDIR then
+		if self.app_items:get_data (1) then
+			if self.app_items:get_data (1).type == TYPE_UP then
+				if self.app_cur_dir:len() > 1 then
+					self.app_cur_dir = path_folder (self.app_cur_dir)
+					self:fill_list ()
+				end
+			end
+		end
+
+		return true
+	end
+
+	if cmdId == IDM_OPEN then
+		self:open_file ()
+
+		return true
+	end
+
+	if cmdId == IDM_RUN then
+		self:run_file ()
+
+		return true
+	end
+
+	if cmdId == IDM_NEWDIR then
+		self:on_new_dir ()
+
+		return true
+	end
+
+	if cmdId == IDM_RENAME then
+		self:on_rename ()
+
+		return true
+	end
+
+	if cmdId == IDM_LABEL then
+		self:on_label_disk ()
+
+		return true
+	end
+
+	if cmdId == IDM_DELETE then
+		self:on_delete ()
+
+		return true
+	end
+
+	if cmdId == IDM_COPY then
+		self:copy (self:get_selected_path ())
+
+		return true
+	end
+
+	if cmdId == IDM_PASTE then
+		self:paste ()
+
+		return true
+	end
+
+	if cmdId == IDM_QUITAPP then
+		self:quit_app ()
+
+		return true
+	end
+
+	return false
+end
+
+
+function appFrame:fill_list ()
+	if self.app_cur_dir ~= "/" then
+		if fs.file_type (self.app_cur_dir:sub (1, -2)) ~= "dir" then
+			self.app_cur_dir = "/"
+		end
+	end
+
+	local sel = self.app_items:get_cur_sel ()
+	local item = self.app_items:get_string ()
+
+	self.app_items:reset_content ()
+
+	if self.app_cur_dir:len() > 1 then
+		self.app_items:add_string ("..", { type = TYPE_UP, name = ".." })
+	end
+
+	local items = fs.ls (self.app_cur_dir, true)
+	table.sort (items)
+	for i, name in ipairs (items) do
+		self.app_items:add_string ("/"..name, { type = TYPE_DIR, name = name })
+	end
+
+	items = fs.ls (self.app_cur_dir, false)
+	table.sort (items)
+	for i, name in ipairs (items) do
+		self.app_items:add_string (name, { type = TYPE_FILE, name = name })
+	end
+
+	if item then
+		local index = self.app_items:find (item, 0, true)
+
+		if index > 0 then
+			self.app_items:set_cur_sel (index)
+			sel = 0
+		end
+	end
+
+	if sel > 0 then
+		self.app_items:set_cur_sel (sel)
+	end
+
+	self:update_title ()
+	self:update_status ()
+end
+
+
+function appFrame:get_selected_path ()
+	if self.app_items:get_data () then
+		if self.app_items:get_data ().type ~= TYPE_UP then
+			return (self.app_cur_dir..self.app_items:get_data ().name)
+		end
+	end
+
+	return nil
+end
+
+
+function appFrame:do_default_action ()
+	if self.app_items:get_data () then
+		if self.app_items:get_data ().type == TYPE_UP then
+			if self.app_cur_dir:len() > 1 then
+				self.app_cur_dir = path_folder (self.app_cur_dir)
+				self.app_items:set_cur_sel (0)
+				self:fill_list ()
+			end
+
+		elseif self.app_items:get_data ().type == TYPE_DIR then
+			self.app_cur_dir = self:get_selected_path ().."/"
+			self.app_items:set_cur_sel (0)
+			self:fill_list ()
+
+		elseif self.app_items:get_data ().type == TYPE_FILE then
+			self:open_file (self:get_selected_path ())
+
+		end
+	end
+end
+
+
+function appFrame:on_event (event, p1, p2, p3, p4, p5, ...)
+	if event == "btn_click" then
+		if p1:get_id () == ID_MENUBTN then
+			self:on_menu ()
+			return true
+		end
+
+	elseif event == "menu_cmd" then
+		return self:on_command (p1)
+
+	elseif event == "selection_change" then
+		if p1:get_id () == ID_FILELIST then
+			self:update_status ()
+
+			return true
+		end
+
+	elseif event == "list_click" then
+		if p1:get_id () == ID_FILELIST then
+
+			return true
+		end
+
+	elseif event == "list_double_click" then
+		if p1:get_id () == ID_FILELIST then
+			self:do_default_action ()
+
+			return true
+		end
+
+	elseif event == "disk" then
+		if (self.app_cur_dir == "/") or
+				(not p1 and not fs.file_exists (self.app_cur_dir)) then
+			self.app_cur_dir = "/"
+			self:fill_list ()
+		end
+
+		return true
+
+	end
+
+	return false
+end
+
+
+function appFrame:new_dir (path)
+	fs.mkdir (path)
+	self:fill_list ()
+end
+
+
+local function validate_new_dir (name)
+	return (not fs.file_exists (appFrame.app_cur_dir..name)) and
+				(not name:find ("/", 1)) and
+				(not name:find (" ", 1))
+end
+
+
+function appFrame:on_new_dir ()
+	local folder = cmndlg.input (self, "New Folder", "Enter new folder name.",
+										  "new", "Name", nil, validate_new_dir )
+
+	if folder then
+		self:new_dir (self.app_cur_dir..folder)
+	end
+end
+
+
+function appFrame:open_file (path)
+	if not path then
+		if not self.app_items:get_data () then
+			return
+		end
+
+		if self.app_items:get_data ().type == TYPE_UP then
+			path = path_folder (self.app_cur_dir)
+		else
+			path = self:get_selected_path ()
+		end
+	end
+
+	if fs.file_type (path) == "dir" then
+		self:get_desktop ():run_app (appFrame:get_app_path (), " \""..path.."\"")
+	else
+		local ini = fs.load_ini (appFrame:get_app_path ()..".asc")
+
+		if ini then
+			local prog_path = ini:find(fs.path_extension (path))
+
+			if not prog_path then
+				prog_path = ini:find ("<default>")
+			end
+
+			if prog_path then
+				self:get_desktop ():run_app (prog_path, "\""..path.."\"")
+			end
+		end
+	end
+end
+
+
+function appFrame:run_file (path)
+	if not path then
+		if not self.app_items:get_data () then
+			return
+		end
+
+		if self.app_items:get_data ().type == TYPE_UP then
+			self:open_file (path_folder (self.app_cur_dir))
+
+			return
+
+		elseif self.app_items:get_data ().type == TYPE_DIR then
+			self:open_file (self:get_selected_path ())
+
+			return
+
+		else
+			path = self:get_selected_path ()
+		end
+	end
+
+	local file = io.open (path, "r")
+	if not file then
+		self:msgbox ("Error", "File error "..path, term.colors.red)
+		return
+	end
+
+	local content = file:read ("*a")
+	local is_app = (content:find ("win.create_app_frame", 1) and
+											content:find ("run_app", 1))
+
+	file:close ()
+
+	if is_app then
+		self:get_desktop ():run_app (path)
+	else
+		local ini = fs.load_ini (appFrame:get_app_path ()..".asc")
+
+		if ini then
+			local prog_path = ini:find(fs.path_extension (path))
+
+			if not prog_path then
+				prog_path = ini:find ("<console>")
+			end
+
+			if prog_path then
+				self:get_desktop ():run_app (prog_path, "\""..path.."\"")
+			end
+		end
+	end
+end
+
+
+function appFrame:rename(path, new_name)
+	fs.rename (path, path_folder (path)..new_name)
+	self:fill_list ()
+end
+
+
+local function validate_rename (name)
+	return (not fs.file_exists (path_folder (appFrame:get_selected_path ())..name)) and
+				(not name:find ("/", 1))
+end
+
+
+function appFrame:on_rename ()
+	local path = self:get_selected_path ()
+
+	if path then
+		if not get_drive (path) then
+			local name = cmndlg.input (self, "Rename",
+												"Rename "..fs.path_name (path).." to:",
+												 fs.path_name (path),
+												 "Name", nil, validate_rename)
+
+			if name then
+				self:rename (path, name)
+			end
+		end
+	end
+end
+
+
+function appFrame:label_disk (drive, label)
+	fs.set_label (drive, label)
+	self:fill_list ()
+end
+
+
+function appFrame:on_label_disk ()
+	local drive = get_drive (self:get_selected_path ())
+
+	if drive then
+		local cur_label = fs.get_label (drive) or ""
+		local label = cmndlg.input (self, "Label",
+											 "Label disk "..tostring (drive)..
+												" from "..cur_label.." to:",
+											 cur_label, "Label")
+
+		if label then
+			self:label_disk (drive, label)
+		end
+	end
+end
+
+
+function appFrame:delete (path)
+	fs.rm (path, true)
+	self:fill_list ()
+end
+
+
+function appFrame:on_delete ()
+	local path = self:get_selected_path ()
+
+	if path then
+		if fs.file_type (path) == "dir" then
+			if not cmndlg.confirm (self, "Delete Folder",
+										  "Delete "..fs.path_name (path)..
+											  " and all of its contents?",
+										  false, term.colors.orange) then
+				return
+			end
+		else
+			if not cmndlg.confirm (self, "Delete File",
+										  "Delete "..fs.path_name (path).."?",
+										  false, term.colors.orange) then
+				return
+			end
+		end
+
+		self:delete (path)
+	end
+end
+
+
+function appFrame:copy (path)
+	if path then
+		self:set_clipboard (path, win.CB_TEXT)
+	end
+end
+
+
+function appFrame:paste ()
+	local cbType, cbPath = self:get_clipboard ()
+
+	if cbType == win.CB_TEXT then
+		if can_paste (cbPath, self.app_cur_dir) then
+			local copy_path;
+
+			if path_folder (cbPath) == self.app_cur_dir then
+				local counter = 1
+
+				copy_path = string.format("%s_%d", cbPath, counter)
+
+				while fs.file_exists (copy_path) do
+					counter = counter + 1
+					copy_path = string.format ("%s_%d", cbPath, counter)
+				end
+			else
+				copy_path = self.app_cur_dir..fs.path_name (cbPath)
+
+				if fs.file_exists (copy_path) then
+					if fs.file_type (copy_path) == "dir" then
+						if not cmndlg.confirm (self, "Overwrite",
+													  "Folder "..fs.path_name (cbPath)..
+														  " already exists.\nOverwrite all of its contents?",
+													  false, term.colors.orange) then
+							return
+						end
+					else
+						if not cmndlg.confirm (self, "Overwrite",
+													  "File "..fs.path_name (cbPath)..
+														  " already exists.\nOverwrite?",
+													  false, term.colors.orange) then
+							return
+						end
+					end
+				end
+			end
+
+			fs.cp (cbPath, copy_path, true)
+			self:fill_list ()
+		end
+	end
+end
+
+
+
+function appFrame:update_status ()
+	local info
+
+	if self:get_selected_path () then
+		local free_size = fs.disk_free (get_mount (self:get_selected_path ()))
+		local free_label
+
+		if free_size > 1000 then
+			free_label = string.format ("%0.1fkb", free_size / 1000)
+		else
+			free_label = string.format ("%db", free_size)
+		end
+
+		if fs.file_exists (self:get_selected_path (), true) then
+			info = string.format("%d items %s free",
+										table.maxn (fs.ls (self:get_selected_path ())),
+										free_label)
+		else
+			local file_size = fs.file_size (self:get_selected_path ())
+			local file_label
+
+			if file_size > 1000 then
+				file_label = string.format ("%0.1fkb", file_size / 1000)
+			else
+				file_label = string.format ("%db", file_size)
+			end
+
+			info = string.format ("%s %s free", file_label, free_label)
+		end
+	else
+		local free_size = fs.disk_free (get_mount (self.app_cur_dir))
+		local free_label
+
+		if free_size > 1000 then
+			free_label = string.format ("%0.1fkb", free_size / 1000)
+		else
+			free_label = string.format ("%db", free_size)
+		end
+
+		local items
+
+		if self.app_cur_dir ~= "/" then
+			if fs.file_exists (self.app_cur_dir:sub (1, -2), true) then
+				items = table.maxn (fs.ls (self.app_cur_dir:sub (1, -2)))
+			end
+		else
+			items = table.maxn (fs.ls ("/"))
+		end
+
+		if items then
+			info = string.format ("%d items %s free", items, free_label)
+		else
+			info = string.format ("%s free", free_label)
+		end
+	end
+
+	self.app_status:set_text (info)
+end
+
+
+function appFrame:update_title ()
+	local cur_path = string.trim (self.app_cur_dir, "/")
+	if cur_path:len () > 0 then
+		self:set_title (cur_path..":"..APP_TITLE)
+	else
+		self:set_title(APP_TITLE)
+	end
+end
+
+
+function appFrame:on_move ()
+	self.app_items:move (1, 1, self.width - 2, self.height - 2)
+	self.app_status:move (1, self.height - 1, self.width - 2, 1)
+
+	return false
+end
+
+
+function appFrame:on_frame_activate (active)
+	if active then
+		local sel = self.app_items:get_cur_sel ()
+
+		self:fill_list ()
+		self.app_items:set_cur_sel (sel)
+	end
+end
+
+
+function appFrame:on_child_key (wnd, key, ctrl, alt, shift)
+	if win.applicationFrame.on_child_key (self, wnd, key, ctrl, alt, shift) then
+		return true
+	end
+
+	if self:get_focus () == self.app_items then
+		if ctrl and not alt and not shift then
+			if key == keys.KEY_O then
+				return self:on_command (IDM_OPEN)
+			end
+
+			if key == keys.KEY_P then
+				return self:on_command (IDM_RUN)
+			end
+
+			if key == keys.KEY_N then
+				return self:on_command (IDM_NEWDIR)
+			end
+
+			if key == keys.KEY_R then
+				return self:on_command (IDM_RENAME)
+			end
+
+			if key == keys.KEY_L then
+				return self:on_command (IDM_LABEL)
+			end
+
+			if key == keys.KEY_C then
+				return self:on_command (IDM_COPY)
+			end
+
+			if key == keys.KEY_V then
+				return self:on_command (IDM_PASTE)
+			end
+
+			if key == keys.KEY_UP then
+				return self:on_command (IDM_UPDIR)
+			end
+
+		elseif not ctrl and alt and not shift then
+			if key == keys.KEY_M then
+				self:on_menu ()
+				return true
+			end
+
+		elseif not ctrl and not alt and not shift then
+			if key == keys.KEY_DELETE then
+				return self:on_command (IDM_DELETE)
+			end
+
+			if key == keys.KEY_ENTER then
+				self:do_default_action ()
+				return true
+			end
+
+		end
+	end
+
+	return false
+end
+
+
+function appFrame:on_child_right_click (child, x, y)
+	if child == self.app_items then
+		self.app_items:set_focus ()
+		self:on_menu (self:screen_to_wnd (x, y))
+
+		return true
+	end
+
+	return false
+end
+
+
+function appFrame:on_create ()
+	self:dress (APP_TITLE)
+
+	local menubtn = win.buttonWindow:new (self, ID_MENUBTN, 0, 0, "Menu")
+	menubtn:set_colors (menubtn:get_colors ().frame_text,
+							  menubtn:get_colors ().title_back,
+							  menubtn:get_colors ().frame_back)
+	menubtn:move (nil, nil, nil, nil, win.WND_TOP)
+
+	self.app_items = win.listWindow:new (self, ID_FILELIST, 1, 1, self.width - 2, self.height - 2)
+	self.app_items:set_colors (self:get_colors ().wnd_text,
+										self:get_colors ().wnd_back,
+										self:get_colors ().wnd_back,
+										self:get_colors ().selected_text,
+										self:get_colors ().selected_back)
+	self.app_items:set_focus ()
+
+	self.app_status = win.labelWindow:new (self, ID_STATUS, 1, self.height - 1, "")
+	self.app_status:move (1, self.height - 1, self.width - 2, 1)
+
+	self:want_event ("disk")
+
+	self.app_cur_dir = "/"
+
+	if #app_args > 0 then
+		local init_path = tostring (app_args[1])
+
+		if init_path:len () > 1 then
+			if init_path:sub (-1) == "/" then
+				if fs.file_type (init_path) == "dir" then
+					self.app_cur_dir = file_type
+				end
+			elseif fs.file_exists (init_path) then
+				if fs.file_type (init_path) == "dir" then
+					self.app_cur_dir = init_path.."/"
+				else
+					init_path = init_path:sub (1, -(fs.path_name (init_path):len () + 1))
+
+					if fs.file_type (init_path) == "dir" then
+						self.app_cur_dir = init_path
+					end
+				end
+			end
+		end
+	end
+
+	self:fill_list ()
+	self:set_active_top_frame ()
+
+	return true
+end
+
+
+appFrame:run_app ()

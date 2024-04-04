@@ -1,0 +1,154 @@
+
+local app_args = { ... }
+local appFrame = win.create_app_frame ()
+
+local APP_TITLE      = "Shutdown"
+local ID_SHUTDOWN    = 100
+local ID_RESTART     = 101
+local ID_CANCEL      = 102
+local ID_LOCKSCRNS   = 103
+
+
+function appFrame:on_event (event, p1, p2, p3, p4, p5, ...)
+	if event == "btn_click" then
+		if p1:get_id () == ID_LOCKSCRNS then
+			self:lock_screens ()
+			self:quit_app ()
+			return true
+		end
+
+		if p1:get_id () == ID_RESTART then
+			self:clear_screens ()
+			os.reboot ()
+			return true
+		end
+
+		if p1:get_id () == ID_SHUTDOWN then
+			self:clear_screens ()
+			os.shutdown ()
+			return true
+		end
+
+		if p1:get_id () == ID_CANCEL then
+			self:quit_app ()
+			return true
+		end
+	end
+
+	return false
+end
+
+
+function appFrame:on_frame_activate (active)
+	if not active then
+		self:start_timer (0.05)
+	end
+end
+
+
+function appFrame:on_timer (id)
+	self:quit_app ()
+
+	return false
+end
+
+
+function appFrame:on_move ()
+	local left, vert_mid = math.floor((self.width - 10) / 2),
+								  math.floor(self.height / 2)
+
+	if self:get_desktop ():can_lock () == false then
+		vert_mid = vert_mid - 2
+	end
+
+	local wnd = self:get_wnd_by_id (ID_LOCKSCRNS)
+	if wnd then
+		wnd:move (left, vert_mid - 3)
+	end
+
+	wnd = self:get_wnd_by_id (ID_RESTART)
+	if wnd then
+		wnd:move (left, vert_mid - 1)
+	end
+
+	wnd = self:get_wnd_by_id (ID_SHUTDOWN)
+	if wnd then
+		wnd:move (left, vert_mid + 1)
+	end
+
+	wnd = self:get_wnd_by_id (ID_CANCEL)
+	if wnd then
+		wnd:move (left, vert_mid + 3)
+	end
+
+	return false
+end
+
+
+function appFrame:on_create ()
+	self:set_text (APP_TITLE)
+	self:set_color (self:get_colors ().home_text)
+	self:set_bg_color (self:get_colors ().home_back)
+
+	local left, vert_mid = math.floor((self.width - 10) / 2),
+								  math.floor(self.height / 2)
+
+	if self:get_desktop ():can_lock () == false then
+		vert_mid = vert_mid - 2
+	end
+
+	win.buttonWindow:new(self, ID_LOCKSCRNS, left, vert_mid - 3,
+								"   Lock   "):show (self:get_desktop ():can_lock ())
+
+	win.buttonWindow:new(self, ID_RESTART, left, vert_mid - 1,
+								"  Restart ")
+
+	win.buttonWindow:new (self, ID_SHUTDOWN, left, vert_mid + 1,
+								" Shutdown ")
+
+	local can = win.buttonWindow:new (self, ID_CANCEL, left, vert_mid + 3,
+												"  Cancel  ")
+	can:set_colors (can:get_colors ().close_text,
+						 can:get_colors ().close_back,
+						 can:get_colors ().close_focus)
+	can:set_focus ()
+
+	self:set_active_top_frame ()
+
+	return true
+end
+
+
+function appFrame:clear_screens ()
+	local dirs = self:get_workspace ():desktops ()
+
+	for _, dir in ipairs (dirs) do
+		local dt = self:get_workspace ():get_desktop (dir)
+
+		if dt then
+			local gdi = dt:get_GDI ()
+
+			if gdi then
+				gdi:set_blink (false)
+				gdi:set_colors (nil, term.colors.black)
+				gdi:clear (0, 0, gdi:get_size ())
+
+				dt:release_GDI ()
+
+				gdi:set_blink (false)
+			end
+		end
+	end
+end
+
+
+function appFrame:lock_screens ()
+	local dirs = self:get_workspace ():desktops ()
+
+	for i = 1, #dirs, 1 do
+		self:get_workspace ():get_desktop (dirs[i]):lock_screen ()
+	end
+end
+
+
+appFrame:run_app ()

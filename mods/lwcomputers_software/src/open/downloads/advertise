@@ -1,0 +1,108 @@
+
+-- collect any program arguments
+local app_args = {...}
+-- [displayTime]
+
+-- create the application's main frame
+local appFrame = win.create_app_frame ()
+
+
+local APP_TITLE         = "Advertse"
+
+-- ids should be between 1 - 65535
+
+-- control ids
+local ID_ADVERT         = 101
+
+-- command ids
+local IDM_ONE           = 1001
+local IDM_TWO           = 1002
+local IDM_THREE         = 1003
+local IDM_QUITAPP       = 1004
+
+-- unique id for app frame
+local ID_MYAPP_FRAME    = 7246
+
+
+
+function appFrame:on_idle (idle_count)
+	if (os.clock () - self.app_started) >= self.app_display_time then
+      if not self:load_advert () then
+         self:msgbox ("Error", "Error loading advert.", term.colors.red)
+         self:quit ()
+      end
+
+      self.app_started = os.clock ()
+	end
+
+	return false
+end
+
+
+
+-- to reposition control windows, app frames should only
+-- move if monitor device changes size/resolution or
+-- fullscreen mode changes
+function appFrame:on_move ()
+   self.app_advert:move (nil, nil, self.width, self.height)
+
+   return false
+end
+
+
+
+function appFrame:on_create ()
+   -- single instance, look for existing frame
+   local instance = self:get_desktop ():get_wnd_by_id (ID_MYAPP_FRAME, false)
+
+   -- if found
+   if instance then
+      -- bring running instance to top
+      instance:set_active_top_frame ()
+
+      -- and drop out
+      return false
+   end
+
+   -- not found, change frame id to ID_MYAPP_FRAME
+   self:set_id (ID_MYAPP_FRAME)
+
+   -- frame wnd text displays in running app list
+   self:set_title (APP_TITLE)
+
+   -- create controls, usually setting focus to first
+   self.app_display_time = tonumber (app_args[1] or 10)
+   self.app_started = os.clock () - self.app_display_time - 1
+   self.app_advert = html.browserWindow:new (self, ID_ADVERT, 0, 0, self.width, self.height)
+   self:hide_cursor ()
+
+   -- app is constructed, bring it to top
+   self:set_active_top_frame ()
+
+   return true
+end
+
+
+
+function appFrame:load_advert ()
+   local folder = fs.path_folder (self:get_app_path ()).."/adverts"
+   local files = fs.ls (folder, false)
+
+   if #files > 0 then
+      local file = io.open (folder.."/"..files[math.random (1, #files)], "r")
+
+      if file then
+         self.app_advert:set_text (file:read ("*a"))
+         file:close ()
+
+         return true
+      end
+   end
+
+   return false
+end
+
+
+
+-- run application loop after methods are defined
+appFrame:run_app ()

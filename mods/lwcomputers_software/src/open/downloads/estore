@@ -1,0 +1,716 @@
+
+local app_args = {...}
+local appFrame = win.create_app_frame ()
+
+
+local APP_TITLE         = "eStore"
+
+local ID_MENUBTN        = 101
+local ID_ORDERS         = 102
+
+local IDM_PENDING       = 1001
+local IDM_COMPLETE      = 1002
+local IDM_PRINT         = 1003
+local IDM_DELETE        = 1004
+local IDM_QUITAPP       = 1005
+local IDM_VIEW          = 1006
+
+local ID_ESTORE_FRAME   = 12742
+
+local STORE_APP_ID		= "estore_app_id"
+
+
+local ALIGN_LEFT     = 0
+local ALIGN_RIGHT    = 1
+local ALIGN_CENTER   = 2
+
+
+
+local function str_field (field, len, precision, align, fill)
+	local str = tostring (field or "")
+	fill = fill or " "
+	align = align or ALIGN_LEFT
+	len = tonumber (len) or 0
+
+	if type (field) == "number" then
+		if precision and precision >= 0 then
+			precision = tonumber (precision) or 0
+
+			if precision > 0 then
+				local whole, part = math.modf (field)
+
+				part = math.modf ((part * math.pow (10, precision)) + 0.5)
+
+				str = string.format ("%01d.%0"..tostring (precision).."d", whole, part)
+			else
+				str = string.format ("%01d", (math.modf (field + 0.5)))
+			end
+		end
+	end
+
+	if len > 0 then
+		if string.len (str) > len then
+			if align == ALIGN_RIGHT then
+				local s = string.sub (str, string.len (str) - len)
+				str = s..""
+			else
+				local s = string.sub (str, 1, len)
+				str = s..""
+			end
+		elseif string.len (str) < len then
+			if align == ALIGN_RIGHT then
+				local s = string.rep (fill or " ", len - string.len (str))..str
+				str = s..""
+			elseif align == ALIGN_CENTER then
+				local pre = math.modf ((len - string.len (str)) / 2)
+
+				if pre > 0 then
+					local s = string.rep (fill or " ", pre)..str..string.rep (fill or " ", len - string.len (str) - pre)
+					str = s..""
+				else
+					local s = str..fill or " "
+					str = s..""
+				end
+			else
+				local s = str..string.rep (fill or " ", len - string.len (str))
+				str = s..""
+			end
+		end
+	end
+
+	return str
+end
+
+
+
+local function file_folder (path)
+	local str = string.reverse (path)
+	local folder = string.sub (str, string.find (str, "/", 1, true) + 1)
+
+	return string.reverse (folder)
+end
+
+
+-- orderDlg class ------------------------------------------------------
+local orderDlg = win.popupFrame:base()
+
+
+
+function orderDlg:on_create (order)
+	self:dress ("Order")
+
+	local str = string.format ("O%06d   %s\n %s\n%s\n",
+										order.id, os.date ("%Y-%m-%d %I:%M %P"),
+										str_field (order.status, 21, nil, ALIGN_CENTER),
+										order.name)
+
+	local address = string.wrap (order.address, 19)
+	for l = 1, #address, 1 do
+		str = str.."  "..address[l].."\n"
+	end
+
+	str = str.."Acc:"..order.account.."\n".."Total:"..
+			str_field (order.total, nil, 2, ALIGN_LEFT)..
+			"\n\nItem       Price  Qty"
+
+	for l = 1, #order.items, 1 do
+		str = str.."\n"..
+				str_field (order.items[l].item, 11, nil, ALIGN_LEFT, ".")..
+				str_field (order.items[l].price, 5, 2, ALIGN_RIGHT)..
+				str_field (order.items[l].qty, 5, 0, ALIGN_RIGHT)
+	end
+
+	local view = win.textWindow:new (self, ID_NAME, 1, 2, 22, 15, str)
+	view:set_bg_color (view:get_colors ().wnd_back)
+
+	self:move (nil, nil, 24, 18)
+
+	return true
+end
+-- end orderDlg class --------------------------------------------------
+
+
+
+function appFrame:on_receive (msg)
+	if msg.application == STORE_APP_ID and type (msg.data) == "table" then
+		if msg.context == "eshop_catalog" then
+			self:send_catalog (msg.sender_id, msg.data.application)
+		elseif msg.context == "eshop_order" then
+			if not self.app_current_order then
+				self:process_order (msg.sender_id, msg.data)
+				return true
+			end
+		elseif msg.context == "bank_approved" then
+			if self.app_current_order then
+				local order_id = self:add_order (self.app_current_order.order)
+
+				self:send_message (self.app_current_order.recipient_id,
+										 self.app_current_order.application,
+										 "estore_ordered",
+										 {
+											 order = order_id,
+											 total = self.app_current_order.order.total
+										 },
+										 self.app_connection_name)
+
+				self.app_current_order = nil
+				self:fill_orders ()
+				return true
+			end
+		elseif msg.context == "bank_declined" then
+			if self.app_current_order then
+				self:send_message (self.app_current_order.recipient_id,
+										 self.app_current_order.application,
+										 "estore_declined",
+										 {
+											 message = msg.data.message
+										 },
+										 self.app_connection_name)
+
+				self.app_current_order = nil
+				return true
+			end
+		end
+	end
+
+	return false
+end
+
+
+
+function appFrame:on_sent (msg, success)
+	if not success then
+		if self.app_current_order then
+			self:send_message (self.app_current_order.recipient_id,
+									 self.app_current_order.application,
+									 "estore_declined",
+									 {
+										 message = "Failed to send "..msg.context
+									 },
+									 self.app_connection_name)
+
+			self.app_current_order = nil
+		end
+	end
+end
+
+
+
+function appFrame:on_print_data ()
+	if self.app_print_order then
+		return win.applicationFrame.on_print_data (self,
+																 string.format ("Order O%06d", self.app_print_order.id),
+																 self.app_print_order, 0)
+	end
+
+	return nil
+end
+
+
+
+function appFrame:on_print_page (gdi, page, data)
+	local width, height = gdi:get_page_size ()
+	local address = string.wrap (data.data.address, width - 2)
+	local line = 2
+	local item = 0
+	local items = height - 4
+
+	gdi:write (string.format ("O%06d%s %s",
+									  data.data.id,
+									  string.rep (" ", width - 18),
+									  os.date ("%Y-%m-%d %I:%M %P")),
+				  0, 0)
+
+	if page == 1 then
+		gdi:write (str_field (data.data.status, width, nil, ALIGN_CENTER), 0, 1)
+		gdi:write (data.data.name, 0, 2)
+
+		for l = 1, #address, 1 do
+			gdi:write ("  "..address[l], 0, 2 + l)
+		end
+
+		gdi:write ("Acc:"..data.data.account, 0, 3 + #address)
+		gdi:write ("Total:"..str_field (data.data.total, nil, 2, ALIGN_LEFT), 0, 4 + #address)
+		line = 6 + #address
+		items = height - (#address + 8)
+	else
+		item = ((page - 1) * (height - 4)) - (#address + 4)
+	end
+
+	gdi:write (string.format ("Item%sPrice  Qty", string.rep (" ", width - 14)), 0, line)
+
+	for i = 1, items, 1 do
+		if (item + i) <= #data.data.items then
+			gdi:write (str_field (data.data.items[item + i].item, width - 10, nil, ALIGN_LEFT, ".")..
+							  str_field (data.data.items[item + i].price, 5, 2, ALIGN_RIGHT)..
+							  str_field (data.data.items[item + i].qty, 5, 0, ALIGN_RIGHT),
+						  0, line + i)
+		end
+	end
+
+	gdi:write (str_field (page, width, nil, ALIGN_CENTER), 0, height)
+
+	return ((page * (height - 4)) - (#address + 4)) <= #data.data.items
+end
+
+
+
+function appFrame:on_event (event, p1, p2, p3, p4, p5, ...)
+	if event == "btn_click" then
+		if p1:get_id () == ID_MENUBTN then
+			self:on_menu ()
+			return true
+		end
+
+	elseif event == "menu_cmd" then
+		return self:on_command (p1)
+
+	elseif event == "list_double_click" then
+		self:on_view ()
+		return true
+	end
+
+	return false
+end
+
+
+
+function appFrame:on_move ()
+	self.app_orders:move (1, 2, self.width - 2, self.height - 3)
+
+	return false
+end
+
+
+
+function appFrame:on_child_key (wnd, key, ctrl, alt, shift)
+	if win.applicationFrame.on_child_key (self, wnd, key, ctrl, alt, shift) then
+		return true
+	end
+
+	-- accelerators to menu commands
+	if ctrl and not alt and not shift then
+		if key == keys.KEY_V then
+			return self:on_command (IDM_VIEW)
+		end
+
+		if key == keys.KEY_P then
+			return self:on_command (IDM_PRINT)
+		end
+
+		if key == keys.KEY_R then
+			return self:on_command (IDM_PENDING)
+		end
+
+		if key == keys.KEY_C then
+			return self:on_command (IDM_COMPLETE)
+		end
+
+		if key == keys.KEY_D then
+			return self:on_command (IDM_DELETE)
+		end
+	end
+
+	return false
+end
+
+
+
+function appFrame:on_menu ()
+	local menu = win.menuWindow:new (self)
+
+	if self.app_orders:get_cur_sel () > 0 then
+		menu:add_string ("View     Ctrl+V",   IDM_VIEW)
+		menu:add_string ("Print    Ctrl+P",   IDM_PRINT)
+		menu:add_string ("---------------")
+		menu:add_string ("Pending  Ctrl+R",   IDM_PENDING)
+		menu:add_string ("Complete Ctrl+C",   IDM_COMPLETE)
+		menu:add_string ("---------------")
+		menu:add_string ("Delete   Ctrl+D",   IDM_DELETE)
+		menu:add_string ("---------------")
+	end
+	menu:add_string ("Quit App",          IDM_QUITAPP)
+
+	menu:track (0, 1)
+end
+
+
+
+function appFrame:on_command (cmd_id)
+	if cmd_id == IDM_VIEW then
+		self:on_view ()
+		return true
+	end
+
+	if cmd_id == IDM_PRINT then
+		self:on_print ()
+		return true
+	end
+
+	if cmd_id == IDM_PENDING then
+		self:on_status ("pending")
+		return true
+	end
+
+	if cmd_id == IDM_COMPLETE then
+		self:on_status ("complete")
+		return true
+	end
+
+	if cmd_id == IDM_DELETE then
+		self:on_delete ()
+		return true
+	end
+
+	if cmd_id == IDM_QUITAPP then
+		self:quit_app ()
+		return true
+	end
+
+	return false
+end
+
+
+
+function appFrame:on_create ()
+	local instance = self:get_desktop ():get_wnd_by_id (ID_ESTORE_FRAME, false)
+
+	if instance then
+		instance:set_active_top_frame ()
+		return false
+	end
+
+	self:set_id (ID_ESTORE_FRAME)
+
+	self:dress (APP_TITLE)
+
+	local menuBtn = win.buttonWindow:new (self, ID_MENUBTN, 0, 0, "Menu")
+	menuBtn:set_colors (menuBtn:get_colors ().frame_text,
+							  menuBtn:get_colors ().title_back,
+							  menuBtn:get_colors ().frame_back)
+	menuBtn:move (nil, nil, nil, nil, win.WND_TOP)
+
+	self.app_orders = win.listWindow:new (self, ID_ORDERS, 1, 2, self.width - 2, self.height - 3)
+	self.app_orders:set_focus ()
+
+	self.app_current_order = nil
+	self.app_print_order = nil
+
+	if not self:load_init () then
+		return false
+	end
+
+	local con = self:comm_open (nil, 5)
+	if not con then
+		self:msgbox ("Connection", "Could not connect to modem!", term.colors.red)
+		return false
+	end
+
+	self.app_connection_name = con:get_name ()
+	self:want_messages (STORE_APP_ID, self.app_connection_name)
+	self:want_messages (self.app_banknetwork, self.app_connection_name)
+
+	self:fill_orders ()
+	self:set_active_top_frame ()
+
+	return true
+end
+
+
+
+function appFrame:load_init ()
+	local ini = fs.load_ini (self:get_app_path ()..".ini")
+	if ini then
+		self.app_register = ini:find ("register")
+	end
+
+	self.app_register = tostring (self.app_register or fs.path_folder (self:get_app_path ()).."/register")
+
+	ini = fs.load_ini (self.app_register..".ini")
+	if ini then
+		self.app_retailer = ini:find ("retailer")
+		self.app_account = ini:find ("account")
+		self.app_bankname = ini:find ("bankname")
+		self.app_banknetwork = ini:find ("banknetwork")
+	end
+
+	self.app_banknetwork = tostring (self.app_banknetwork or "mine_bank_network")
+	self.app_bankname = tostring (self.app_bankname or "mineBank")
+
+	if not self.app_account then
+		self:msgbox ("Account", "No retail account set in init file!", term.colors.red)
+		return false
+	end
+
+	if self.app_retailer then
+		self:set_title (APP_TITLE..":"..self.app_retailer)
+	end
+
+	return true
+end
+
+
+
+function appFrame:send_catalog (recipient_id, app_id)
+	local file = io.open (self.app_register..".dat", "r")
+
+	if file then
+		local success, data = pcall (utils.deserialize, file:read ("*a"))
+
+		if success and type (data) == "table" then
+			local catalog = { }
+
+			for dropper, item in pairs (data) do
+				if string.len (item.item) > 0 and ((not item.qty) or item.qty ~= 0) then
+					catalog[#catalog + 1] = { item = item.item, price = item.price }
+				end
+			end
+
+			table.sort (catalog,
+							function (item1, item2)
+								return item1.item <= item2.item
+							end)
+
+			self:send_message (recipient_id, app_id, "estore_catalog", catalog, self.app_connection_name)
+
+			return true
+		end
+	end
+
+	return false
+end
+
+
+
+function appFrame:process_order (recipient_id, order)
+	order.recipient_id = recipient_id
+	order.order.total = 0
+
+	self.app_current_order = order
+
+	for i = 1, #order.order.items, 1 do
+		order.order.total = order.order.total + (order.order.items[i].price * order.order.items[i].qty)
+	end
+
+	self.app_current_order = order
+
+	order.msg_id = self:send_message (self.app_bankname,
+												self.app_banknetwork,
+												"mine_bank_transfer",
+												{
+													application = STORE_APP_ID,
+													account = order.order.account,
+													pin = order.order.pin,
+													to = self.app_account,
+													amount = order.order.total
+												},
+												self.app_connection_name)
+
+	if not order.msg_id then
+		self:send_message (order.recipient_id, order.application, "estore_declined",
+								 {
+									 message = "Network error"
+								 },
+								 self.app_connection_name)
+
+		self.app_current_order = nil
+	end
+end
+
+
+
+function appFrame:load_orders ()
+	local file = io.open (self:get_app_path ()..".orders", "r")
+
+	if file then
+		local success, data = pcall (utils.deserialize, file:read ())
+		file:close ()
+
+		if success and type (data) == "table" then
+			return data
+		end
+	end
+
+	return nil
+end
+
+
+
+function appFrame:load_order (order_id)
+	local orders = self:load_orders ()
+
+	if orders then
+		for i = 1, #orders.orders, 1 do
+			if orders.orders[i].id == order_id then
+				return orders.orders[i]
+			end
+		end
+	end
+
+	return nil
+end
+
+
+
+function appFrame:add_order (order)
+	local orders = self:load_orders ()
+
+	if not orders then
+		orders = { last_id = 0, orders = { } }
+	end
+
+	orders.last_id = orders.last_id + 1
+
+	orders.orders[#orders.orders + 1] = order
+	orders.orders[#orders.orders].pin = nil
+	orders.orders[#orders.orders].id = orders.last_id
+	orders.orders[#orders.orders].status = "pending"
+	orders.orders[#orders.orders].time = os.time ()
+
+	local success, raw = pcall (utils.serialize, orders)
+	if success and type (raw) == "string" then
+		local file = io.open (self:get_app_path ()..".orders", "w")
+		if file then
+			file:write (raw)
+			file:close ()
+			return string.format ("O%06d", orders.last_id)
+		end
+	end
+
+	return nil
+end
+
+
+
+function appFrame:remove_order (order_id)
+	local orders = self:load_orders ()
+
+	if orders then
+		for i = 1, #orders.orders, 1 do
+			if orders.orders[i].id == order_id then
+				table.remove (orders.orders, i)
+
+				local success, raw = pcall (utils.serialize, orders)
+				if success and type (raw) == "string" then
+					local file = io.open (self:get_app_path ()..".orders", "w")
+					if file then
+						file:write (raw)
+						file:close ()
+						return true
+					end
+				end
+			end
+		end
+	end
+
+	return false
+end
+
+
+
+function appFrame:order_status (order_id, status)
+	local orders = self:load_orders ()
+
+	if orders then
+		for i = 1, #orders.orders, 1 do
+			if orders.orders[i].id == order_id then
+				orders.orders[i].status = status
+
+				local success, raw = pcall (utils.serialize, orders)
+				if success and type (raw) == "string" then
+					local file = io.open (self:get_app_path ()..".orders", "w")
+					if file then
+						file:write (raw)
+						file:close ()
+						return true
+					end
+				end
+			end
+		end
+	end
+
+	return false
+end
+
+
+
+function appFrame:fill_orders ()
+	local orders = self:load_orders ()
+
+	self.app_orders:reset_content ()
+	self.app_orders:set_cur_sel ()
+
+	if orders then
+		for i = 1, #orders.orders, 1 do
+			self.app_orders:add_string (
+				str_field (string.format ("O%06d", orders.orders[i].id), self.width - 29, nil, ALIGN_LEFT)..
+					str_field (os.date ("%Y-%m-%d %H:%M"), 16, nil, ALIGN_RIGHT)..
+					" "..str_field (orders.orders[i].status, 9, nil, ALIGN_LEFT),
+				orders.orders[i].id)
+		end
+	end
+end
+
+
+
+function appFrame:on_status (status)
+	local i = self.app_orders:get_cur_sel ()
+
+	if i > 0 then
+		local id = self.app_orders:get_data (i)
+
+		self:order_status (id, status)
+		self:fill_orders ()
+		self.app_orders:set_cur_sel (i)
+	end
+end
+
+
+
+function appFrame:on_delete ()
+	local i = self.app_orders:get_cur_sel ()
+
+	if i > 0 then
+		local id = self.app_orders:get_data (i)
+
+		if cmndlg.confirm (self, "Delete", string.format ("Delete order O%06d?", id), true) then
+			self:remove_order (id)
+			self:fill_orders ()
+		end
+	end
+end
+
+
+
+function appFrame:on_print ()
+	local i = self.app_orders:get_cur_sel ()
+
+	if i > 0 then
+		local id = self.app_orders:get_data (i)
+		self.app_print_order = self:load_order (id)
+
+		if self.app_print_order then
+			self:print_doc ()
+			self.app_print_order = nil
+		end
+	end
+end
+
+
+
+function appFrame:on_view ()
+	local i = self.app_orders:get_cur_sel ()
+
+	if i > 0 then
+		local id = self.app_orders:get_data (i)
+		local order = self:load_order (id)
+
+		if order then
+			orderDlg:new (self):do_modal (order)
+		end
+	end
+end
+
+
+
+appFrame:run_app ()

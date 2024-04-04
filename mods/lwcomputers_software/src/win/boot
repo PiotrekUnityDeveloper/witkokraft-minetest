@@ -1,0 +1,13 @@
+-- uncomment to run server
+--dofile ("/server")
+
+term.set_colors (term.colors.white, term.colors.black)
+term.clear ()
+term.set_cursor (0, 0)
+print ("Starting ")
+term.set_colors (term.colors.yellow, term.colors.black)
+print ("WIN")
+
+os.sleep (0.1)
+
+dofile ("/win/win")

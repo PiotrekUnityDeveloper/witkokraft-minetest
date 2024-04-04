@@ -1,0 +1,1665 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>workSpace</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>private.workSpace - WIN</h1>
+    Class <b>workSpace</b><br>
+    Inherits from <a moz-do-not-send="true" href="__classBase.html">__classBase</a>.<br>
+    <br>
+    The workSpace class provides the top WIN system object. The class,
+    and a single object <a moz-do-not-send="true"
+      href="private.html#private.workspace">private.workspace</a>, are
+    defined privately in the win API. While the work space object is
+    obtainable through <a moz-do-not-send="true"
+      href="window.html#window:get_workspace">window:get_workspace</a>,
+    generally it is not required as its features are more conveniently
+    available through the available class objects.<br>
+    <br>
+    <b>Properties</b><br>
+    <br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">ws__app_dir</td>
+          <td valign="top">string</td>
+          <td valign="top">Desktop directory under <i>/win/devices</i>
+            for link up at application start up.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">ws__app_frame</td>
+          <td valign="top">applicationFrame</td>
+          <td valign="top">Application frame for link up at application
+            start up.</td>
+        </tr>
+        <tr>
+          <td valign="top">ws__app_path</td>
+          <td valign="top">string</td>
+          <td valign="top">Application program file path for link up at
+            application start up.</td>
+        </tr>
+        <tr>
+          <td valign="top">ws__app_thread</td>
+          <td valign="top">thread</td>
+          <td valign="top">Application thread for link up at application
+            start up.</td>
+        </tr>
+        <tr>
+          <td valign="top">ws__comms </td>
+          <td valign="top">number</td>
+          <td valign="top">Count of system (permanent) comm connections.</td>
+        </tr>
+        <tr>
+          <td valign="top">ws__desktops</td>
+          <td valign="top">table</td>
+          <td valign="top">Collection of desktops.</td>
+        </tr>
+        <tr>
+          <td valign="top">ws__last_update</td>
+          <td valign="top">number<br>
+          </td>
+          <td valign="top">Last time (of os.clock ()) that the desktops
+            were automatically updated.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">ws__shutdown</td>
+          <td valign="top">number<br>
+          </td>
+          <td valign="top">Indicates if a shutdown operation is required
+            (1 = reboot, 2 = shutdown).<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">ws__syscomms</td>
+          <td valign="top">table</td>
+          <td valign="top">Collection of comm objects.</td>
+        </tr>
+        <tr>
+          <td valign="top">ws__timers</td>
+          <td valign="top">table</td>
+          <td valign="top">List of registered timers and alarms.</td>
+        </tr>
+        <tr>
+          <td valign="top">ws__wnd_events</td>
+          <td valign="top">table</td>
+          <td valign="top">List of registered desired window events.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Methods</b><br>
+    <ul id="mozToc">
+      <!--mozToc h3 1-->
+      <li><a href="#mozTocId274710">workSpace:altkey</a></li>
+      <li><a href="#mozTocId130153">workSpace:combo_keys</a></li>
+      <li><a href="#mozTocId729107">workSpace:comm_close</a></li>
+      <li><a href="#mozTocId443119">workSpace:comm_enabled</a></li>
+      <li><a href="#mozTocId932383">workSpace:comm_find</a></li>
+      <li><a href="#mozTocId641097">workSpace:comm_open</a></li>
+      <li><a href="#mozTocId998131">workSpace:comm_register</a></li>
+      <li><a href="#mozTocId338235">workSpace:comm_send</a></li>
+      <li><a href="#mozTocId830460">workSpace:comm_unregister</a></li>
+      <li><a href="#mozTocId108868">workSpace:constructor</a></li>
+      <li><a href="#mozTocId382509">workSpace:create_desktop</a></li>
+      <li><a href="#mozTocId122955">workSpace:create_desktops</a></li>
+      <li><a href="#mozTocId951284">workSpace:ctrlkey</a></li>
+      <li><a href="#mozTocId492012">workSpace:desktop_startup</a></li>
+      <li><a href="#mozTocId226477">workSpace:desktops</a></li>
+      <li><a href="#mozTocId445937">workSpace:dispatch_event</a></li>
+      <li><a href="#mozTocId341508">workSpace:get_desktop</a></li>
+      <li><a href="#mozTocId652712">workSpace:get_focus_wnd</a></li>
+      <li><a href="#mozTocId148917">workSpace:kill_alarm</a></li>
+      <li><a href="#mozTocId422133">workSpace:kill_idle_timer</a></li>
+      <li><a href="#mozTocId922360">workSpace:kill_timer</a></li>
+      <li><a href="#mozTocId894020">workSpace:kill_timers</a></li>
+      <li><a href="#mozTocId389571">workSpace:pump_event</a></li>
+      <li><a href="#mozTocId470448">workSpace:run</a></li>
+      <li><a href="#mozTocId721904">workSpace:run_app</a></li>
+      <li><a href="#mozTocId58642">workSpace:set_alarm</a></li>
+      <li><a href="#mozTocId154304">workSpace:shiftkey</a></li>
+      <li><a href="#mozTocId565008">workSpace:start_idle_timer</a></li>
+      <li><a href="#mozTocId732826">workSpace:start_timer</a></li>
+      <li><a href="#mozTocId324457">workSpace:startup</a></li>
+      <li><a href="#mozTocId140455">workSpace:unwant_event</a></li>
+      <li><a href="#mozTocId297120">workSpace:want_event</a></li>
+    </ul>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId274710" class="mozTocH3"></a><a
+        name="workSpace:altkey"></a>private.workSpace:altkey</h3>
+    <i> depressed workSpace:altkey ()</i><br>
+    <br>
+    Returns true if the alternate key is active, false if not.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">depressed </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if depressed, false if not. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#workSpace:shiftkey">workSpace:shiftkey</a>,
+    <a moz-do-not-send="true" href="#workSpace:ctrlkey">workSpace:ctrlkey</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId130153" class="mozTocH3"></a><a
+        name="workSpace:combo_keys"></a>private.workSpace:combo_keys</h3>
+    <i> match workSpace:combo_keys (ctrl, alt, shift)</i><br>
+    <br>
+    Returns true if the current key state of the control, alternate and
+    shift keys matches those indicated through the parameters, false if
+    not.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">ctrl </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True for control key depressed, false for
+            not. </td>
+        </tr>
+        <tr>
+          <td valign="top">alt </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True for alternate key depressed, false for
+            not. </td>
+        </tr>
+        <tr>
+          <td valign="top">shift</td>
+          <td valign="top">boolean</td>
+          <td valign="top">True for shift key depressed, false for not.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">match </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if keys state matches. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Use <a moz-do-not-send="true" href="window.html#window:combo_keys">window:combo_keys</a>
+    instead.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId729107" class="mozTocH3"></a><a
+        name="workSpace:comm_close"></a>private.workSpace:comm_close</h3>
+    <i> result workSpace:comm_close (name)</i><br>
+    <br>
+    Closes a <a moz-do-not-send="true" href="comm.html">comm</a>
+    connection in the system's collection.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">name </td>
+          <td valign="top">string </td>
+          <td valign="top">The name of the connection to close. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if the connection was closed, false if
+            not (the connection wasn't found). </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:comm_close">window:comm_close</a>,
+    <a moz-do-not-send="true" href="#workSpace:comm_open">workSpace:comm_open</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId443119" class="mozTocH3"></a><a
+        name="workSpace:comm_enabled"></a>private.workSpace:comm_enabled</h3>
+    <i> result workSpace:comm_enabled ()</i><br>
+    <br>
+    Returns whether there are any system <a moz-do-not-send="true"
+      href="comm.html">comm</a> connections (created from the <i>/win.ini</i>
+    file).<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if there are any connections, otherwise
+            false. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true"
+      href="window.html#window:comm_enabled">window:comm_enabled</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <a name="workSpace:comm_find"></a>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId932383" class="mozTocH3"></a>private.workSpace:comm_find</h3>
+    <i> com workSpace:comm_find (name)</i><br>
+    <br>
+    Finds and returns a matching <a moz-do-not-send="true"
+      href="comm.html">comm</a> connection.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">name </td>
+          <td valign="top">string/nil </td>
+          <td valign="top">The name of the connection. If nil the first
+            connection created is returned, if any. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">com </td>
+          <td valign="top"><a moz-do-not-send="true" href="comm.html">comm</a>
+          </td>
+          <td valign="top">The comm object or nil if none matching
+            found. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If name is nil the first connection created is returned, if any.
+    Generally this is the first connection in the <i>/win.ini</i> file.<br>
+    <br>
+    See <a moz-do-not-send="true" href="window.html#window:comm_find">window:comm_find</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId641097" class="mozTocH3"></a><a
+        name="workSpace:comm_open"></a>private.workSpace:comm_open</h3>
+    <i> com workSpace:comm_open (name, timeout)</i><br>
+    <br>
+    Opens a new <a moz-do-not-send="true" href="comm.html">comm</a>
+    connection and returns the comm object.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">name </td>
+          <td valign="top">string/nil </td>
+          <td valign="top">The name of the connection. If nil a unique
+            name is generated. </td>
+        </tr>
+        <tr>
+          <td valign="top">timeout </td>
+          <td valign="top">number/nil </td>
+          <td valign="top">Count of os.clock () an operation will
+            wait/attempt until a failure is accepted. If nil the default
+            is 5. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">com </td>
+          <td valign="top"><a moz-do-not-send="true" href="comm.html">comm</a>
+          </td>
+          <td valign="top">The comm connection object, or nil if the
+            connection could not be established. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    The created connection is maintained in the system's collection.<br>
+    <br>
+    If an application opens a connection for its own purposes, it should
+    close it when no longer required.<br>
+    <br>
+    See <a moz-do-not-send="true" href="window.html#window:comm_open">window:comm_open</a>,
+    <a moz-do-not-send="true" href="#workSpace:comm_close">workSpace:comm_close</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId998131" class="mozTocH3"></a><a
+        name="workSpace:comm_register"></a>private.workSpace:comm_register</h3>
+    <i> result workSpace:comm_register (wnd, application, name)</i><br>
+    <br>
+    Registers an interest in the <a moz-do-not-send="true"
+      href="comm.html">comm</a> connection to receive messages and sent
+    notifications.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">wnd </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">The window registering the interest. </td>
+        </tr>
+        <tr>
+          <td valign="top">application </td>
+          <td valign="top">string </td>
+          <td valign="top">Identifier for filtering which messages
+            should be passed to the sent notification and receive
+            handlers. </td>
+        </tr>
+        <tr>
+          <td valign="top">name</td>
+          <td valign="top">string/nil</td>
+          <td valign="top">The name of the connection to register the
+            interest with. If nil the first connection created is used,
+            if any.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if the interest was successfully
+            registered, false if not (no appropriate connection was
+            found). </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If name is nil the first connection created is used, if any.
+    Generally this is the first connection in the <i>/win.ini</i> file.<br>
+    <br>
+    When the interest in the connection is no longer required it should
+    be unregistered with <a moz-do-not-send="true"
+      href="#workSpace:comm_unregister">workSpace:comm_unregister</a>.<br>
+    <br>
+    See <a moz-do-not-send="true" href="window.html#window:on_receive">window:on_receive</a>,
+    <a moz-do-not-send="true" href="window.html#window:on_sent">window:on_sent</a>,
+    <a moz-do-not-send="true" href="window.html#window:want_messages">window:want_messages</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId338235" class="mozTocH3"></a><a
+        name="workSpace:comm_send"></a>private.workSpace:comm_send</h3>
+    <i> message_id workSpace:comm_send (recipient, application, context,
+      data, name)</i><br>
+    <br>
+    Send a message across a <a moz-do-not-send="true" href="comm.html">comm</a>
+    connection.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">recipient </td>
+          <td valign="top">string/number/nil </td>
+          <td valign="top">The intended recipient computer's label or id
+            number. If nil the message is broadcasted to all computers.
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">application </td>
+          <td valign="top">string </td>
+          <td valign="top">Identifier for message filtering. This should
+            match the sender's and recipient's registered application
+            filter. </td>
+        </tr>
+        <tr>
+          <td valign="top">context</td>
+          <td valign="top">string</td>
+          <td valign="top">Message specific context. This states the
+            purpose/structure of the data.</td>
+        </tr>
+        <tr>
+          <td valign="top">data</td>
+          <td valign="top">any<br>
+          </td>
+          <td valign="top">The data for the message, if any.</td>
+        </tr>
+        <tr>
+          <td valign="top">name</td>
+          <td valign="top">string/nil</td>
+          <td valign="top">The name of the connection to use to send the
+            message. If nil the first connection created is used, if
+            any.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">message_id </td>
+          <td valign="top">number </td>
+          <td valign="top">Unique identifier for the message, or nil if
+            the send was not successful (no appropriate connection or
+            the message was addressed to the sending computer). This can
+            be used to identify the message in the sent handler. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    While a message may be sent without registering an interest in the
+    connection, sent notifications cannot be implemented without it.<br>
+    <br>
+    Messages are not sent directly through this call, but are queued to
+    be sent by the mechanism. It will be sent repeatedly by the system's
+    idle processor up to the timeout value or until a confirmation is
+    received.<br>
+    <br>
+    See <a moz-do-not-send="true"
+      href="window.html#window:send_message">window:send_message</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId830460" class="mozTocH3"></a><a
+        name="workSpace:comm_unregister"></a>private.workSpace:comm_unregister</h3>
+    <i> result workSpace:comm_unregister (wnd, application, name)</i><br>
+    <br>
+    Unregisters an interest in the <a moz-do-not-send="true"
+      href="comm.html">comm</a> connection registered with <a
+      moz-do-not-send="true" href="#workSpace:comm_register">workSpace:comm_register</a>.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">wnd </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">The window that registered the interest. </td>
+        </tr>
+        <tr>
+          <td valign="top">application </td>
+          <td valign="top">string/nil </td>
+          <td valign="top">The message filtering identifier the interest
+            was registered with. </td>
+        </tr>
+        <tr>
+          <td valign="top">name</td>
+          <td valign="top">string/nil</td>
+          <td valign="top">The name of the connection the interest was
+            registered with. If nil the first connection created is
+            used, if any.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if the interest was successfully
+            unregistered, false if not (a matching interest was not
+            found on the specified connection). </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    The parameters passed to workSpace:comm_unregister should match
+    those passed to <a moz-do-not-send="true"
+      href="#workSpace:comm_register">workSpace:comm_register</a> to
+    register the interest. If only the wnd parameter is given all
+    interests for that window on all connections are unregistered, in
+    which case the return value is always true.<br>
+    <br>
+    See <a moz-do-not-send="true"
+      href="window.html#window:unwant_messages">window:unwant_messages</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId108868" class="mozTocH3"></a><a
+        name="workSpace:constructor"></a>private.workSpace:constructor</h3>
+    <i> ws workSpace:constructor ()</i><br>
+    <br>
+    Constructs and returns the instantiated work space object.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">ws </td>
+          <td valign="top">workSpace </td>
+          <td valign="top">The instantiated work space object. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId382509" class="mozTocH3"></a><a
+        name="workSpace:create_desktop"></a>private.workSpace:create_desktop</h3>
+    <i> desktop workSpace:create_desktop (type, dir, width, channels)</i><br>
+    <br>
+    Creates the desktop window for the given side if a display device
+    exists, returning the created desktop window. .<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">type<br>
+          </td>
+          <td valign="top">string<br>
+          </td>
+          <td valign="top">Type of device. Can be:<br>
+            <tt>"term"</tt><br>
+            <tt>"monitor"</tt><br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">dir<br>
+          </td>
+          <td valign="top">string<br>
+          </td>
+          <td valign="top">Desktop directory under <i>/win/devices</i>.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">width<br>
+          </td>
+          <td valign="top">number<br>
+          </td>
+          <td valign="top">Display width for multi-monitor devices.
+            Ignored for others.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">channels<br>
+          </td>
+          <td valign="top">string/list<br>
+          </td>
+          <td valign="top">The digilines channel/s of the attached
+            device.<br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">desktop </td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="desktopWindow.html">desktopWindow</a> </td>
+          <td valign="top">Desktop window or nil if not created. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId122955" class="mozTocH3"></a><a
+        name="workSpace:create_desktops"></a>private.workSpace:create_desktops</h3>
+    <i>workSpace:create_desktops ()</i><br>
+    <br>
+    Creates and initializes the desktops as required.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId951284" class="mozTocH3"></a><a
+        name="workSpace:ctrlkey"></a>private.workSpace:ctrlkey</h3>
+    <i> depressed workSpace:ctrlkey ()</i><br>
+    <br>
+    Returns true if the state of the control key is active, false if
+    not.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">depressed </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if depressed, false if not. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#workSpace:shiftkey">workSpace:shiftkey</a>,
+    <a moz-do-not-send="true" href="#workSpace:altkey">workSpace:altkey</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId492012" class="mozTocH3"></a><a
+        name="workSpace:desktop_startup"></a>private.workSpace:desktop_startup</h3>
+    <i>workSpace:desktop_startup (dir)</i><br>
+    <br>
+    Implements the <i>startup.ini</i> file for the desktop indicated by
+    dir, if the file and desktop exist.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">dir<br>
+          </td>
+          <td valign="top">string<br>
+          </td>
+          <td valign="top">Desktop directory under <i>/win/devices</i>.<br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId226477" class="mozTocH3"></a><a
+        name="workSpace:desktops"></a>private.workSpace:desktops</h3>
+    <i> dirs workSpace:desktops ()</i><br>
+    <br>
+    Returns an indexed table of strings of desktop directories under <i>/win/devices</i>,
+    one for each device with a desktop.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">dirs<br>
+          </td>
+          <td valign="top">table </td>
+          <td valign="top">Tables of desktop directories. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#workSpace:get_desktop">workSpace:get_desktop</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId445937" class="mozTocH3"></a><a
+        name="workSpace:dispatch_event"></a>private.workSpace:dispatch_event</h3>
+    <i>workSpace:dispatch_event (event, p1, p2, p3, p4, p5, ...)</i><br>
+    <br>
+    The main system's pump. Called internally by the system's main loop,
+    <a moz-do-not-send="true" href="#workSpace:run">workSpace:run</a>.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">event </td>
+          <td valign="top">string </td>
+          <td valign="top">The event type. </td>
+        </tr>
+        <tr>
+          <td valign="top">p1 </td>
+          <td valign="top">any </td>
+          <td valign="top">First parameter for the event or nil if not
+            used. </td>
+        </tr>
+        <tr>
+          <td valign="top">p2</td>
+          <td valign="top">any</td>
+          <td valign="top">Second parameter for the event or nil if not
+            used.</td>
+        </tr>
+        <tr>
+          <td valign="top">p3</td>
+          <td valign="top">any</td>
+          <td valign="top">Third parameter for the event or nil if not
+            used.</td>
+        </tr>
+        <tr>
+          <td valign="top">p4</td>
+          <td valign="top">any</td>
+          <td valign="top">Fourth parameter for the event or nil if not
+            used.</td>
+        </tr>
+        <tr>
+          <td valign="top">p5</td>
+          <td valign="top">any</td>
+          <td valign="top">Fifth parameter for the event or nil if not
+            used.</td>
+        </tr>
+        <tr>
+          <td valign="top">...</td>
+          <td valign="top">any</td>
+          <td valign="top">Any additional parameters.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId341508" class="mozTocH3"></a><a
+        name="workSpace:get_desktop"></a>private.workSpace:get_desktop</h3>
+    <i> desktop workSpace:get_desktop (dir)</i><br>
+    <br>
+    Returns the desktop window object for the given directory (under <i>/win/devices</i>).
+
+
+    If none or dir is invalid, nil is returned.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">dir<br>
+          </td>
+          <td valign="top">string </td>
+          <td valign="top">Desktop directory under<i> /win/devices</i>.<br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">desktop </td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="desktopWindow.html">desktopWindow</a> </td>
+          <td valign="top">The desktop for the given directory, or nil
+            if none. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#workSpace:desktops">workSpace:desktops</a>,
+    <a moz-do-not-send="true" href="window.html#window:get_desktop">window:get_desktop</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId652712" class="mozTocH3"></a><a
+        name="workSpace:get_focus_wnd"></a>private.workSpace:get_focus_wnd</h3>
+    <i> wnd workSpace:get_focus_wnd (dir)</i><br>
+    <br>
+    Returns the window that currently has input focus on the desktop for
+    the given directory. If none or dir is invalid, nil is returned.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">dir </td>
+          <td valign="top">string </td>
+          <td valign="top">Desktop directory under<i> /win/devices</i>.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">wnd </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">The window that currently has input focus on
+            the sort desktop, or nil if none. </td>
+        </tr>
+        <tr>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Use <a moz-do-not-send="true" href="window.html#window:get_focus">window:get_focus</a>
+    instead.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId148917" class="mozTocH3"></a><a
+        name="workSpace:kill_alarm"></a>private.workSpace:kill_alarm</h3>
+    <i> workSpace:kill_alarm (wnd, alarm_id)</i><br>
+    <br>
+    Removes an alarm set with <a moz-do-not-send="true"
+      href="#workSpace:set_alarm">workSpace:set_alarm</a>.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">wnd<br>
+          </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a><br>
+          </td>
+          <td valign="top">Window associated with the alarm.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">alarm_id </td>
+          <td valign="top">number<br>
+          </td>
+          <td valign="top">The id of the alarm returned by <a
+              moz-do-not-send="true" href="#workSpace:set_alarm">workSpace:set_alarm</a>
+            to remove. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none<br>
+          </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:set_alarm">window:set_alarm</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId422133" class="mozTocH3"></a><a
+        name="workSpace:kill_idle_timer"></a>private.workSpace:kill_idle_timer</h3>
+    <i> workSpace:kill_idle_timer ()</i><br>
+    <br>
+    Stops the idle timer if set.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none<br>
+          </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId922360" class="mozTocH3"></a><a
+        name="workSpace:kill_timer"></a>private.workSpace:kill_timer</h3>
+    <i> workSpace:kill_timer (wnd, timer_id)</i><br>
+    <br>
+    Removes a timer set with <a moz-do-not-send="true"
+      href="#workSpace:start_timer">workSpace:start_timer</a>.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">wnd </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a><br>
+          </td>
+          <td valign="top">Window associated with the timer.</td>
+        </tr>
+        <tr>
+          <td valign="top">timer_id </td>
+          <td valign="top">number<br>
+          </td>
+          <td valign="top">The id of the alarm returned by <a
+              moz-do-not-send="true" href="#workSpace:start_timer">workSpace:start_timer</a>
+            to remove. <br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none<br>
+          </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:start_timer">window:start_timer</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId894020" class="mozTocH3"></a><a
+        name="workSpace:kill_timers"></a>private.workSpace:kill_timers</h3>
+    <i>workSpace:kill_timers (wnd)</i><br>
+    <br>
+    Removes all timers and alarms for the given window.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">wnd </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">The window to kill the timers and alarms for.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId389571" class="mozTocH3"></a><a
+        name="workSpace:pump_event"></a>private.workSpace:pump_event</h3>
+    <i> result workSpace:pump_event (wnd, ... )</i><br>
+    <br>
+    Passes the event to the appropriate application thread for
+    processing.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">wnd </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">Window the event is for. </td>
+        </tr>
+        <tr>
+          <td valign="top">... </td>
+          <td valign="top">any </td>
+          <td valign="top">Event parameters. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top"> The value returned by the handler for the
+            event. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId470448" class="mozTocH3"></a><a
+        name="workSpace:run"></a>private.workSpace:run</h3>
+    <i>workSpace:run ()</i><br>
+    <br>
+    The system's main loop.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none</td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks<br>
+    </b>This function never returns.<br>
+    <br>
+    See <a moz-do-not-send="true" href="globals.html#win.start">win.start</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId721904" class="mozTocH3"></a><a
+        name="workSpace:run_app"></a>private.workSpace:run_app</h3>
+    <i>workSpace:run_app (dir, path, ...)</i><br>
+    <br>
+    Starts the program given by path passing it the arguments in the
+    desktop indicated by side.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">dir<br>
+          </td>
+          <td valign="top">string </td>
+          <td valign="top">Desktop directory under <i>/win/devices</i>.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">path </td>
+          <td valign="top">string </td>
+          <td valign="top">Full path to program file to run. </td>
+        </tr>
+        <tr>
+          <td valign="top">...</td>
+          <td valign="top">string</td>
+          <td valign="top">Any command line arguments. Each argument
+            must be a separate string parameter.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Use the <a moz-do-not-send="true"
+      href="desktopWindow.html#desktopWindow:run_app">desktopWindow:run_app</a>
+    method instead.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId58642" class="mozTocH3"></a><a
+        name="workSpace:set_alarm"></a>private.workSpace:set_alarm</h3>
+    <i> id workSpace:set_alarm (wnd, time)</i><br>
+    <br>
+    Sets an alarm with the given time value and associates it with the
+    wnd object for event routing, returning the alarm id.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">wnd </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">The window associated with the alarm. </td>
+        </tr>
+        <tr>
+          <td valign="top">time </td>
+          <td valign="top">number </td>
+          <td valign="top">The time the alarm will fire. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">id </td>
+          <td valign="top">number </td>
+          <td valign="top">The identifier for the alarm. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Use the <a moz-do-not-send="true"
+      href="window.html#window:set_alarm">window:set_alarm</a> method
+    instead.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId154304" class="mozTocH3"></a><a
+        name="workSpace:shiftkey"></a>private.workSpace:shiftkey</h3>
+    <i> depressed workSpace:shiftkey ()</i><br>
+    <br>
+    Returns true if the state of the shift key is active, false if not.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">depressed </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if depressed, false if not. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#workSpace:altkey">workSpace:altkey</a>,
+    <a moz-do-not-send="true" href="#workSpace:ctrlkey">workSpace:ctrlkey</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId565008" class="mozTocH3"></a><a
+        name="workSpace:start_idle_timer"></a>private.workSpace:start_idle_timer</h3>
+    <i>workSpace:start_idle_timer ()</i><br>
+    <br>
+    Restarts the idle event timer if the time from the last invocation
+    has elapsed.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId732826" class="mozTocH3"></a><a
+        name="workSpace:start_timer"></a>private.workSpace:start_timer</h3>
+    <i> id workSpace:start_timer (wnd, timeout)</i><br>
+    <br>
+    Starts a timer with the given timeout value and associates it with
+    the wnd object for event routing, returning the timer id.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">wnd </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">The window associated with the timer. </td>
+        </tr>
+        <tr>
+          <td valign="top">timeout </td>
+          <td valign="top">number </td>
+          <td valign="top">The timer elapse time in seconds. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">id </td>
+          <td valign="top">number </td>
+          <td valign="top">The timer id. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Use the <a moz-do-not-send="true"
+      href="window.html#window:start_timer">window:start_timer</a>
+    method instead.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId324457" class="mozTocH3"></a><a
+        name="workSpace:startup"></a>private.workSpace:startup</h3>
+    <i>workSpace:startup ()</i><br>
+    <br>
+    Implements any settings from the system's <i>/win.ini</i> file, if
+    required, and creates any desktops.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId140455" class="mozTocH3"></a><a
+        name="workSpace:unwant_event"></a>private.workSpace:unwant_event</h3>
+    <i> result workSpace:unwant_event (wnd, event)</i><br>
+    <br>
+    Unregisters the window from receiving the event, returning true if
+    it was registered, false otherwise. If event is nil all events for
+    the window are unregistered and true is returned.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">wnd </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">The window to unregister the event/s for. </td>
+        </tr>
+        <tr>
+          <td valign="top">event </td>
+          <td valign="top">string/nil </td>
+          <td valign="top">The event to unregister, nil for all events.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if successful, false if not. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Use <a moz-do-not-send="true"
+      href="window.html#window:unwant_event">window:unwant_event</a>
+    instead.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId297120" class="mozTocH3"></a><a
+        name="workSpace:want_event"></a>private.workSpace:want_event</h3>
+    <i> result workSpace:want_event (wnd, event)</i><br>
+    <br>
+    Registers the window to receive the event.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">wnd </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">The window to receive the event. </td>
+        </tr>
+        <tr>
+          <td valign="top">event </td>
+          <td valign="top">string </td>
+          <td valign="top">The event wanted by the window. The wildcard
+            <font color="#ffcc33">"*"</font> will send all non-standard
+            routed events to the window. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if successfully registered, false
+            otherwise. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Use <a moz-do-not-send="true" href="window.html#window:want_event">window:want_event</a>
+    instead.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="workSpace.html#top">top</a><br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

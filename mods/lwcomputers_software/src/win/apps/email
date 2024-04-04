@@ -1,0 +1,753 @@
+
+local app_args = {...}
+local appFrame = win.create_app_frame ()
+
+
+local APP_TITLE         = "emails"
+
+local ID_OK             = 1
+
+local ID_MENUBTN        = 101
+local ID_FOLDER         = 102
+local ID_EMAILS         = 103
+
+local ID_ADDRESS        = 201
+local ID_PASSWORD       = 202
+local ID_NETWORK        = 203
+local ID_TIMEOUT        = 204
+local ID_NEWPWD         = 205
+local ID_CONFIRMPWD     = 206
+
+local IDM_DOWNLOAD      = 1001
+local IDM_NEWMSG        = 1002
+local IDM_OPEN          = 1003
+local IDM_DELMSG        = 1004
+local IDM_ACCOUNT       = 1005
+local IDM_CHANGEPWD     = 1006
+local IDM_QUITAPP       = 1007
+
+local ID_EMAIL_FRAME    = 32154
+
+
+-- accountDlg class ----------------------------------------------------
+
+local accountDlg = win.popupFrame:base ()
+
+function accountDlg:on_create (address, password, network, timeout)
+	self:dress ("Account")
+
+	self.acc_address = win.inputWindow:new (self, ID_ADDRESS, 1, 2, 17,
+														 address, "Email Address")
+	self.acc_password = win.inputWindow:new (self, ID_PASSWORD, 1, 4, 17,
+														  password, "Password")
+	self.acc_network = win.inputWindow:new (self, ID_NETWORK, 1, 6, 17,
+														 network, "Network")
+	self.acc_timeout = win.inputWindow:new (self, ID_TIMEOUT, 1, 8, 8,
+														 timeout, "Timeout")
+	win.buttonWindow:new(self, ID_OK, 14, 10, " Ok ")
+
+	self.acc_password:set_mask_char ("*")
+	self.acc_address:set_sel (0, -1)
+	self.acc_address:set_focus ()
+
+	self:move (nil, nil, 19, 12)
+
+	return true
+end
+
+
+function accountDlg:on_event (event, p1, p2, p3, p4, p5, ...)
+	if event == "btn_click" then
+		if p1:get_id () == ID_OK then
+			if self.acc_address:get_text ():len() < 3 or
+					not self.acc_address:get_text ():find ("@", 1) then
+				self.acc_address:set_error (true)
+				self.acc_address:set_focus ()
+			else
+				self:close (ID_OK)
+			end
+
+			return true
+		end
+	end
+
+	return false
+end
+
+
+function accountDlg:on_child_focus (child, blurred)
+	if child.set_sel  then
+		child:set_sel (0, -1)
+	end
+
+	return win.popupFrame.on_child_focus (self, child, blurred)
+end
+
+
+function accountDlg:on_child_blur (child, focused)
+	if child.set_sel  then
+		local len = child:get_text ():len ()
+		child:set_sel (len, len, false)
+	end
+
+	return win.popupFrame.on_child_blur (self, child, focused)
+end
+
+-- end accountDlg class ------------------------------------------------
+
+
+-- passwordDlg class ---------------------------------------------------
+
+local passwordDlg = win.popupFrame:base ()
+
+function passwordDlg:on_create (password)
+	self:dress ("Password")
+
+	self.pw_password = win.inputWindow:new (self, ID_PASSWORD, 1, 2, 17,
+														 password, "Password")
+	win.buttonWindow:new (self, ID_OK, 14, 3, " Ok ")
+	self.pw_password:set_mask_char ("*")
+	self.pw_password:set_sel (0, -1)
+	self.pw_password:set_focus ()
+
+	self:move (nil, nil, 19, 5)
+
+	return true
+end
+
+
+function passwordDlg:on_event (event, p1, p2, p3, p4, p5, ...)
+	if event == "btn_click" then
+		if p1:get_id () == ID_OK then
+			self:close (ID_OK)
+
+			return true
+		end
+	end
+
+	return false
+end
+
+
+function passwordDlg:on_child_focus (child, blurred)
+	if child.set_sel  then
+		child:set_sel (0, -1)
+	end
+
+	return win.popupFrame.on_child_focus (self, child, blurred)
+end
+
+
+function passwordDlg:on_child_blur (child, focused)
+	if child.set_sel  then
+		local len = child:get_text ():len ()
+		child:set_sel (len, len, false)
+	end
+
+	return win.popupFrame.on_child_blur (self, child, focused)
+end
+
+-- end passwordDlg class -----------------------------------------------
+
+
+-- newPasswordDlg class ---------------------------------------------------
+
+local newPasswordDlg = win.popupFrame:base ()
+
+function newPasswordDlg:on_create (password)
+	self:dress ("Password")
+
+	self.pw_password = win.inputWindow:new (self, ID_PASSWORD, 1, 2, 17,
+														 password, "Password")
+	self.pw_password:set_mask_char ("*")
+
+	self.pw_new_password = win.inputWindow:new (self, ID_NEWPWD, 1, 4, 17, "", "New")
+	self.pw_new_password:set_mask_char ("*")
+
+	self.pw_confirm_password = win.inputWindow:new (self, ID_PASSWORD, 1, 6, 17,
+																	"", "Confirm")
+	self.pw_confirm_password:set_mask_char ("*")
+
+	if tostring (password or ""):len () > 0 then
+		self.pw_new_password:set_focus ()
+	else
+		self.pw_password:set_focus ()
+	end
+
+	win.buttonWindow:new (self, ID_OK, 14, 7, " Ok ")
+
+	self:move (nil, nil, 19, 9)
+
+	return true
+end
+
+
+function newPasswordDlg:on_event (event, p1, p2, p3, p4, p5, ...)
+	if event == "btn_click" then
+		if p1:get_id () == ID_OK then
+			if self.pw_new_password:get_text ():len() < 1 then
+				self.pw_new_password:set_focus ()
+				self.pw_new_password:set_error (true)
+				return true
+			elseif self.pw_new_password:get_text () ~= self.pw_confirm_password:get_text () then
+				self.pw_confirm_password:set_sel (0, -1)
+				self.pw_confirm_password:set_focus ()
+				self.pw_confirm_password:set_error (true)
+				return true
+			end
+
+			self:close (ID_OK)
+
+			return true
+		end
+	end
+
+	return false
+end
+
+
+function newPasswordDlg:on_child_blur (child, focused)
+	if child.set_error  then
+		child:set_error (false)
+	end
+
+	if child.set_sel  then
+		local len = child:get_text ():len ()
+		child:set_sel (len, len, false)
+	end
+
+	return win.popupFrame.on_child_blur (self, child, focused)
+end
+
+
+function newPasswordDlg:on_child_focus (child, blurred)
+	if child.set_sel  then
+		child:set_sel (0, -1)
+	end
+
+	return win.popupFrame.on_child_focus (self, child, blurred)
+end
+
+-- end passwordDlg class -----------------------------------------------
+
+
+
+function appFrame:on_receive (msg)
+	if (msg.recipient_name or msg.recipient_id) then
+		if msg.context == "email_response" and type (msg.data) == "table" then
+			if type (msg.data.email) == "table" then
+				local email = utils.serialize (msg.data.email)
+				if email then
+					local path;
+
+					repeat
+						path = self.app_data_path.."/inbox/r"..
+										tostring (math.random (1, 65535))..".email"
+					until not fs.file_exists (path)
+
+					local file = io.open (path, "w")
+					if file then
+						file:write (email)
+						file:close ()
+
+						local domain = self.app_address:sub (self.app_address:find ("@", 1) + 1)
+						local account = self.app_address:sub (1, self.app_address:find ("@", 1) - 1)
+						self:send_message (domain, self.app_network, "email_delete",
+												 {
+													 account = account,
+													 password = self.app_password,
+													 id = msg.data.id
+												 }, self.app_conn_name)
+
+						self:reload_emails ("inbox")
+
+						return true
+					end
+				end
+			end
+		end
+	end
+
+	return false
+end
+
+
+function appFrame:on_sent (msg, success)
+	if not success then
+		if msg.context == "email_request" then
+			self:msgbox ("Error", "Error getting emails from server!", term.colors.red)
+		elseif msg.context == "account_password" then
+			self:msgbox ("Error", "Error changing account password!", term.colors.red)
+		end
+	end
+
+	return true
+end
+
+
+function appFrame:on_event (event, p1, p2, p3, p4, p5, ...)
+	if event == "btn_click" then
+		if p1:get_id () == ID_MENUBTN then
+			self:on_menu ()
+			return true
+		end
+
+	elseif event == "menu_cmd" then
+		return self:on_command (p1)
+
+	elseif event == "list_click" then
+		if p1:get_id () == ID_FOLDER then
+			if p1:get_string () then
+				self:load_emails (p1:get_string ())
+			end
+
+			return true
+		end
+
+	elseif event == "list_double_click" then
+		if p1:get_id () == ID_EMAILS then
+			return appFrame:on_command (IDM_OPEN)
+		end
+
+	elseif event == "reload_list" then
+		return self:reload_emails (tostring (p1 or ""))
+	end
+
+	return false
+end
+
+
+function appFrame:on_timer (timer_id)
+	if timer_id == self.app_conn_timer then
+		if self.app_conn_name then
+			self:comm_close (self.app_conn_name)
+			self.app_conn_name = nil
+			self.app_address = nil
+			self.app_password = nil
+			self.app_network = nil
+		end
+
+		self.app_conn_timer = nil
+	end
+
+	return false
+end
+
+
+function appFrame:on_child_key (wnd, key, ctrl, alt, shift)
+	if win.applicationFrame.on_child_key (self, wnd, key, ctrl, alt, shift) then
+		return true
+	end
+
+	if ctrl and not alt and not shift then
+		if key == keys.KEY_G then
+			return self:on_command (IDM_DOWNLOAD)
+		end
+
+		if key == keys.KEY_N then
+			return self:on_command (IDM_NEWMSG)
+		end
+
+		if key == keys.KEY_O then
+			return self:on_command (IDM_OPEN)
+		end
+	elseif not ctrl and not alt and not shift then
+		if key == keys.KEY_DELETE then
+			return self:on_command (IDM_DELMSG)
+		end
+	end
+
+	return false
+end
+
+
+function appFrame:on_frame_activate (active)
+end
+
+
+function appFrame:on_quit ()
+	if self.app_conn_name then
+		self:comm_close (self.app_conn_name)
+	end
+
+	return false
+end
+
+
+function appFrame:on_menu ()
+	local menu = win.menuWindow:new (self)
+
+	menu:add_string ("Get Emails Ctrl+G", IDM_DOWNLOAD)
+	menu:add_string ("New Email  Ctrl+N", IDM_NEWMSG)
+	if self.app_emails:get_data () then
+		menu:add_string ("Open       Ctrl+O", IDM_OPEN)
+		menu:add_string ("Delete     Del",    IDM_DELMSG)
+	end
+	menu:add_string ("-----------------")
+	menu:add_string ("Account",           IDM_ACCOUNT)
+	menu:add_string ("Change Password",   IDM_CHANGEPWD)
+	menu:add_string ("-----------------")
+	menu:add_string ("Quit App",          IDM_QUITAPP)
+
+	menu:track (0, 1)
+end
+
+
+function appFrame:on_command (cmdId)
+	if cmdId == IDM_DOWNLOAD then
+		self:on_get_emails ()
+		return true
+	end
+
+	if cmdId == IDM_NEWMSG then
+		self:on_new_email ()
+		return true
+	end
+
+	if cmdId == IDM_OPEN then
+		self:on_open_email ()
+		return true
+	end
+
+	if cmdId == IDM_DELMSG then
+		self:on_delete_email ()
+		return true
+	end
+
+	if cmdId == IDM_ACCOUNT then
+		self:on_account ()
+		return true
+	end
+
+	if cmdId == IDM_CHANGEPWD then
+		self:on_change_password ()
+		return true
+	end
+
+	if cmdId == IDM_QUITAPP then
+		self:quit_app ()
+		return true
+	end
+
+	return false
+end
+
+
+function appFrame:on_move ()
+	self.app_folder:move (0, 1, 7, self.height - 1)
+	self.app_emails:move (8, 1, self.width - 8, self.height - 1)
+	return false
+end
+
+
+function appFrame:on_create ()
+	local instance = self:get_desktop ():get_wnd_by_id (ID_EMAIL_FRAME, false)
+	if instance then
+		instance:set_active_top_frame ()
+
+		return false
+	end
+
+	self:set_id (ID_EMAIL_FRAME)
+	self:dress (APP_TITLE)
+
+	local menuBtn = win.buttonWindow:new (self, ID_MENUBTN, 0, 0, "Menu")
+	menuBtn:set_colors (menuBtn:get_colors ().frame_text,
+							  menuBtn:get_colors ().title_back,
+							  menuBtn:get_colors ().frame_back)
+	menuBtn:move (nil, nil, nil, nil, win.WND_TOP)
+
+	self.app_folder = win.listWindow:new (self, ID_FOLDER, 0, 1, 7, self.height - 1)
+	self.app_emails = win.listWindow:new (self, ID_EMAILS, 8, 1, self.width - 8, self.height - 1)
+
+	self.app_app_folder = self:get_app_path ():sub (1, -(fs.path_name (self:get_app_path ()):len () + 1))
+	self.app_data_path = self.app_app_folder.."data/email"
+	self.app_conn_name = nil
+	self.app_conn_timer = nil
+	self.app_address = nil
+	self.app_password = nil
+	self.app_network = nil
+
+	self:load_folders ()
+
+	self:set_active_top_frame ()
+
+	return true
+end
+
+
+function appFrame:load_folders ()
+	self.app_folder:reset_content ()
+	self.app_emails:reset_content ()
+
+	if not fs.file_exists (self.app_data_path) then
+		fs.mkdir (self.app_data_path)
+	end
+
+	if not fs.file_exists (self.app_data_path.."/inbox") then
+		fs.mkdir (self.app_data_path.."/inbox")
+	end
+
+	if not fs.file_exists (self.app_data_path.."/sent") then
+		fs.mkdir (self.app_data_path.."/sent")
+	end
+
+	local folders = fs.ls (self.app_data_path)
+	for i = 1, #folders, 1 do
+		if fs.file_exists (self.app_data_path.."/"..folders[i], true) then
+			self.app_folder:add_string (folders[i])
+		end
+	end
+
+	self.app_folder:sort ()
+end
+
+
+local function email_sorter (email1, email2)
+	return (email1.time < email2.time)
+end
+
+
+local function email_date_time (date_time)
+	return os.date ("%y-%m-%d %H:%M", date_time)
+end
+
+
+function appFrame:load_emails (folder)
+	local emails = { }
+	local list = fs.ls (self.app_data_path.."/"..folder)
+	self.app_emails:reset_content ()
+
+	for i = 1, #list, 1 do
+		local file = io.open (self.app_data_path.."/"..folder.."/"..list[i], "r")
+		if file then
+			local email = utils.deserialize (file:read ("*a"))
+			file:close ()
+
+			if email then
+				emails[#emails + 1] =
+				{
+					recipient = email.recipient,
+					sender = email.sender,
+					subject = email.subject,
+					time = email.time,
+					path = self.app_data_path.."/"..folder.."/"..list[i]
+				}
+			end
+		end
+	end
+
+	table.sort (emails, email_sorter)
+
+	for i = 1, #emails, 1 do
+		local who, subject =
+			tostring ((folder == "sent" and emails[i].recipient) or emails[i].sender),
+			tostring (emails[i].subject or "")
+
+		local who_full = who
+
+		if who:len () > 15 then
+			who = who:sub (1, 15)
+		elseif who:len () < 15 then
+			who = who..string.rep (" ", 15 - who:len ())
+		end
+
+		if subject:len () > 15 then
+			subject = subject:sub (1, 15)
+		elseif subject:len () < 15 then
+			subject = subject..string.rep (" ", 15 - subject:len ())
+		end
+
+		self.app_emails:add_string (
+				string.format("%s %s %s", who, subject, email_date_time (emails[i].time)),
+				{ path = emails[i].path, subject = string.trim (subject), who = who_full })
+	end
+
+	local x, y = self.app_emails:get_scroll_size ()
+	self.app_emails:set_scroll_size ((self.app_emails:count() > 0 and 46) or 0, y)
+end
+
+
+function appFrame:reload_emails (folder)
+	if folder and self.app_folder:get_string () == folder then
+		self:load_emails (folder)
+	end
+end
+
+
+function appFrame:on_open_email ()
+	if self.app_emails:get_data () then
+		local path = self.app_app_folder.."emread"
+
+		self:get_desktop ():run_app (path, self.app_emails:get_data ().path)
+	end
+end
+
+
+function appFrame:on_delete_email ()
+	if self.app_emails:get_data () then
+		if cmndlg.confirm (self, "Delete",
+								 "Delete "..self.app_emails:get_data ().subject.."?",
+								 false, term.colors.orange) then
+			fs.rm (self.app_emails:get_data ().path)
+			self:reload_emails (self.app_folder:get_string ())
+		end
+	end
+end
+
+
+function appFrame:on_new_email ()
+	if self.app_emails:get_data () then
+		self:get_desktop ():run_app (self.app_app_folder.."emwrite", self.app_emails:get_data ().who)
+	else
+		self:get_desktop ():run_app (self.app_app_folder.."emwrite")
+	end
+end
+
+
+function appFrame:on_account ()
+	local ini_path = self.app_app_folder.."email.ini"
+	local dlg = accountDlg:new (self)
+	local address = ""
+	local password = ""
+	local network = "wide_area_network"
+	local timeout = 5
+	local ini = fs.load_ini (ini_path)
+
+	if ini then
+		address = tostring (ini:find ("address") or "")
+		password = tostring (ini:find ("password") or "")
+		network = tostring (ini:find ("network") or "wide_area_network")
+		timeout = tonumber (ini:find ("timeout")) or 5
+	end
+
+	if dlg:do_modal (address, password, network, timeout) == ID_OK then
+		address = dlg.acc_address:get_text ()
+		password = dlg.acc_password:get_text ()
+		network = dlg.acc_network:get_text ()
+		if network:len() < 1 then
+			network = "wide_area_network"
+		end
+		timeout = tonumber (dlg.acc_timeout:get_text ()) or 5
+
+		local file = io.open (ini_path, "w")
+		if file then
+			file:write( string.format ("address=%s\npassword=%s\nnetwork=%s\ntimeout=%d",
+												address, password, network, timeout))
+			file:close ()
+		else
+			self:msgbox ("Error", "Error saving account settings!", term.colors.red)
+		end
+	end
+end
+
+
+function appFrame:on_get_emails ()
+	local ini = fs.load_ini (self.app_app_folder.."email.ini")
+
+	if ini then
+		self.app_address = tostring (ini:find("address") or "")
+		self.app_password = tostring (ini:find("password") or "")
+		self.app_network = tostring (ini:find ("network") or "wide_area_network")
+		local timeout = tonumber (ini:find ("timeout")) or 5
+
+		if self.app_address:len () > 2 and self.app_address:find ("@", 1) then
+			if self.app_password:len () < 1 then
+				local dlg = passwordDlg:new (self)
+
+				if dlg:do_modal () ~= ID_OK then
+					return
+				end
+
+				self.app_password = dlg.pw_password:get_text ()
+			end
+
+			if not self.app_conn_name then
+				local con = self:comm_open (nil, timeout)
+
+				if not con then
+					self:msgbox ("Connection", "Could not connect to modem!", term.colors.red)
+					return
+				end
+
+				self.app_conn_name = con:get_name ()
+				self:want_messages ("email_client", self.app_conn_name)
+				self:want_messages (self.app_network, self.app_conn_name)
+			end
+
+			local domain = self.app_address:sub (self.app_address:find ("@", 1) + 1)
+			local account = self.app_address:sub (1, self.app_address:find ("@", 1) - 1)
+
+			self.app_conn_timer = self:start_timer (30)
+			self:send_message (domain, self.app_network, "email_request",
+									 {
+										 application = "email_client",
+										 account = account,
+										 password = self.app_password
+									 }, self.app_conn_name)
+		else
+			self.app_address = nil
+			self.app_password = nil
+			self.app_network = nil
+			self:msgbox ("Account", "Invalid account settings!", term.colors.red)
+		end
+	else
+		self:msgbox ("Account", "No account set up!", term.colors.red)
+	end
+end
+
+
+function appFrame:on_change_password ()
+	local ini = fs.load_ini (self.app_app_folder.."email.ini")
+
+	if ini then
+		self.app_address = tostring (ini:find ("address") or "")
+		self.app_password = tostring (ini:find ("password") or "")
+		self.app_network = tostring (ini:find ("network") or "wide_area_network")
+		local timeout = tonumber (ini:find ("timeout")) or 5
+
+		if self.app_address:len () > 2 and self.app_address:find ("@", 1) then
+			local dlg = newPasswordDlg:new (self)
+
+			if dlg:do_modal (self.app_password) ~= ID_OK then
+				return
+			end
+
+			self.app_password = dlg.pw_password:get_text ()
+
+			if not self.app_conn_name then
+				local con = self:comm_open (nil, timeout)
+				if not con then
+					self:msgbox ("Connection", "Could not connect to modem!", term.colors.red)
+					return
+				end
+
+				self.app_conn_name = con:get_name ()
+				self:want_messages ("email_client", self.app_conn_name)
+				self:want_messages (self.app_network, self.app_conn_name)
+			end
+
+			local domain = self.app_address:sub (self.app_address:find ("@", 1) + 1)
+			local account = self.app_address:sub (1, self.app_address:find ("@", 1) - 1)
+
+			self.app_conn_timer = self:start_timer (30)
+			self:send_message (domain, self.app_network, "account_password",
+									 {
+										 account = account,
+										 password = self.app_password,
+										 new_password = dlg.pw_new_password:get_text ()
+									 }, self.app_conn_name)
+		else
+			self.app_address = nil
+			self.app_password = nil
+			self.app_network = nil
+			self:msgbox ("Account", "Invalid account settings!", term.colors.red)
+		end
+	else
+		self:msgbox ("Account", "No account set up!", term.colors.red)
+	end
+end
+
+
+
+appFrame:run_app ()

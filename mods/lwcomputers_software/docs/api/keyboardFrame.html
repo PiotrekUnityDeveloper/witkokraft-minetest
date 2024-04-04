@@ -1,0 +1,860 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>keyboardFrame</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>private.keyboardFrame - WIN</h1>
+    Class <b>keyboardFrame</b><br>
+    Inherits from <a moz-do-not-send="true"
+      href="applicationFrame.html">applicationFrame</a>.<br>
+    <br>
+    The keyboardFrame class provides the keyboard overlay frame for
+    monitors. It is privately defined in the win API. To invoke the on
+    screen keyboard use the <a moz-do-not-send="true"
+      href="window.html#window:set_want_key_input">window:set_want_key_input</a>
+    method of the window requiring key input.<br>
+    <br>
+    <b>Properties</b><br>
+    <br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">alt_state</td>
+          <td valign="top">boolean</td>
+          <td valign="top">Alternate key state.</td>
+        </tr>
+        <tr>
+          <td valign="top">cancel_color</td>
+          <td valign="top">number</td>
+          <td valign="top">Cancel key background color.</td>
+        </tr>
+        <tr>
+          <td valign="top">caps_state</td>
+          <td valign="top">boolean</td>
+          <td valign="top">Caps lock key state.</td>
+        </tr>
+        <tr>
+          <td valign="top">cmd_color</td>
+          <td valign="top">number</td>
+          <td valign="top">Command key background color.</td>
+        </tr>
+        <tr>
+          <td valign="top">ctrl_state</td>
+          <td valign="top">boolean</td>
+          <td valign="top">Control key state.</td>
+        </tr>
+        <tr>
+          <td valign="top">kb_bg_color</td>
+          <td valign="top">number</td>
+          <td valign="top">Keyboard background color.</td>
+        </tr>
+        <tr>
+          <td valign="top">kb_text_color</td>
+          <td valign="top">number</td>
+          <td valign="top">Key text color.</td>
+        </tr>
+        <tr>
+          <td valign="top">key_map<br>
+          </td>
+          <td valign="top">table<br>
+          </td>
+          <td valign="top">Reference to appropriate keyboard layout.</td>
+        </tr>
+        <tr>
+          <td valign="top">keys_left</td>
+          <td valign="top">number</td>
+          <td valign="top">Left position of key panel.</td>
+        </tr>
+        <tr>
+          <td valign="top">keys_top</td>
+          <td valign="top">number</td>
+          <td valign="top">Top position of key panel.</td>
+        </tr>
+        <tr>
+          <td valign="top">shift_state</td>
+          <td valign="top">boolean</td>
+          <td valign="top">Shift key state.</td>
+        </tr>
+        <tr>
+          <td valign="top">std_color</td>
+          <td valign="top">number</td>
+          <td valign="top">Standard key background color.</td>
+        </tr>
+        <tr>
+          <td valign="top">target_parent</td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a></td>
+          <td valign="top">Stores parent of target window.</td>
+        </tr>
+        <tr>
+          <td valign="top">target_parent_frame</td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="parentFrame.html">parentFrame</a><br>
+          </td>
+          <td valign="top">Stores parent frame of target window.<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">target_rect</td>
+          <td valign="top"><a moz-do-not-send="true" href="rect.html">rect</a></td>
+          <td valign="top">Stores target window size and placement.</td>
+        </tr>
+        <tr>
+          <td valign="top">target_wnd</td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a></td>
+          <td valign="top">Window to receive key input.</td>
+        </tr>
+        <tr>
+          <td valign="top">target_z</td>
+          <td valign="top">number</td>
+          <td valign="top">Stores z position of target window.</td>
+        </tr>
+        <tr>
+          <td valign="top">toggle_color</td>
+          <td valign="top">number</td>
+          <td valign="top">Toggled key background color.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Methods</b><br>
+    <ul id="mozToc">
+      <!--mozToc h3 1 h6 6-->
+      <li><a href="#mozTocId840763">keyboardFrame:alt_key_color</a></li>
+      <li><a href="#mozTocId253756">keyboardFrame:cancel_key_color</a></li>
+      <li><a href="#mozTocId14991">keyboardFrame:caps_key_color</a></li>
+      <li><a href="#mozTocId902007">keyboardFrame:cmd_key_color</a></li>
+      <li><a href="#mozTocId663227">keyboardFrame:constructor</a></li>
+      <li><a href="#mozTocId515136">keyboardFrame:ctrl_key_color</a></li>
+      <li><a href="#mozTocId340156">keyboardFrame:dismiss</a></li>
+      <li><a href="#mozTocId286058">keyboardFrame:draw</a></li>
+      <li><a href="#mozTocId668037">keyboardFrame:get_key_def</a></li>
+      <li><a href="#mozTocId423073">keyboardFrame:no_key_color</a></li>
+      <li><a href="#mozTocId18855">keyboardFrame:on_create</a></li>
+      <li><a href="#mozTocId253112">keyboardFrame:on_event</a></li>
+      <li><a href="#mozTocId505036">keyboardFrame:on_quit</a></li>
+      <li><a href="#mozTocId148823">keyboardFrame:on_resize</a></li>
+      <li><a href="#mozTocId249852">keyboardFrame:on_touch</a></li>
+      <li><a href="#mozTocId37005">keyboardFrame:shift_key_color</a></li>
+      <li><a href="#mozTocId757082">keyboardFrame:std_key_color</a></li>
+    </ul>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId840763" class="mozTocH3"></a><a
+        name="keyboardFrame:alt_key_color"></a>private.keyboardFrame:alt_key_color</h3>
+    <i> color keyboardFrame:alt_key_color ()</i><br>
+    <br>
+    Returns the current background color for an alternate key.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">color </td>
+          <td valign="top">number </td>
+          <td valign="top">Alternate key color. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId253756" class="mozTocH3"></a><a
+        name="keyboardFrame:cancel_key_color"></a>private.keyboardFrame:cancel_key_color</h3>
+    <i> color keyboardFrame:cancel_key_color ()</i><br>
+    <br>
+    Returns the current background color for the cancel key.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">color </td>
+          <td valign="top">number </td>
+          <td valign="top">Cancel key color. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId14991" class="mozTocH3"></a><a
+        name="keyboardFrame:caps_key_color"></a>private.keyboardFrame:caps_key_color</h3>
+    <i> color keyboardFrame:caps_key_color ()</i><br>
+    <br>
+    Returns the current background color for the caps lock key.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">color </td>
+          <td valign="top">number </td>
+          <td valign="top">Caps lock key color. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId902007" class="mozTocH3"></a><a
+        name="keyboardFrame:cmd_key_color"></a>private.keyboardFrame:cmd_key_color</h3>
+    <i> color keyboardFrame:cmd_key_color ()</i><br>
+    <br>
+    Returns the current background color for a command key.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">color </td>
+          <td valign="top">number </td>
+          <td valign="top">Command key color. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="keyboardFrame.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId663227" class="mozTocH3"></a><a
+        name="keyboardFrame:constructor"></a>private.keyboardFrame:constructor</h3>
+    <i> frame keyboardFrame:constructor (dir, target_wnd)</i><br>
+    <br>
+    Constructs and returns the instantiated home page frame window.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">dir </td>
+          <td valign="top">string </td>
+          <td valign="top">Desktop directory under<i> /win/devices</i>.
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">target_wnd </td>
+          <td valign="top"><a moz-do-not-send="true" href="window.html">window</a>
+          </td>
+          <td valign="top">The window to receive key input from the on
+            screen keyboard. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">frame </td>
+          <td valign="top">keyboardFrame </td>
+          <td valign="top">The instantiated frame window. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="keyboardFrame.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId515136" class="mozTocH3"></a><a
+        name="keyboardFrame:ctrl_key_color"></a>private.keyboardFrame:ctrl_key_color</h3>
+    <i> color keyboardFrame:ctrl_key_color ()</i><br>
+    <br>
+    Returns the current background color for a control key.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">color </td>
+          <td valign="top">number </td>
+          <td valign="top">Control key color. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="keyboardFrame.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId340156" class="mozTocH3"></a><a
+        name="keyboardFrame:dismiss"></a>private.keyboardFrame:dismiss</h3>
+    <i> keyboardFrame:dismiss ()</i><br>
+    <br>
+    Dismisses the keyboard overlay by ending its modal state.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="keyboardFrame.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId286058" class="mozTocH3"></a><a
+        name="keyboardFrame:draw"></a>private.keyboardFrame:draw</h3>
+    <i> keyboardFrame:draw (gdi, bounds)</i><br>
+    <br>
+    Draws the keyboard overlay window.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">gdi </td>
+          <td valign="top"><a moz-do-not-send="true" href="GDI.html">GDI</a>
+          </td>
+          <td valign="top">GDI object to use for drawing. </td>
+        </tr>
+        <tr>
+          <td valign="top">bounds </td>
+          <td valign="top"><a moz-do-not-send="true" href="rect.html">rect</a>
+          </td>
+          <td valign="top">Invalidated area of the window. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="keyboardFrame.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId668037" class="mozTocH3"></a><a
+        name="keyboardFrame:get_key_def"></a>private.keyboardFrame:get_key_def</h3>
+    <i> def keyboardFrame:get_key_def (x, y)</i><br>
+    <br>
+    Retrieves the key definition table for the key at the given
+    position, or nil if none.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">x </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative x position. </td>
+        </tr>
+        <tr>
+          <td valign="top">y </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative y position. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">def </td>
+          <td valign="top">table </td>
+          <td valign="top">Key definition (information) table. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="keyboardFrame.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId423073" class="mozTocH3"></a><a
+        name="keyboardFrame:no_key_color"></a>private.keyboardFrame:no_key_color</h3>
+    <i> color keyboardFrame:no_key_color ()</i><br>
+    <br>
+    Returns the background color of the keyboard..<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">color </td>
+          <td valign="top">number </td>
+          <td valign="top">Keyboard color. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="keyboardFrame.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId18855" class="mozTocH3"></a><a
+        name="keyboardFrame:on_create"></a>private.keyboardFrame:on_create</h3>
+    <i> result keyboardFrame:on_create ()</i><br>
+    <br>
+    Adopts the target window and sets up the keyboard.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none<br>
+          </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result<br>
+          </td>
+          <td valign="top">boolean<br>
+          </td>
+          <td valign="top">Always true.<br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="keyboardFrame.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId253112" class="mozTocH3"></a><a
+        name="keyboardFrame:on_event"></a>private.keyboardFrame:on_event</h3>
+    <i> result keyboardFrame:on_event (event, p1, p2, p3, p4, p5, ...)</i><br>
+    <br>
+    Processes any events from the target window (the window receiving
+    key input).<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">event </td>
+          <td valign="top">string </td>
+          <td valign="top">The event type. </td>
+        </tr>
+        <tr>
+          <td valign="top">p1 </td>
+          <td valign="top">any </td>
+          <td valign="top">First parameter to event or nil if not used.
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">p2</td>
+          <td valign="top">any</td>
+          <td valign="top">Second parameter to event or nil if not used.</td>
+        </tr>
+        <tr>
+          <td valign="top">p3</td>
+          <td valign="top">any</td>
+          <td valign="top">Third parameter to event or nil if not used.</td>
+        </tr>
+        <tr>
+          <td valign="top">p4</td>
+          <td valign="top">any</td>
+          <td valign="top">Fourth parameter to event or nil if not used.</td>
+        </tr>
+        <tr>
+          <td valign="top">p5</td>
+          <td valign="top">any</td>
+          <td valign="top">Fifth parameter to event or nil if not used.</td>
+        </tr>
+        <tr>
+          <td valign="top">...<br>
+          </td>
+          <td valign="top">any</td>
+          <td valign="top">Any additional parameters.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Always true. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:on_event">window:on_event</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="keyboardFrame.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId505036" class="mozTocH3"></a><a
+        name="keyboardFrame:on_quit"></a>private.keyboardFrame:on_quit</h3>
+    <i> result keyboardFrame:on_quit ()</i><br>
+    <br>
+    Restores the target window back to it's original parent.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none<br>
+          </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result<br>
+          </td>
+          <td valign="top">boolean<br>
+          </td>
+          <td valign="top">Always false.<br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="keyboardFrame.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId148823" class="mozTocH3"></a><a
+        name="keyboardFrame:on_resize"></a>private.keyboardFrame:on_resize</h3>
+    <i> result keyboardFrame:on_resize ()</i><br>
+    <br>
+    Resizes the frame and reconfigures the keyboard layout.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Always true. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="keyboardFrame.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId249852" class="mozTocH3"></a><a
+        name="keyboardFrame:on_touch"></a>private.keyboardFrame:on_touch</h3>
+    <i> result keyboardFrame:on_touch (x, y)</i><br>
+    <br>
+    Implements the keyboard's touch responses.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">x </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative x position. </td>
+        </tr>
+        <tr>
+          <td valign="top">y </td>
+          <td valign="top">number </td>
+          <td valign="top">Window relative y position. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Always true. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:on_touch">window:on_touch</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="keyboardFrame.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId37005" class="mozTocH3"></a><a
+        name="keyboardFrame:shift_key_color"></a>private.keyboardFrame:shift_key_color</h3>
+    <i> color keyboardFrame:shift_key_color ()</i><br>
+    <br>
+    Returns the current background color for a shift key.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">color </td>
+          <td valign="top">number </td>
+          <td valign="top">Shift key color. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="keyboardFrame.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId757082" class="mozTocH3"></a><a
+        name="keyboardFrame:std_key_color"></a>private.keyboardFrame:std_key_color</h3>
+    <i> color keyboardFrame:std_key_color ()</i><br>
+    <br>
+    Returns the current background color for a standard key.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">color </td>
+          <td valign="top">number </td>
+          <td valign="top">Standard key color. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="keyboardFrame.html#top">top</a><br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

@@ -1,0 +1,1661 @@
+lwcomputer computer API reference.
+==================================
+
+*	The side orientation is as the computer/robot is facing.
+
+
+assert (v [, message])
+	Std lua.
+
+collectgarbage ([opt [, arg]])
+	Omitted.
+
+dofile (filename)
+	Routs file path to computers file system, calls `loadfile`.
+	Opens the named file and executes its contents as a Lua chunk.
+	Files only, no std input. Returns all values returned by the chunk.
+	In case of errors, dofile propagates the error to its caller (that is,
+	dofile does not run in protected mode).
+
+error (message [, level])
+	Std lua.
+
+_G
+	Refers to computer's environment table.
+
+getfenv ([f])
+	Returns the current environment in use by the function. f can be a Lua
+	function or a number that specifies the function at that stack level:
+	Level 1 is the function calling getfenv. If the given function is not
+	a Lua function, or if f is 0, getfenv returns the sandbox environment.
+	The default for f is 1. If the environment is above the sandbox nil is
+	returned.
+
+getmetatable (object)
+	Returns the metatable of object, which must be a the table. If object is
+	string, coroutine, table, math or vector nil is returned.
+
+ipairs (t)
+	Std lua.
+
+load (func [, chunkname])
+	Same as std lua but environment of returned function is set to the computer's
+	environment.
+
+loadfile (filename)
+	Routs file path to computers file system, loads and calls `loadstring`.
+	Files only, no std input.
+
+loadstring (string [, chunkname])
+	Same as std lua but environment of returned function is set to the computer's
+	environment.
+
+next (table [, index])
+	Std lua.
+
+pairs (t)
+	Std lua.
+
+pcall (f, arg1, ···)
+	Std lua.
+
+print (fmt, ... )
+	Calls `term.print`. Not as std, parameters as for `string.format`.
+
+rawequal (v1, v2)
+	Omitted.
+
+rawget (table, index)
+	Omitted.
+
+rawset (table, index, value)
+	Omitted.
+
+require
+	Omitted.
+
+select (index, ···)
+	Std lua.
+
+setfenv (f, table)
+	Sets the environment to be used by the given function if the current
+	environment is not above the sandbox. f can be a Lua  function or a
+	number that specifies the function at that stack level: Level 1 is the
+	function calling setfenv. setfenv returns the given function.
+
+setmetatable (table, metatable)
+	Sets the metatable of the table. Metatables of string, coroutine, table,
+	math and vector cannot be set.
+
+tonumber (e [, base])
+	Std lua.
+
+tostring (e)
+	Std lua.
+
+type (v)
+	Std lua.
+
+unpack (list [, i [, j]])
+	Std lua.
+
+_VERSION
+	Std lua.
+
+xpcall (f, err)
+	Std lua.
+
+
+coroutine
+---------
+	Std lua interface.
+
+
+package
+-------
+	Omitted.
+
+
+string
+------
+	Std lua interface, including minetest string.split, except for the following.
+
+string.rep (str, n)
+	The same as std but length of returned string is limited to the
+	`lwcomputers_max_string_rep_size` setting (default 64000). That is
+	`str:len () * n`. If the requested size is greater a
+	"string.rep string too long" error is generated.
+
+string.find (str, pattern , init)
+	The same as std but the forth argument is omitted and is always set to
+	true (plain text search only).
+
+
+table
+-----
+	Std lua interface.
+
+
+math
+----
+	Std lua interface.
+
+
+debug
+-----
+	Omitted.
+
+
+jit
+---
+	Omitted.
+
+
+vector
+------
+	Std minetest interface.
+
+
+io
+--
+
+io.close (file)
+	Closes the given file. Given file only, no default output file.
+	Equivalent of `file:close ()`.
+
+io.flush ()
+	Omitted.
+
+io.input ([file])
+	Omitted.
+
+io.lines (filename)
+	Routs file path to computers file system. Given file only, no default input file.
+	Opens the given file name in read mode and returns an iterator function that,
+	each time it is called, returns a new line from the file. When the iterator
+	function detects the end of file, it returns nil (to finish the loop) and
+	automatically closes the file.
+
+io.open (filename [, mode])
+	Routs file path to computers file system.
+	This function opens a file, in the mode specified in the string mode.
+	It returns a new file handle, or, in case of errors, nil plus an error message.
+	The mode string can be any of the following:
+		"r": read mode (the default);
+		"w": write mode;
+		"a": append mode;
+		"r+": update mode, all previous data is preserved;
+		"w+": update mode, all previous data is erased;
+		"a+": append update mode, previous data is preserved, writing is only
+				allowed at the end of file.
+	The mode string can also have a 'b' at the end, which is needed in some systems
+	to open the file in binary mode. This string is exactly what is used in the
+	standard C function fopen.
+
+	* Returned file objects work the same as std lua, except for the following:
+		file:setvbuf:	Has no effect. All write operations are immediate.
+		file:write:		Throws error "disk full" if the write will exceed disk size.
+							The file is flushed after every write action.
+		Writing and reading number values with meta data disk storage is not
+		compatible with native lua.
+
+io.output ([file])
+	Omitted.
+
+io.read (···)
+	Omitted.
+
+io.type (obj)
+	Works the same as std lua, but adapted to work with safe file objects
+	returned from io.open as well.
+
+io.write (···)
+	Omitted.
+
+
+os
+--
+
+os.chat (message, name)
+	message: string message to send to chat.
+	name: target player's name (optional).
+	If the machine is private and name is not specified the message is only
+	sent to the owner. If name is given it must be the owner or a player
+	in the access list (see security) and the message is only sent to that
+	player, prefixed with the owner and computer id.
+	If the machine is public, if name is given the message is only sent to
+	that player. If name is not specified the message is sent to all.
+
+	*If Allow chat setting is disabled any call to os.chat is ignored.
+	*If Allow public chat setting is disabled any call to os.chat on a
+	public machine is ignored.
+
+os.clock ()
+	Seconds since lwcomputer computer was started.
+
+os.clock_speed ()
+	The time in seconds of the running interval for the computer.
+	* This returns the "Running interval seconds" setting.
+
+os.computer_id ()
+	Returns the computer's unique id number.
+
+os.copy_to_clipboard (contents)
+	Copies the contents string to the first clipboard in the computer's slot.
+	Returns true if successful, false if not (no clipboard).
+	* The length of the contents is limited to the "Maximum clipboard content length"
+	setting (default 64000).
+	See "clipboard" event.
+
+os.date ([format [, time]])
+	Without time argument uses minetest world time (see os.time). Otherwise
+	same as std lua.
+
+os.difftime (t2, t1)
+	Std lua.
+
+os.environs
+	Added table for environment variables. See `os.getenv` and `os.setenv`.
+
+os.envstr (str)
+	Returns the string with any environment variables replaced with their
+	value. Environment names of the form "$<name>".
+
+os.getenv (varname)
+	Queries the added `environs` table.
+	Returns the value of the environment variable varname, or nil if the
+	variable is not defined.
+
+os.get_event ([event])
+	Returns the next queued event, removing it from the queue.
+	event: if nil the next available event is returned. If event type (should
+	be string) returns the next available event of that type.
+
+	The first value is a string of the type of event. The following values
+	vary depending on the event type. Typical usage:
+
+	local event = { os.get_event () }
+	if event[1] == "char" then ... end
+
+	See events.
+	* This function yields.
+
+os.get_name ()
+	Returns the computer's string name. This is an arbitrary value. An empty
+	string is returned if the name has not been set.
+
+os.has_clipboard ()
+	Returns true if a clipboard is currently in one of the computer's slots,
+	otherwise false.
+
+os.key_state (key)
+	Returns the current state of the queried key, true for down or false for up.
+	key: if one of `keys.KEY_CTRL`, `keys.KEY_ALT`, `keys.KEY_SHIFT` or `keys.KEY_CAPS`
+	the state of that key is returned. If nil the state of all four keys is returned
+	as `ctrl, alt, shift, caps`. If an invalid key is queried nil is returned.
+
+os.kill_timer (id)
+	Cancels the identified timer. This id is returned by `os.start_timer`.
+	Ignored if the timer doesn't exist.
+
+os.paste_from_clipboard ()
+	Returns the contents string of the first clipboard in the computer's slot,
+	or nil if none.
+	* The length of the contents is limited to the "Maximum clipboard content length"
+	setting (default 64000).
+	See "clipboard" event.
+
+os.peek_event ([event])
+	Checks the event queue and returns the next available event without removing
+	it from the queue. Returns nil if no event is available.
+	event: if nil the next available event is returned, if any. If event type
+	(should be string) returns the next available event of that type, if any.
+	See events.
+	* This function does not yield.
+
+os.queue_event (event, ... )
+	Queues an event.
+	The first argument must be a string of the event type, followed by any
+	additional values for that event.
+	See events.
+
+os.reboot ()
+	Reboots the computer.
+
+os.remove (path)
+	Routs file path to computers file system.
+	Deletes the file or directory with the given name. Directories must be
+	empty to be removed. If this function fails, it returns nil, plus a string
+	describing the error.
+
+os.remove_event ([event])
+	Checks the event queue and returns the next available event and removes
+	it from the queue. Returns nil if no event is available.
+	event: if nil the next available event is removed, if any. If event type
+	(should be string) removes the next available event of that type, if any.
+	See events.
+	* This function does not yield.
+
+os.rename (oldname, newname)
+	Routs file paths to computers file system.
+	Renames file or directory named oldname to newname. If this function fails,
+	it returns nil, plus a string describing the error.
+
+os.setenv (varname, value)
+	Added to set a variable in the added `environs` table.
+	Sets the value of the environment variable varname to value. If value
+	is nil the environment variable is cleared.
+
+os.setlocale (locale [, category])
+	Omitted.
+
+os.set_name (name)
+	Sets the computer's string name. If nil an empty string is used (the
+	named is cleared).
+
+os.shutdown ()
+	Shuts down the computer.
+
+os.sleep (secs)
+	Pauses code execution for the given number of seconds (real world), which
+	can be fractional. The time paused may not be exact, but extended to the
+	nearest processing tick (0.1 second intervals by default).
+	* This function yields.
+
+os.start_timer (secs)
+	Starts a single elapse timer. Seconds can be fractional. Returns an integer
+	identifier value that can be used with `os.kill_timer`.
+	* Timers elapse on tick boundaries (0.1 seconds by default).
+	* For repeat timer, re-start it in the event handler.
+
+os.time ([table])
+	Without argument returns minetest world time (seconds since system's epoch,
+	usually from beginning of 1970). Otherwise same as std lua.
+
+os.tmpname ()
+	Omitted.
+
+os.to_worldtime (secs)
+	Returns in games seconds converted from real world seconds.
+	* If the setting 'time_speed' is zero, `secs` is returned.
+
+os.to_realtime (secs)
+	Returns real world seconds converted from in games seconds.
+	* If the setting 'time_speed' is zero, `secs` is returned.
+
+os.version ()
+	Returns lwcomputer's version string, eg. "0.2.9".
+
+
+security
+--------
+Security interface. Always defined but inactive if computer/robot is
+public.
+
+security.add_access (name)
+	Adds player that can access this machine if it is private. Returns
+	true if successful, false if not (machine is public).
+	name: the players name to allow access.
+
+security.remove_access (name)
+	Removes access to an allowed player to this machine if it is private.
+	Returns true if successful, false if not (machine is public).
+	name: the players name to remove access.
+
+security.access_list ()
+	Returns an indexed list of player names that can access this machine,
+	or nil if machine is public. The returned list can be zero size as the
+	owner always has access, and is not placed in the access list.
+
+security.owner ()
+	Returns the owner's name, or nil if machine is public.
+
+
+fs
+--
+Added interface to handle file system operations.
+
+fs.abs_path (basepath, relpath)
+	On success returns the full absolute path, or nil and an error message.
+	basepath: the base path relied on for interpretation, should start at root.
+	relpath: the relative path, if starts at root "/" it is returned.
+	eg.
+		fs.abs_path ("/here/there", "everywhere")
+			returns "/here/there/everywhere"
+
+		fs.abs_path ("/here/there", "../everywhere")
+			returns "/here/everywhere"
+
+		fs.abs_path ("/here/there", "/everywhere")
+			returns "/everywhere"
+
+fs.copy_file (srcpath, destpath)
+	Copies file at srcpath to destpath, overwriting if it exists. Routs file
+	paths to computers file system.
+	Returns true on success, or false and an error message.
+
+fs.disk_free (drivepath)
+	Returns the free space of the disk in bytes, or nil and error message
+	on failure.
+	drivepath can be:
+		*	A zero based ordinal number of the drive to fetch. Zero is the computers
+			hard drive. Floppies are numbered in order from the inventory slots,
+			as found - not by slot number.
+		*	A base path string for the drive. "/" is the computers hard drive.
+			"/<mount>" for floppies.
+
+fs.disk_size (drivepath)
+	Returns the total capacity of the disk in bytes, or nil and error message
+	on failure.
+	drivepath can be:
+		*	A zero based ordinal number of the drive to fetch. Zero is the computers
+			hard drive. Floppies are numbered in order from the inventory slots,
+			as found - not by slot number.
+		*	A base path string for the drive. "/" is the computers hard drive.
+			"/<mount>" for floppies.
+
+fs.file_exists (path, types)
+	Routs file path to computers file system.
+	Returns true if file/folder at path exists or false if not.
+	types: nil = any, true = only dir, false = only file
+
+fs.file_size (path)
+	Routs file path to computers file system.
+	Returns:
+		If file, byte size of the file.
+		If directory, total byte size of files under directory (including subs).
+		nil on error.
+
+fs.file_type (path)
+	Routs file path to computers file system.
+	Returns "file", "dir" or nil.
+
+fs.get_drive_id (drivepath)
+	Returns the id number of the specified drive, or nil and error message on failure.
+	drivepath can be:
+		*	A zero based ordinal number of the drive to fetch. Zero is the computers
+			hard drive. Floppies are numbered in order from the inventory slots,
+			as found - not by slot number.
+		*	A base path string for the drive. "/" is the computers hard drive.
+			"/<mount>" for floppies.
+
+fs.get_label (drivepath)
+	Returns the label of the specified drive, or nil and error message on failure.
+	drivepath can be:
+		*	A zero based ordinal number of the drive to fetch. Zero is the computers
+			hard drive. Floppies are numbered in order from the inventory slots,
+			as found - not by slot number.
+		*	A base path string for the drive. "/" is the computers hard drive.
+			"/<mount>" for floppies.
+
+fs.ls (path, types)
+	Routs file path to computers file system.
+	Returns directory listing as an indexed table, or nil and error message on failure.
+	types: nil = all, true = only dirs, false = only files.
+	If path is nil, types is ignored and a list as an indexed table of the
+	drive base paths is returned.
+	eg:
+		{
+			"/", -- root of hdd always first
+			"/<mount 1>",
+			...
+		}
+
+fs.mkdir (path)
+	Calls `minetest.mkdir`. Routs file path to computers file system.
+	Creates a directory specified by `path`, creating parent directories
+	if they don't exist. Returns true on success or false and error message.
+
+fs.path_extension (path)
+	Returns the path's file extension or nil if path is malformed. If the
+	path has no extension "" is returned.
+	Eg. fs.path_folder ("/here/there/file.txt") returns "txt".
+
+fs.path_folder (path)
+	Returns the path's folder or nil if path is malformed.
+	Eg. fs.path_folder ("/here/there/file.txt") returns "/here/there".
+
+fs.path_name (path)
+	Returns the path's file name or nil if path is malformed.
+	Eg. fs.path_folder ("/here/there/file.txt") returns "file.txt".
+
+fs.path_title (path)
+	Returns the path's file title or nil if path is malformed.
+	Eg. fs.path_folder ("/here/there/file.txt") returns "file".
+
+fs.remove (path)
+	Calls `os.remove`. Routs file path to computers file system.
+	Deletes the file or directory with the given name. Directories must be
+	empty to be removed. If this function fails, it returns nil, plus a string
+	describing the error.
+
+fs.rename (oldname, newname)
+	Calls `os.rename`. Routs file path to computers file system.
+	Renames file or directory named oldname to newname. If this function fails,
+	it returns nil, plus a string describing the error.
+
+fs.set_label (drivepath, label)
+	Sets the label of the specified drive, returning true on success or false and
+	an error message on failure.
+	drivepath can be:
+		*	A zero based ordinal number of the drive to fetch. Zero is the computers
+			hard drive. Floppies are numbered in order from the inventory slots,
+			as found - not by slot number.
+		*	A base path string for the drive. "/" is the computers hard drive.
+			"/<mount>" for floppies.
+	If label is nil an empty string is set (the label is cleared).
+
+
+term
+----
+	Added terminal interface.
+	Terminal coordinates are zero based, left top corner.
+
+term.colors
+	Table of colors used by terminal, as `term.colors.<color>`.
+
+black		= 0,
+orange	= 1,
+magenta	= 2,
+sky		= 3,
+yellow	= 4,
+pink		= 5,
+cyan		= 6,
+gray		= 7,
+silver	= 8,
+red		= 9,
+green		= 10,
+blue		= 11,
+brown		= 12,
+lime		= 13,
+purple	= 14,
+white		= 15
+
+
+term.get_cursor ()
+	Returns x, y of current cursor position.
+
+term.set_cursor (x, y)
+	Sets cursors current position. Position is clipped to terminal resolution.
+
+term.set_blink (blink)
+	Sets the visible state of the cursor (true or false).
+
+term.get_blink ()
+	Returns the visible state of the cursor (true or false).
+
+term.get_resolution ()
+	Returns width, height of the terminal display.
+
+term.get_colors ()
+	Returns the current forecolor, backcolor colors.
+
+term.set_colors (fg, bg)
+	Sets the current forecolor, backcolor colors.
+	If either color is nil, that color is not changed.
+
+term.set_char (x, y, char, fg, bg)
+	Sets the character at zero based coordinate x, y.
+	char: the ascii code to set (0 to 255), or nil for no change.
+	fg: the forecolor to set or nil for no change.
+	bg: the backcolor to set or nil for no change.
+
+term.get_char (x, y)
+	Returns the character at zero based coordinate x, y as
+	asciicode, forecolor, backcolor or nil, nil, nil if
+	x or y are out of range.
+
+term.write (str, fg, bg)
+	Write the string at the current cursor position. Lines wrap but terminal
+	doesn't scroll. Excess is not written.
+	str: the string to write.
+	fg: forecolor to use or nil to use currently set.
+	bg: backcolor to use or nil to use currently set.
+	* Cursor position is not updated.
+
+term.blit (buff, x, y, w, h)
+	Blits a rectangular section to the terminal from a buffer.
+	Returns true if successful, or false and an error message if not.
+	buff: The buffer holding the data to write.
+	x: zero based left coordinate to write to.
+	y: zero based top coordinate to write to.
+	w: the width of the rectangular section to write to.
+	h: the height of the rectangular section to write to.
+	Any section of the rectangle which is not on the screen is omitted. x and y
+	can be negative.
+	The buffer is an indexed table of character data from left to right, top
+	to bottom in order. Each character data should be formed as:
+	{ char = <asciicode>, fg = <forecolor>, bg = <backcolor> }. If any table
+	cell is not a table that character is not altered (transparent).
+
+term.cache (x, y, w, h)
+	Returns a buffer of the character data from the terminal buffer, of the
+	form used by `term.blit`, or nil if w * h has no size.
+	x: zero based left coordinate to read from.
+	y: zero based top coordinate to read from.
+	w: the width of the rectangular section to read from.
+	h: the height of the rectangular section to read from.
+	Any section of the rectangle which is not on the screen is set to zero
+	(not a table, will blit as transparent).
+	x and y can be negative.
+
+term.clear (char, fg, bg, x, y, w, h)
+	Clears a rectangular section of the terminal display.
+	char: the ascii code to set for each character, nil defaults to zero.
+	fg: forecolor to set, nil defaults to currently set color.
+	bg: backcolor to set, nil defaults to currently set color.
+	x: zero based left coordinate to clear, nil defaults to zero.
+	y: zero based top coordinate to clear, nil defaults to zero.
+	w: width of rectangular section to clear, nil defaults to terminal right.
+	h: height of rectangular section to clear, nil defaults to terminal bottom.
+	`term.clear ()` will clear to whole terminal to black.
+	* The cursor position is not moved.
+
+term.scroll (lines, x, y, w, h)
+	Scrolls a rectangular section the given lines.
+	lines: the lines to scroll, negative moves up, positive moves down.
+	x: zero based left coordinate to scroll, nil defaults to zero.
+	y: zero based top coordinate to scroll, nil defaults to zero.
+	w: width of rectangular section to scroll, nil defaults to terminal right.
+	h: height of rectangular section to scroll, nil defaults to terminal bottom.
+	`term.scroll (-1)` scrolls the whole terminal up one line.
+	* Lines not overwritten by the scrolling are not cleared.
+
+term.print (fmt, ... )
+	Writes the string to the current cursor position, using the current forecolor
+	and backcolor, updating the cursor position. Lines wrap and the terminal scrolls
+	if the write goes beyond the bottom line.
+	Parameter are as for `string.format`. The function `print` calls this function.
+
+term.redraw (force)
+	Redraws the terminal. If force is false the terminal is redrawn if it
+	has been invalidated. If true the terminal is redrawn immediately.
+
+term.invalidate ()
+	Flag that the terminal needs to be redrawn. The terminal is automatically
+	redrawn if needed internally at every tick. Terminal functions that change
+	to the terminal buffer invalidate the terminal. This function is usually
+	not needed.
+
+
+utils
+-----
+	Added utilities interface.
+
+utils.serialize (data)
+	Serializes a table to a string.
+	Calls `minetest.serialize`.
+
+utils.deserialize (str)
+	Deserializes a string to a table.
+	Calls `minetest.deserialize`.
+
+utils.parse_json (str, nullvalue)
+	Convert a string containing JSON data into the Lua equivalent
+	`nullvalue`: returned in place of the JSON null; defaults to `nil`
+	On success returns a table, a string, a number, a boolean or `nullvalue`
+	On failure outputs an error message and returns `nil`
+	Example: `parse_json("[10, {\"a\":false}]")`, returns `{10, {a = false}}`
+	Calls `minetest.parse_json`.
+
+utils.write_json (data, styled)
+	Returns a string or `nil` and an error message.
+	Convert a Lua table into a JSON string
+	styled: Outputs in a human-readable format if this is set, defaults to false.
+	Unserializable things like functions and userdata will cause an error.
+	**Warning**: JSON is more strict than the Lua table format.
+		1. You can only use strings and positive integers of at least one as keys.
+		2. You can not mix string and integer keys.
+			This is due to the fact that JSON has two distinct array and object values.
+	Example: `write_json({10, {a = false}})`,
+				returns `"[10, {\"a\": false}]"`
+	Calls `minetest.write_json`.
+
+utils.compress (data, method, ... )
+	Returns `compressed_data`
+	Compress a string of data.
+	method: a string identifying the compression method to be used.
+		Supported compression methods:
+			Deflate (zlib): "deflate"
+	...: indicates method-specific arguments. Currently defined arguments are:
+		Deflate: `level` - Compression level, `0`-`9` or `nil`.
+	Calls `minetest.compress`.
+
+utils.decompress (compressed_data, method, ... )
+	Returns data
+	Decompress a string of data (using ZLib).
+	See documentation on `minetest.compress()` for supported compression methods.
+	...: indicates method-specific arguments. Currently, no methods use this.
+	Calls `minetest.decompress`.
+
+utils.dump (obj, name, dumped)
+	Returns a string which makes obj human-readable, handles reference loops.
+	obj: arbitrary variable
+	name: string, default: "_"
+	dumped: table, default: {}
+	Calls `dump2`.
+
+
+wireless
+--------
+	Added wireless communications interface.
+
+wireless.send_message (msg, target_id)
+	Sends a message to another or all other computers.
+	msg: the string message to send.
+	target_id: id of the computer to send the message to, or nil to send it to all
+	other computers.
+	Return true if the message was successfully sent to the target computer, or false
+	if failed. This is only the success of the send, not whether the target processed
+	the message, it could be turned off. false is returned if the target id is invalid
+	or it is in an unloaded chunk. If the message is broadcast true is always returned.
+
+wireless.lookup_name (id)
+	Returns the string name of the computer with the given id, or nil if it
+	couldn't be found.
+
+wireless.lookup_id (name)
+	Returns the id of the computer with the given name, or nil if not found
+	or in an unloaded chunk.
+	* Computer names may not be unique. If more than one computer has the same name
+	only one of them is returned.
+
+
+http
+----
+	Only functional if the lwcomputers mod has been granted access by being
+	listed in the `secure.http_mods` or `secure.trusted_mods` setting.
+
+http.fetch (request)
+	Performs given request and returns the HTTPRequestResult result.
+	request: see HTTPRequest for details.
+	If the call fails nil and an error message is retuned.
+	"no url": the request doesn't have a url.
+	"denied": the requested url is not in the white list.
+	"no http": http is not enabled for the mod.
+	"timed out": the call timed out. This is an internal limit, not the result
+	from the call.
+	* Timeout values are limited to a maximum of 30 seconds.
+
+http.get (url, timeout, extra_headers, user_agent)
+	On success returns the data and code from the request. On failure returns
+	nil and an error message.
+	"no url": the request doesn't have a url.
+	"denied": the requested url is not in the white list.
+	"no http": http is not enabled for the mod.
+	"timed out": the call timed out. Internal limit or request result.
+	"incomplete" : the result returned incomplete.
+	<code>: the code returned from the server. eg. "404".
+	"request failed": undetermined request error.
+	* Timeout values are limited to a maximum of 30 seconds.
+	url: string of the requested url.
+	timeout: timeout seconds for the call. Limited to maximum of 30 seconds.
+	If nil defaults to 3 seconds.
+	extra_headers: table of extra headers for the request. See HTTPRequest.
+	Can be nil for none.
+	user_agent: string of user agent for the request. If nil the minetest
+	user agent is used.
+
+
+mesecons
+--------
+	Interface is always defined but is inactive if mesecons mod is not present.
+	See "mesecons" event.
+
+mesecons.supported ()
+	Returns true if mesecons interface is active, otherwise false.
+
+mesecons.get (side)
+	Returns true if mesecons state is currently on, false if off or not supported.
+	side: the side of the computer to check. Can be -
+			"up"
+			"left"
+			"right"
+			"front"
+			"back"
+			nil - true if any side is on.
+	* Note: this returns the computer's set state (with mesecons.set). It does
+	not return the state set by an external source. See "mesecons" event.
+
+mesecons.set (state, side)
+	If state is true, turns the mesecons state to on. Otherwise turns it off.
+	side: the side of the computer to action. Can be -
+			"up"
+			"left"
+			"right"
+			"front"
+			"back"
+			nil - actions all above sides
+	The state of a side's mesecons state is only changed if not currently
+	the requested state.
+	This call is ignored if not supported.
+
+
+digilines
+---------
+	Interface is always defined but is inactive if digilines mod is not present.
+	See "digilines" event.
+
+digilines.supported ()
+	Returns true if digilines interface is active, otherwise false.
+
+digilines.get_channel ()
+	Returns the digilines channel as a string. An empty string is returned
+	if the channel has not been set or digilines is not supported .
+
+digilines.set_channel (channel)
+	Sets the digilines channel to the string given. If channel is nil or an
+	empty string the channel is cleared. This call is ignored if not supported.
+
+digilines.send (channel, msg)
+	Sends a message to the given digilines channel. This call is ignored if not
+	supported.
+
+
+lwwires
+-------
+	Interface is always defined but is inactive if lwwires mod is not present.
+	See "bundle_on" and "bundle_off" events.
+
+wires.supported ()
+	Returns true if lwwires interface is active, otherwise false.
+
+wires.current_state (side)
+	Returns a table of internal power states of wires for the bundle at side,
+	or nil if side is not valid or not a bundle or lwwires is not enabled.
+
+	side: the side of the computer to query. Can be -
+			"up"
+			"down"
+			"left"
+			"right"
+			"front"
+			"back"
+
+	In the returned table the key is the color string, and its value is true
+	if powered or false if not.
+
+wires.wire (idx)
+	Returns either the wire number or wire color depending on idx. If lwwires
+	is not enabled nil is returned.
+
+	idx: If a number the color string is returned.
+		  If a color string the wire number is returned.
+		  If idx is not recognized nil is returned.
+
+wires.color_string_list ()
+	Returns a list of color strings with every wire, or an empty list if
+	lwwires is not enabled.
+
+wires.is_wire_in_list (wire, list)
+	Returns true if wire is in the list of wires, otherwise false. If lwwires
+	is not enabled false is returned.
+
+	wire: Can be wire number or color string.
+	list: List of wire numbers or color strings.
+
+wires.bundle_on (side, wires)
+	If the node at side is a bundle turns the wires on.
+
+	side: the side of the computer to action. Can be -
+			"up"
+			"down"
+			"left"
+			"right"
+			"front"
+			"back"
+	wires: Can be wire number, color string, or a list of wire numbers or
+			 color strings.
+
+	Returns true if successful, false if not (either side is not a bundle,
+	wires is invalid or lwwires is not enabled).
+
+wires.bundle_off (side, wires)
+	If the node at side is a bundle turns the wires off.
+
+	side: the side of the computer to action. Can be -
+			"up"
+			"down"
+			"left"
+			"right"
+			"front"
+			"back"
+	wires: Can be wire number, color string, or a list of wire numbers or
+			 color strings.
+
+	Returns true if successful, false if not (either side is not a bundle,
+	wires is invalid or lwwires is not enabled).
+
+wires.bundle_power (side, wires)
+	Returns a table of external power states of wires for the bundle at side,
+	or nil if side is not valid or not a bundle or lwwires is not enabled.
+
+	side: the side of the computer to query. Can be -
+			"up"
+			"down"
+			"left"
+			"right"
+			"front"
+			"back"
+	wires: Can be wire number, color string, a list of wire numbers or
+			 color strings, or nil. If nil all 16 wires are returned.
+
+	In the returned table the key is the color string, and its value is true
+	if powered or false if not.
+
+
+printer
+-------
+	Interface is always defined but is inactive if digilines mod is not present.
+
+printer.start_page (channel, title, pageno)
+	Sends the start command to the printer to start a page, if one is not
+	already started.
+	channel: the channel of the printer.
+	title: the title of the page. If nil or empty string "untitled" is used.
+	pageno: if > 1 the page number is append to the title.
+
+printer.end_page (channel)
+	Sends the end command to the printer to end the current page and place it
+	in the out tray, if one was started.
+	channel: the channel of the printer.
+
+printer.color (channel, fg, bg)
+	Sends the color command to the printer to set the current colors, if
+	a page was started.
+	channel: the channel of the printer.
+	fg: the forecolor, one of the term.colors
+	bg: the backcolor, one of the term.colors
+
+printer.position (channel, x, y)
+	Sends the position command to the printer to set the current position,
+	if a page was started.
+	channel: the channel of the printer.
+	x: the zero based column of the page.
+	y: the zero based line of the page.
+
+printer.write (channel, str)
+	Sends the write command to the printer to draw the string, if a page
+	was started.
+	channel: the channel of the printer.
+	str: the string to write.
+
+printer.query_ink (channel)
+	Queries the printer for how many pages can still be printer with the ink
+	cartridge.
+	channel: the channel of the printer.
+	Returns the number of pages, or nil if the printer at channel didn't respond
+	or digilines is not loaded.
+	* This function blocks for up to 1.0 second waiting for the response from
+	the printer.
+	* Any digilines messages that are ahead in the event queue but are not
+	from the printer are requeued.
+
+printer.query_pages (channel)
+	Queries the printer for how many page slots are still available in the
+	output tray to take a printed page.
+	channel: the channel of the printer.
+	Returns the number of page slots, or nil if the printer at channel didn't
+	respond or digilines is not loaded.
+	* This function blocks for up to 1.0 second waiting for the response from
+	the printer.
+	* Any digilines messages that are ahead in the event queue but are not
+	from the printer are requeued.
+
+printer.query_paper (channel)
+	Queries the printer for how many sheets of paper are still available in
+	the input tray for printing.
+	channel: the channel of the printer.
+	Returns the number of sheets of paper, or nil if the printer at channel
+	didn't respond or digilines is not loaded.
+	* This function blocks for up to 1.0 second waiting for the response from
+	the printer.
+	* Any digilines messages that are ahead in the event queue but are not
+	from the printer are requeued.
+
+printer.query_size (channel)
+	Queries the printer for the character size of a printed page.
+	channel: the channel of the printer.
+	Returns the width and height, or nil if the printer at channel didn't
+	respond or digilines is not loaded. Eg.
+
+		local width, height = printer.query_size (channel)
+		if width then ... end
+
+	* This function blocks for up to 1.0 second waiting for the response from
+	the printer.
+	* Any digilines messages that are ahead in the event queue but are not
+	from the printer are requeued.
+
+printer.query_status (channel)
+	Queries the printer's status.
+	channel: the channel of the printer.
+	Returns
+		"ready" - the printer is ready to print.
+		"printing" - the printer is currently printing.
+		"no ink" - printer is out of ink.
+		"no paper" - printer is out of paper.
+		"tray full" - printer output tray is full.
+		nil if the printer at channel didn't respond or digilines is not loaded.
+	* This function blocks for up to 1.0 second waiting for the response from
+	the printer.
+	* Any digilines messages that are ahead in the event queue but are not
+	from the printer are requeued.
+
+
+monitor
+-------
+	Interface is always defined but is inactive if digilines mod is not present.
+
+monitor.format_character (ascii, fg, bg)
+	Returns a single number value for a character in the monitor's display.
+	ascii: Number of the character ascii code to set (0 to 255).
+	fg: Number of the foreground color for the character (0 to 15) (see
+		 term.colors).
+	bg: Number of the background color for the character (0 to 15) (see
+		 term.colors).
+
+monitor.unformat_character (character)
+	Returns ascii, fg, bg for the character value (reverse of
+	monitor.format_character).
+	character: Number character value to decipher.
+
+monitor.interface (channel)
+	Returns an interface for the monitor on the given channel.
+	channel: string of monitor's channel.
+
+
+monitor.multi_interface (width, height, ... )
+	Returns an interface for multiple monitors on the given channels. The
+	monitors must be arranged in a grid. The returned interface acts on
+	them as a single display.
+	width: Number of monitors per row in the grid.
+	height: Number of monitors high in the grid.
+	... : string monitor channels for each monitor in the grid, left to
+			right, top to bottom.
+
+Querying the returned interface does not query the monitor, but returns
+an internal cache of the value. Querying before setting a value through
+the interface will return an initial default.
+
+The returned interface provides the follow. In the following the
+interface name 'mon' is a place holder for the returned interface.
+Single and multi-monitor interface act the same except where stated.
+
+mon.channel ([index])
+	For single monitor interface, returns the monitor's channel as a
+	string.
+
+	For multi-monitor interface, returns the monitor's channel as a
+	string at the given index.
+
+	index: This parameter is only used on multi-monitor interfaces. The
+			 one based index of the monitor whose channel is returned. The
+			 index is from left, top to right, bottom. If omitted 1 is
+			 assumed.
+
+mon.monitors ()
+	Returns the width, height of the multi-monitor grid, as passed to the
+	interface function. For single monitor interface 1, 1 is returned.
+
+mon.update ()
+	Flushes the interface's contents to the monitor/s.
+
+mon.set_colors (fg, bg)
+	Sets the current foreground, background colors.
+	If either color is nil, that color is not changed. See term.colors.
+
+mon.get_colors ()
+	Returns the current foreground, background colors.
+
+mon.set_scale (scale)
+	Sets the monitor/s' display scale.
+	scale: an integer between 1 to 5.
+	* This call resets the cursor position to 0, 0.
+
+mon.get_scale ()
+	Returns an integer of the monitor/s' display scale.
+
+mon.get_resolution ()
+	Returns character width, height of the monitor/s' display. These
+	values are dependant on the current scale, and possibly the number of
+	monitors.
+
+mon.get_cursor ()
+	Returns x, y of current cursor position. Note, the monitor does not
+	display a cursor. This is the current write position.
+
+mon.set_cursor (x, y)
+	Sets cursors current position. Position is clipped to monitor's
+	resolution. Note, the monitor does not display a cursor. This is the
+	current write position.
+
+mon.set_blink (blink, update)
+	Sets the visible state of the cursor (true or false). If update is not
+	false the changes are flushed to the monitor.
+
+mon.get_blink ()
+	Returns the visible state of the cursor (true or false).
+
+mon.set_char (x, y, char, fg, bg, update)
+	Sets the character at zero based coordinate x, y.
+	char: the ascii code to set (0 to 255), or single character string.
+	fg: the foreground color to set or nil for no current color.
+	bg: the background color to set or nil for no current color.
+	update: if not false the changes are flushed to the monitor.
+
+mon.get_char (x, y)
+	Returns the character at zero based coordinate x, y as
+	asciicode, forecolor, backcolor, or nil if x or y are out of range.
+
+mon.write (str, update)
+	Write the string at the current cursor position. Lines wrap but terminal
+	doesn't scroll. Excess is not written.
+	str: the string to write.
+	update: if not false the changes are flushed to the monitor.
+	* Cursor position is not updated.
+
+mon.blit (buff, x, y, w, h)
+	Blits a rectangular section to the terminal from a buffer.
+	Returns true if successful, or false and an error message if not.
+	buff: The buffer holding the data to write.
+	x: zero based left coordinate to write to.
+	y: zero based top coordinate to write to.
+	w: the width of the rectangular section to write to.
+	h: the height of the rectangular section to write to.
+	Any section of the rectangle which is not on the screen is omitted. x
+	and y can be negative.
+	The buffer is an indexed table of character data from left to right, top
+	to bottom in order. Each character data should be formed as:
+	{ char = <asciicode>, fg = <forecolor>, bg = <backcolor> }. If any table
+	cell is not a table that character is not altered (transparent).
+
+mon.cache (x, y, w, h)
+	Returns a buffer of the character data from the terminal buffer, of the
+	form used by `monitor.blit`, or nil if w * h has no size.
+	x: zero based left coordinate to read from.
+	y: zero based top coordinate to read from.
+	w: the width of the rectangular section to read from.
+	h: the height of the rectangular section to read from.
+	Any section of the rectangle which is not on the screen is set to zero
+	(not a table, will blit as transparent).
+	x and y can be negative.
+
+mon.clear (char, x, y, w, h, update)
+	Clears a rectangular section of the monitor's display.
+	char: the ascii code to set (0 to 255), or single character string. nil
+			defaults to zero.
+	x: zero based left coordinate to clear, nil defaults to zero.
+	y: zero based top coordinate to clear, nil defaults to zero.
+	w: width of rectangular section to clear, nil defaults to monitor's right.
+	h: height of rectangular section to clear, nil defaults to monitor's bottom.
+	update: if not false the changes are flushed to the monitor.
+	`monitor.clear ()` will clear to whole monitor to black.
+	* The cursor position is not moved.
+
+mon.scroll (lines, x, y, w, h, update)
+	Scrolls a rectangular section the given lines.
+	lines: the lines to scroll, negative moves up, positive moves down.
+	x: zero based left coordinate to scroll, nil defaults to zero.
+	y: zero based top coordinate to scroll, nil defaults to zero.
+	w: width of rectangular section to scroll, nil defaults to monitor's right.
+	h: height of rectangular section to scroll, nil defaults to monitor's bottom.
+	update: if not false the changes are flushed to the monitor.
+	`monitor.scroll (-1)` scrolls the whole monitor up one line.
+	* Lines not overwritten by the scrolling are not cleared.
+
+mon.print (fmt, ... )
+	Writes the string to the current cursor position updating the cursor
+	position. Lines wrap and the terminal scrolls if the write goes beyond
+	the bottom line.
+	Parameter are as for `string.format`.
+	Changes are flushed to the monitor.
+
+mon.is_touch (channel, msg)
+	Determines if a digilines message is a touch message from the
+	monitor/s of this interface. If it is x, y of the touched character
+	position is returned as numbers. If not nil is returned.
+	channel: Channel of the digilines message. For a touch message the
+				channel will be the channel of the monitor.
+	msg: The digilines message.
+
+
+
+robot
+-----
+	This interface is only available for robots.
+
+robot.detect_up ()
+robot.detect_down ()
+robot.detect_front ()
+robot.detect_front_up ()
+robot.detect_front_down ()
+robot.detect_back ()
+robot.detect_back_up ()
+robot.detect_back_down ()
+robot.detect_left ()
+robot.detect_left_up ()
+robot.detect_left_down ()
+robot.detect_right ()
+robot.detect_right_up ()
+robot.detect_right_down ()
+	Returns the name of the node in the given direction from the robot, or
+	nil if the node was not readable.
+
+robot.move_up ()
+robot.move_down ()
+robot.move_front ()
+robot.move_front_up ()
+robot.move_front_down ()
+robot.move_back ()
+robot.move_back_up ()
+robot.move_back_down ()
+robot.move_left ()
+robot.move_left_up ()
+robot.move_left_down ()
+robot.move_right ()
+robot.move_right_up ()
+robot.move_right_down ()
+	Moves the robot in the given direction. The orientation of the robot
+	is not changed. Returns true if the robot successfully moved, false if not.
+	* Note, this action is delayed by the robot's movement delay setting time.
+
+robot.turn_left ()
+robot.turn_right ()
+	Turns the robot in the given direction. Always returns true.
+	* Note, this action is delayed by the robot's action delay setting time.
+
+robot.dig_up ()
+robot.dig_down ()
+robot.dig_front ()
+robot.dig_front_up ()
+robot.dig_front_down ()
+robot.dig_back ()
+robot.dig_back_up ()
+robot.dig_back_down ()
+robot.dig_left ()
+robot.dig_left_up ()
+robot.dig_left_down ()
+robot.dig_right ()
+robot.dig_right_up ()
+robot.dig_right_down ()
+	Digs the node in the given direction. Returns a string of the name of
+	the node that was dug, or nil if not dug.
+	* Note, this action is delayed by the robot's action delay setting time.
+
+robot.place_up (nodename [, direction])
+robot.place_down (nodename [, direction])
+robot.place_front (nodename [, direction])
+robot.place_front_up (nodename [, direction])
+robot.place_front_down (nodename [, direction])
+robot.place_back (nodename [, direction])
+robot.place_back_up (nodename [, direction])
+robot.place_back_down (nodename [, direction])
+robot.place_left (nodename [, direction])
+robot.place_left_up (nodename [, direction])
+robot.place_left_down (nodename [, direction])
+robot.place_right (nodename [, direction])
+robot.place_right_up (nodename [, direction])
+robot.place_right_down (nodename [, direction])
+	Places the given node to the given side of the robot. Returns true if
+	the node was placed, or false if not. The given node must be in the
+	robot's storage and the node must be able to be placed to the position.
+	nodename: the string name of the node to place. "air" cannot be used.
+				 it can be an item string such as:
+				 "lwcolorable:stone_brick 1 0 \"\\u0001palette_index\\u000227\\u0003\""
+	direction: if given, the facing direction for the placed node, can be
+				  one of:
+		"up", "down", "left", "right", "front", "back".
+	* Note, this action is delayed by the robot's action delay setting time.
+	* The file 'place_substitute.lua' in the mod folder contains a list of
+		item/node substitutes, useful for farming etc. Modify this file for
+		additional substitutes. The field name is the item/node to be
+		substituted. The value is what it is substituted with. This can be
+		a string value or a table with one indexed string of the default
+		substitute item. This table can optionally contain key values of
+		strings for each direction. Recognised keys are "up", "down", "left",
+		"right", "front", "back".
+
+robot.put_up (item [, listname])
+robot.put_down (item [, listname])
+robot.put_front (item [, listname])
+robot.put_front_up (item [, listname])
+robot.put_front_down (item [, listname])
+robot.put_back (item [, listname])
+robot.put_back_up (item [, listname])
+robot.put_back_down (item [, listname])
+robot.put_left (item [, listname])
+robot.put_left_up (item [, listname])
+robot.put_left_down (item [, listname])
+robot.put_right (item [, listname])
+robot.put_right_up (item [, listname])
+robot.put_right_down (item [, listname])
+	Moves the item/s from the robot's storage into an inventory at the given
+	side of the robot. Returns true if the item/s were moved successfully,
+	false if not. If multiple items either all are moved or none. There must
+	be space in the target inventory of the item/s.
+	item: the item/s to move into the inventory, can be:
+		table: as { name = "nodename", count = amount }
+		string: as node's name, count is 1.
+		number: robot's inventory slot (1 to robot.slots ()), the whole stack is moved.
+	listname: optionally the name of the list in the target inventory, if not
+		given defaults to "main".
+	* Note, this action is delayed by the robot's action delay setting time.
+
+robot.pull_up (item [, listname])
+robot.pull_down (item [, listname])
+robot.pull_front (item [, listname])
+robot.pull_front_up (item [, listname])
+robot.pull_front_down (item [, listname])
+robot.pull_back (item [, listname])
+robot.pull_back_up (item [, listname])
+robot.pull_back_down (item [, listname])
+robot.pull_left (item [, listname])
+robot.pull_left_up (item [, listname])
+robot.pull_left_down (item [, listname])
+robot.pull_right (item [, listname])
+robot.pull_right_up (item [, listname])
+robot.pull_right_down (item [, listname])
+	Moves the item/s from an inventory at the given side of the robot into
+	the robot's storage. Returns true if the item/s were moved successfully,
+	false if not. If multiple items either all are moved or none. There must
+	be space in the robot's inventory for the item/s.
+	item: the item/s to move from the inventory, can be:
+		table: as { name = "nodename", count = amount }
+		string: as node's name, count is 1.
+		number: inventory's slot (1 to however many), the whole stack is moved.
+	listname: optionally the name of the list in the source inventory, if not
+		given defaults to "main".
+	* Note, this action is delayed by the robot's action delay setting time.
+
+robot.cur_pos ()
+	Returns the robot's current world position, as
+	{ x = n, y = n, z = n }
+
+robot.room_for (nodename)
+	Returns true if the item can fit into the robot's storage, false if not.
+
+robot.contains (nodename)
+	Returns true if the robot's storage contains the given item, false if
+	not.
+	nodename: the string node name of the queried item.
+
+robot.slots ()
+	Returns the number of slots in the robot's storage.
+
+robot.slot (slot)
+	Returns a table with the contents of the given slot in the robot's storage,
+	or nil if slot is out of range. The returned table is of the form:
+	{ name = string, count = number }
+	The name is the node/item name, or nil if the given slot is empty. The count
+	is the number of items in the stack.
+	slot: the queried slot number (1 to robot.slots ()).
+
+robot.craft (item)
+	Crafts the given item. Returns true if successful, false if not. The
+	needed items for the craft must be in the robot's storage. The output
+	item is placed in the robot's storage.
+	item: string name of the item to craft.
+	* Note, this action is delayed by the robot's action delay setting time.
+	* The file 'crafting_mods.lua' in the mod folder contains a list of
+		crafting modifications. Modify this file as necessary. The field name
+		is the item being crafted. Each item in the add list is added to the
+		robot's storage. Each item in the remove list is removed from the
+		robot's storage.
+
+robot.find_inventory ([listname])
+	Finds inventory nodes to the sides of the robot. Returns a tables of
+	inventories found, or nil if none found.
+	listname: the name of the sort inventory list, or nil for any inventory.
+	The returned table is both an indexed list of sides, as well as a key/value
+	list where the key is the side. The values of the indexed list are strings
+	of the sides an inventory was found on. If the listname is given the value
+	of the keys is the number of slots for that inventory. If not given it is
+	true. The possible sides are "up", "down", "front", "front_up", "front_down",
+	"back", "back_up", "back_down", "left", "left_up", "left_down", "right",
+	"right_up" and "right_down".
+
+	e.g.
+	local inv = robot.find_inventory ("main")
+
+	if inv then
+		for k, v in pairs (inv) do
+
+		end
+
+		-- or
+
+		for i = 1, #inv do
+			if inv[i] == "front" then
+
+			end
+		end
+
+		-- or
+
+		if inv.front then
+			-- inv.front will be the number of slots
+			-- if listname not given it will be true
+		end
+	end
+
+robot.drop (item)
+	Removes the item/s from the robot's storage and drops it. Returns true
+	if the item/s were dropped successfully, false if not. If multiple items
+	either all are dropped or none.
+	item: the item/s to move from the inventory, can be:
+		table: as { name = "nodename", count = amount }
+		string: as node's name, count is 1.
+		number: inventory's slot (1 to however many), the whole stack is dropped.
+	* Note, this action is delayed by the robot's action delay setting time.
+
+robot.trash (item)
+	Removes the item/s from the robot's storage. Returns true if the item/s
+	were removed successfully, false if not. If multiple items either all are
+	removed or none.
+	item: the item/s to move from the inventory, can be:
+		table: as { name = "nodename", count = amount }
+		string: as node's name, count is 1.
+		number: inventory's slot (1 to however many), the whole stack is removed.
+	* Note, this action is delayed by the robot's action delay setting time.
+
+
+keys
+----
+	Table of keyboard key codes, as `keys.<key>`:
+
+KEY_BACKSPACE		= 8,
+KEY_TAB				= 9,
+KEY_LINE				= 10,
+KEY_ENTER			= 13,
+KEY_ESCAPE			= 27,
+KEY_SPACE			= 32,
+KEY_EXCLAIM			= 33,
+KEY_QUOTE			= 34,
+KEY_HASH				= 35,
+KEY_CURRENCY		= 36,
+KEY_PERCENT			= 37,
+KEY_AMP				= 38,
+KEY_APOSTROPHE		= 39,
+KEY_OPENPAREN		= 40,
+KEY_CLOSEPAREN		= 41,
+KEY_MULTIPLY		= 42,
+KEY_ADD				= 43,
+KEY_COMMA			= 44,
+KEY_SUBTRACT		= 45,
+KEY_DOT				= 46,
+KEY_DIVIDE			= 47,
+KEY_0					= 48,
+KEY_1					= 49,
+KEY_2					= 50,
+KEY_3					= 51,
+KEY_4					= 52,
+KEY_5					= 53,
+KEY_6					= 54,
+KEY_7					= 55,
+KEY_8					= 56,
+KEY_9					= 57,
+KEY_COLON			= 58,
+KEY_SEMICOLON		= 59,
+KEY_LESS				= 60,
+KEY_EQUAL			= 61,
+KEY_GREATER			= 62,
+KEY_QUESTION		= 63,
+KEY_AT				= 64,
+KEY_A					= 65,
+KEY_B					= 66,
+KEY_C					= 67,
+KEY_D					= 68,
+KEY_E					= 69,
+KEY_F					= 70,
+KEY_G					= 71,
+KEY_H					= 72,
+KEY_I					= 73,
+KEY_J					= 74,
+KEY_K					= 75,
+KEY_L					= 76,
+KEY_M					= 77,
+KEY_N					= 78,
+KEY_O					= 79,
+KEY_P					= 80,
+KEY_Q					= 81,
+KEY_R					= 82,
+KEY_S					= 83,
+KEY_T					= 84,
+KEY_U					= 85,
+KEY_V					= 86,
+KEY_W					= 87,
+KEY_X					= 88,
+KEY_Y					= 89,
+KEY_Z					= 90,
+KEY_OPENSQUARE		= 91,
+KEY_SLASH			= 92,
+KEY_CLOSESQUARE	= 93,
+KEY_CARET			= 94,
+KEY_UNDERSCORE		= 95,
+KEY_TICK				= 96,
+KEY_OPENBRACE		= 123,
+KEY_BAR				= 124,
+KEY_CLOSEBRACE		= 125,
+KEY_TILDE			= 126,
+KEY_DELETE			= 127,
+KEY_INSERT			= 128,
+KEY_HOME				= 129,
+KEY_END				= 130,
+KEY_PAGEUP			= 131,
+KEY_PAGEDOWN		= 132,
+KEY_SHIFT			= 133,
+KEY_CAPS				= 134,
+KEY_CTRL				= 135,
+KEY_ALT				= 136,
+KEY_UP				= 137,
+KEY_DOWN				= 138,
+KEY_LEFT				= 139,
+KEY_RIGHT			= 140,
+KEY_F1				= 141,
+KEY_F2				= 142,
+KEY_F3				= 143,
+KEY_F4				= 144,
+KEY_F5				= 145,
+KEY_F6				= 146,
+KEY_F7				= 147,
+KEY_F8				= 148,
+KEY_F9				= 149,
+KEY_F10				= 150,
+KEY_F11				= 151,
+KEY_F12				= 152
+
+
+Events
+======
+	See `os.get_event`.
+
+"key", key_code, ctrl, alt, shift
+	Queued when a key is pressed.
+	key_code: the key code (see keys)
+	ctrl: true if ctrl key is currently down, false if up.
+	alt: true if alt key is currently down, false if up.
+	shift: true if shift key is currently down, false if up.
+
+"char", char, ascii
+	Queued after a key has been pressed, no repeats. Not queued if the ctrl
+	and/or alt keys are down.
+	char: single character string with the character.
+	ascii: the ascii code of the character (0 to 255).
+	Not all key presses generate a char event, if there is no character
+	for that key (eg. ctrl key).
+	If either the ctrl or alt key are down a char event is not generated.
+
+"click", x, y, count
+	Queued when the terminal screen is clicked (if enabled)
+	x: zero based column clicked
+	y: zero based row clicked
+	count: the number of times this same position was repeatedly clicked,
+	with each successive click within the `double_click_time`.
+
+"wireless", msg, sender_id, target_id
+	Queued when a computer sends a message with `wireless.send_message`.
+	msg: the string message sent.
+	sender_id: the number id of the computer that sent the message.
+	target_id: the number id of the target computer (this computer). This will
+	be nil if the message was broadcast.
+
+"timer", id
+	Queued on the elapse of a timer.
+	id: the timer integer identifier, return by `os.start_timer`.
+	* Timers are single elapse timers. For repeated action re-start the timer
+	from the event handler.
+
+"clipboard", contents
+	Queued when a LWComputer Clipboard is in one of the computer's slots
+	and the 'v' key is pressed with ctrl and alt keys active.
+	contents: string from the clipboard being pasted.
+	See `os.copy_to_clipboard`.
+
+"disk", action
+	Queued when a floppy is placed in or removed from a slot.
+	action: true if placed in or false if removed.
+
+"digilines", msg, target, channel
+	Queued when the computer receives a digilines message.
+	msg: the message string or table received.
+	target: the digilines channel of the message target.
+	channel: the computer's digilines channel. This will be an empty string
+	if not set.
+	* This event is not fired if the digilines mod is not loaded.
+	See `digilines.send`.
+
+"mesecons", state, side
+	Queued when the mesecons power state is change on a side of the computer.
+	state: the new state ("on" or "off").
+	side: the side of the computer ("front", "back", "left" or "right").
+	* This event is not fired if the mesecons mod is not loaded.
+
+"bundle_on", side, wires
+	Queued when the wire/s state of a bundle cable connected to the computer
+	is switched on. Note that if a bundle cable or wire is placed this
+	message may be queued without a change in the wire's state.
+	side: the side the bundle is attached to. Will be "up", "down", "left",
+			"right", "front" or "back".
+	wires: a list of the wire color strings that turned on.
+	* This event is not fired if the lwwires mod is not loaded.
+
+"bundle_off", side, wires
+	Queued when the wire/s state of a bundle cable connected to the computer
+	is switched off. Note that if a bundle cable or wire is placed this
+	message may be queued without a change in the wire's state.
+	side: the side the bundle is attached to. Will be "up", "down", "left",
+			"right", "front" or "back".
+	wires: a list of the wire color strings that turned off.
+	* This event is not fired if the lwwires mod is not loaded.
+
+
+Booting
+=======
+	The computer looks for a file named `boot` in the root folder of the
+	drives in order slot 1, slot 2, slot 3, internal hard drive. The first
+	one found is loaded and run. If none is found the computer halts and
+	displays "No boot media ...".
+	When a world is restarted, any computers running from last shut down is
+	rebooted. It does not keep running from where it left off, but boots
+	clean.

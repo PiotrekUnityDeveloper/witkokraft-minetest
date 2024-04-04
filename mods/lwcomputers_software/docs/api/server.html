@@ -1,0 +1,1164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>server</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>server - WIN</h1>
+    The server program is intended for computers that run as servers. It
+    is independent of WIN and can be run with or without it. The
+    communications protocol used by the server is compatible with that
+    used by WIN <a moz-do-not-send="true" href="comm.html">comm</a>
+    system, and the browse and email applications.<br>
+    <br>
+    The server runs by overriding the os.get_event function. When run,
+    it returns immediately to the command line, but is still running in
+    the background, responding to incoming request. Once started the
+    server cannot be stopped, except by rebooting the computer.<br>
+    <br>
+    To run the server with WIN, run the server program before loading
+    WIN. To run the server without WIN it can be started at anytime, but
+    typically is from the <i>/boot</i> file.<br>
+    <br>
+    Note that if the server is run with WIN installed, a computer cannot
+    communicate with itself over a <a moz-do-not-send="true"
+      href="comm.html">comm</a> connection.<br>
+    <br>
+    Options may be set, in the form of global variables, to customize
+    the server's connection. They must be defined before running the
+    server program. The server program searches for <i>/server.cfg</i>,
+    and runs it if found.<br>
+    <br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top"><tt>SERVER_PASSWORD</tt></td>
+          <td valign="top">string</td>
+          <td valign="top">The server access password when accessing the
+            server via the administration messages. If not specified the
+            default is <font color="#ffcc33">"admin"</font>.</td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>SERVER_NETWORK</tt></td>
+          <td valign="top">string</td>
+          <td valign="top">This is the <a moz-do-not-send="true"
+              href="comm.html">comm</a> application identifier the
+            server will respond to. If not specified the default is <font
+              color="#ffcc33">"wide_area_network"</font>.</td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>SERVER_TIMEOUT</tt></td>
+          <td valign="top">number</td>
+          <td valign="top">The timeout count for the server connection.
+            If not specified the default is 5.</td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>SERVER_ROOT</tt></td>
+          <td valign="top">string</td>
+          <td valign="top">This is the local folder (full path) that is
+            the root of the files requested. This acts a the root for
+            the path of incoming request. If not specified the default
+            is <font color="#ffcc33">"/public"</font>. The folder path
+            must exist on the server to operate.</td>
+        </tr>
+        <tr>
+          <td valign="top"><tt>ACCOUNTS_ROOT</tt></td>
+          <td valign="top">string</td>
+          <td valign="top">This is the local folder (full path) that is
+            the root of the (email) accounts' folders. Data for each
+            account is stored under its own folder, of the account name,
+            under this folder. If not specified the default is <font
+              color="#ffcc33">"/accounts"</font>.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <ul id="mozToc">
+      <!--mozToc h2 1 h3 2-->
+      <li><a href="#mozTocId782594">Functions</a>
+        <ul>
+          <li><a href="#mozTocId175916">create_account</a></li>
+          <li><a href="#mozTocId432776">delete_account</a></li>
+          <li><a href="#mozTocId438704">set_account_password</a></li>
+        </ul>
+      </li>
+      <li><a href="#mozTocId682721">Messages</a>
+        <ul>
+          <li><a href="#mozTocId901904">account_password</a></li>
+          <li><a href="#mozTocId733528">create_account</a></li>
+          <li><a href="#mozTocId414057">delete_account</a></li>
+          <li><a href="#mozTocId754601">directory_create</a></li>
+          <li><a href="#mozTocId261156">email_delete</a></li>
+          <li><a href="#mozTocId80226">email_request</a></li>
+          <li><a href="#mozTocId796005">email_send</a></li>
+          <li><a href="#mozTocId501117">file_delete</a></li>
+          <li><a href="#mozTocId522427">file_upload</a></li>
+          <li><a href="#mozTocId31708">ftp_request</a></li>
+          <li><a href="#mozTocId49370">http_request</a></li>
+          <li><a href="#mozTocId94643">listing_request</a></li>
+          <li><a href="#mozTocId768010">reset_password</a></li>
+        </ul>
+      </li>
+    </ul>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <h2><a name="mozTocId782594" class="mozTocH2"></a>Functions</h2>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId175916" class="mozTocH3"></a><a
+        name="function_create_account"></a>create_account</h3>
+    <i> result create_account (account, password)</i><br>
+    <br>
+    Creates a new (email) account.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">account </td>
+          <td valign="top">string </td>
+          <td valign="top">The name of the account to create. </td>
+        </tr>
+        <tr>
+          <td valign="top">password </td>
+          <td valign="top">string/nil </td>
+          <td valign="top">Optionally an initial password for the
+            account. If omitted defaults to <font color="#ffcc33">"1234"</font>.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if the account was successfully created,
+            otherwise false. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    This function is globally available.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#create_account">create_account</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId432776" class="mozTocH3"></a><a
+        name="function_delete_account"></a>delete_account</h3>
+    <i> result delete_account (account)</i><br>
+    <br>
+    Deletes an (email) account.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">account </td>
+          <td valign="top">string </td>
+          <td valign="top">The name of the account to delete. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if the account was deleted, false if not
+            (not found). </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    This function is globally available.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#delete_account">delete_account</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId438704" class="mozTocH3"></a><a
+        name="function_set_account_password"></a>set_account_password</h3>
+    <i> result set_account_password (account, password)</i><br>
+    <br>
+    Sets an (email) account's password.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">account </td>
+          <td valign="top">string </td>
+          <td valign="top">The account to set. </td>
+        </tr>
+        <tr>
+          <td valign="top">password </td>
+          <td valign="top">string </td>
+          <td valign="top">The new password for the account. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if the password was successfully set,
+            otherwise false. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    This function is globally available.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#reset_password">reset_password</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h2><a name="mozTocId682721" class="mozTocH2"></a>Messages</h2>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId901904" class="mozTocH3"></a><a
+        name="account_password"></a>account_password</h3>
+    <i>account_password</i><br>
+    <br>
+    Account access to change the account's password.<br>
+    <br>
+    <b>Message Fields</b> (<a moz-do-not-send="true"
+      href="comm.html#msg">msg</a>)<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">recipient </td>
+          <td valign="top">string/number </td>
+          <td valign="top">The server's computer label or id. Typically
+            the server's label, used as a domain name. </td>
+        </tr>
+        <tr>
+          <td valign="top">application </td>
+          <td valign="top">string </td>
+          <td valign="top">The server's network. </td>
+        </tr>
+        <tr>
+          <td valign="top">context</td>
+          <td valign="top">string</td>
+          <td valign="top"><font color="#ffcc33">"account_password"</font></td>
+        </tr>
+        <tr>
+          <td valign="top">data</td>
+          <td valign="top">table</td>
+          <td valign="top">Must be a table with the following fields.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.account</td>
+          <td valign="top">string</td>
+          <td valign="top">The account name.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.password</td>
+          <td valign="top">string</td>
+          <td valign="top">The existing password.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.new_password</td>
+          <td valign="top">string</td>
+          <td valign="top">The new password.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If for some reason (the password is incorrect, the account name was
+    not found, etc.) the message is not received by the server.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="server.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId733528" class="mozTocH3"></a><a
+        name="create_account"></a>create_account</h3>
+    <i>create_account</i><br>
+    <br>
+    Remote server administration message to create a new (email)
+    account.<br>
+    <br>
+    <b>Message Fields</b> (<a moz-do-not-send="true"
+href="comm.html#msg">msg</a>)<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">recipient </td>
+          <td valign="top">string/number </td>
+          <td valign="top">The server's computer label or id. Typically
+            the server's label, used as a domain name. </td>
+        </tr>
+        <tr>
+          <td valign="top">application </td>
+          <td valign="top">string </td>
+          <td valign="top">The server's network. </td>
+        </tr>
+        <tr>
+          <td valign="top">context</td>
+          <td valign="top">string</td>
+          <td valign="top"><font color="#ffcc33">"create_account"</font></td>
+        </tr>
+        <tr>
+          <td valign="top">data</td>
+          <td valign="top">table</td>
+          <td valign="top">Must be a table with the following fields.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.password</td>
+          <td valign="top">string</td>
+          <td valign="top">The server access password.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.account</td>
+          <td valign="top">string</td>
+          <td valign="top">The name of the account to create.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.client_password<br>
+          </td>
+          <td valign="top">string</td>
+          <td valign="top">Optionally an initial password for the
+            account. If omitted defaults to <font color="#ffcc33">"1234"</font>.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If for some reason (the access password is incorrect, the account
+    name already exists, etc.) the message is not received by the
+    server.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#function_create_account">create_account</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="server.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId414057" class="mozTocH3"></a><a
+        name="delete_account"></a>delete_account</h3>
+    <i>delete_account</i><br>
+    <br>
+    Remote server administration message to delete an (email) account.<br>
+    <br>
+    <b>Message Fields</b> (<a moz-do-not-send="true"
+href="comm.html#msg">msg</a>)<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">recipient </td>
+          <td valign="top">string/number </td>
+          <td valign="top">The server's computer label or id. Typically
+            the server's label, used as a domain name. </td>
+        </tr>
+        <tr>
+          <td valign="top">application </td>
+          <td valign="top">string </td>
+          <td valign="top">The server's network. </td>
+        </tr>
+        <tr>
+          <td valign="top">context</td>
+          <td valign="top">string</td>
+          <td valign="top"><font color="#ffcc33">"delete_account"</font></td>
+        </tr>
+        <tr>
+          <td valign="top">data</td>
+          <td valign="top">table</td>
+          <td valign="top">Must be a table with the following fields.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.password</td>
+          <td valign="top">string</td>
+          <td valign="top">The server access password.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.account</td>
+          <td valign="top">string</td>
+          <td valign="top">The name of the account to delete.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If for some reason (the access password is incorrect, the account
+    name does not exists, etc.) the message is not received by the
+    server.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#function_delete_account">delete_account</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="server.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId754601" class="mozTocH3"></a><a
+        name="directory_create"></a>directory_create</h3>
+    <i>directory_create</i><br>
+    <br>
+    Remote server administration message to creates a new directory
+    (folder) on the server.<br>
+    <br>
+    <b>Message Fields</b> (<a moz-do-not-send="true"
+href="comm.html#msg">msg</a>)<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">recipient </td>
+          <td valign="top">string/number </td>
+          <td valign="top">The server's computer label or id. Typically
+            the server's label, used as a domain name. </td>
+        </tr>
+        <tr>
+          <td valign="top">application </td>
+          <td valign="top">string </td>
+          <td valign="top">The server's network. </td>
+        </tr>
+        <tr>
+          <td valign="top">context</td>
+          <td valign="top">string</td>
+          <td valign="top"><font color="#ffcc33">"directory_create"</font></td>
+        </tr>
+        <tr>
+          <td valign="top">data</td>
+          <td valign="top">table</td>
+          <td valign="top">Must be a table with the following fields.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.password</td>
+          <td valign="top">string</td>
+          <td valign="top">The server access password.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.path</td>
+          <td valign="top">string</td>
+          <td valign="top">Server directory path to create. This path is
+            interpreted from the <tt>SERVER_ROOT</tt> folder.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If for some reason (the password is incorrect, the path was not
+    valid, etc.) the message is not received by the server.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="server.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId261156" class="mozTocH3"></a><a
+        name="email_delete"></a>email_delete</h3>
+    <i>email_delete</i><br>
+    <br>
+    Requests the deletion of an email stored on the server.<br>
+    <br>
+    <b>Message Fields</b> (<a moz-do-not-send="true"
+href="comm.html#msg">msg</a>)<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">recipient </td>
+          <td valign="top">string/number </td>
+          <td valign="top">The server's computer label or id. Typically
+            the server's label, used as a domain name. </td>
+        </tr>
+        <tr>
+          <td valign="top">application </td>
+          <td valign="top">string </td>
+          <td valign="top">The server's network. </td>
+        </tr>
+        <tr>
+          <td valign="top">context</td>
+          <td valign="top">string</td>
+          <td valign="top"><font color="#ffcc33">"email_delete"</font></td>
+        </tr>
+        <tr>
+          <td valign="top">data</td>
+          <td valign="top">table</td>
+          <td valign="top">Must be a table with the following fields.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.account</td>
+          <td valign="top">string</td>
+          <td valign="top">The account name.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.password</td>
+          <td valign="top">string</td>
+          <td valign="top">The account password.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.id</td>
+          <td valign="top">string</td>
+          <td valign="top">The email identifier sent in the <a
+              moz-do-not-send="true" href="#email_response">email_response</a>
+            message.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If for some reason (the password is incorrect, the account name was
+    not found, etc.) the message is not received by the server.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="server.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId80226" class="mozTocH3"></a><a
+        name="email_request"></a>email_request</h3>
+    <i>email_request</i><br>
+    <br>
+    Requests the download of any emails stored on the server.<br>
+    <br>
+    <b>Message Fields</b> (<a moz-do-not-send="true"
+href="comm.html#msg">msg</a>)<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">recipient </td>
+          <td valign="top">string/number </td>
+          <td valign="top">The server's computer label or id. Typically
+            the server's label, used as a domain name. </td>
+        </tr>
+        <tr>
+          <td valign="top">application </td>
+          <td valign="top">string </td>
+          <td valign="top">The server's network. </td>
+        </tr>
+        <tr>
+          <td valign="top">context</td>
+          <td valign="top">string</td>
+          <td valign="top"><font color="#ffcc33">"email_request"</font></td>
+        </tr>
+        <tr>
+          <td valign="top">data</td>
+          <td valign="top">table</td>
+          <td valign="top">Must be a table with the following fields.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.account</td>
+          <td valign="top">string</td>
+          <td valign="top">The account name.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.password</td>
+          <td valign="top">string</td>
+          <td valign="top">The account password.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.application</td>
+          <td valign="top">string</td>
+          <td valign="top">The <a moz-do-not-send="true"
+              href="comm.html">comm</a> application identifier the
+            server will send the response as.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    A client application must specify an application identifier for the
+    returning messages. This means the client application opens a <a
+      moz-do-not-send="true" href="comm.html">comm </a> connection and
+    registers two interest (usually with <a moz-do-not-send="true"
+      href="window.html#window:want_messages"> window:want_messages</a>).
+    One with the application identifier the server is operating with,
+    for sent notifications, and one with the client application
+    identifier for receiving from the server.<br>
+    <br>
+    The server responds with a <font color="#ffcc33">"<a
+        name="email_response"></a>email_response"</font> message for
+    each email stored on the server, using the data.application value in
+    the return message. The data key of the message returned by the
+    server contains the following keys:<br>
+    <pre>{
+&nbsp;&nbsp; account = string,
+&nbsp;&nbsp; id = string,
+&nbsp;&nbsp; email =
+&nbsp;&nbsp; {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; recipient = string,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; sender = string,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; time = number,&nbsp;&nbsp;&nbsp; -- optional, (os.time ())
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; subject = string, -- optional
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; message = string
+&nbsp;&nbsp; }
+}</pre>
+    For each successfully received email the client application should
+    respond with an <a moz-do-not-send="true" href="#email_delete">email_delete</a>
+    message, passing the data.id from the <font color="#ffcc33">"email_request"</font>
+    message.<br>
+    <br>
+    If for some reason (the password is incorrect, the account name was
+    not found, etc.) the message is not received by the server.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="server.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId796005" class="mozTocH3"></a><a name="email_send"></a>email_send</h3>
+    <i> email_send</i><br>
+    <br>
+    Sent to a server to store an email intended for an account on that
+    server.<br>
+    <br>
+    <b>Message Fields</b> (<a moz-do-not-send="true"
+href="comm.html#msg">msg</a>)<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">recipient </td>
+          <td valign="top">string/number </td>
+          <td valign="top">The server's computer label or id. Typically
+            the server's label, used as a domain name. </td>
+        </tr>
+        <tr>
+          <td valign="top">application </td>
+          <td valign="top">string </td>
+          <td valign="top">The server's network. </td>
+        </tr>
+        <tr>
+          <td valign="top">context</td>
+          <td valign="top">string</td>
+          <td valign="top"><font color="#ffcc33">"email_send"</font></td>
+        </tr>
+        <tr>
+          <td valign="top">data</td>
+          <td valign="top">table</td>
+          <td valign="top">Must be a table with the following fields.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.account</td>
+          <td valign="top">string</td>
+          <td valign="top">The receiving account's name.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.email</td>
+          <td valign="top">table</td>
+          <td valign="top">Must be a table with the following fields.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.email.recipient</td>
+          <td valign="top">string</td>
+          <td valign="top">The receiver's email address.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.email.sender</td>
+          <td valign="top">string</td>
+          <td valign="top">The sender's email address.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.email.message</td>
+          <td valign="top">string</td>
+          <td valign="top">The body of the message.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.email.subject</td>
+          <td valign="top">string</td>
+          <td valign="top">Optionally a subject line.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.email.time</td>
+          <td valign="top">number</td>
+          <td valign="top">Optionally a time stamp of when the email was
+            sent. (os.time ()).</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If for some reason (the account name was not found, etc.) the
+    message is not received by the server.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="server.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId501117" class="mozTocH3"></a><a name="file_delete"></a>file_delete</h3>
+    <i> file_delete</i><br>
+    <br>
+    Remote server administration message to delete a file or folder.<br>
+    <br>
+    <b>Message Fields</b> (<a moz-do-not-send="true"
+href="comm.html#msg">msg</a>)<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">recipient </td>
+          <td valign="top">string/number </td>
+          <td valign="top">The server's computer label or id. Typically
+            the server's label, used as a domain name. </td>
+        </tr>
+        <tr>
+          <td valign="top">application </td>
+          <td valign="top">string </td>
+          <td valign="top">The server's network. </td>
+        </tr>
+        <tr>
+          <td valign="top">context</td>
+          <td valign="top">string</td>
+          <td valign="top"><font color="#ffcc33">"file_delete"</font></td>
+        </tr>
+        <tr>
+          <td valign="top">data</td>
+          <td valign="top">table</td>
+          <td valign="top">Must be a table with the following fields.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.password</td>
+          <td valign="top">string</td>
+          <td valign="top">The server access password.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.path</td>
+          <td valign="top">string</td>
+          <td valign="top">Server path of the file or folder to delete.
+            This path is interpreted from the <tt>SERVER_ROOT</tt>
+            folder.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If for some reason (the access password is incorrect, the path is
+    invalid, etc.) the message is not received by the server.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#file_upload">file_upload</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="server.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId522427" class="mozTocH3"></a><a name="file_upload"></a>file_upload</h3>
+    <i>file_upload</i><br>
+    <br>
+    Remote server administration message to upload a file.<br>
+    <br>
+    <b>Message Fields</b> (<a moz-do-not-send="true"
+href="comm.html#msg">msg</a>)<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">recipient </td>
+          <td valign="top">string/number </td>
+          <td valign="top">The server's computer label or id. Typically
+            the server's label, used as a domain name. </td>
+        </tr>
+        <tr>
+          <td valign="top">application </td>
+          <td valign="top">string </td>
+          <td valign="top">The server's network. </td>
+        </tr>
+        <tr>
+          <td valign="top">context</td>
+          <td valign="top">string</td>
+          <td valign="top"><font color="#ffcc33">"file_upload"</font></td>
+        </tr>
+        <tr>
+          <td valign="top">data</td>
+          <td valign="top">table</td>
+          <td valign="top">Must be a table with the following fields.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.password</td>
+          <td valign="top">string</td>
+          <td valign="top">The server access password.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.path</td>
+          <td valign="top">string</td>
+          <td valign="top">Server path to upload the file to. This path
+            is interpreted from the <tt>SERVER_ROOT</tt> folder.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.content</td>
+          <td valign="top">string</td>
+          <td valign="top">The contents of the uploaded file, to store
+            on the server.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If for some reason (the access password is incorrect, the path is
+    invalid, etc.) the message is not received by the server.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#file_delete">file_delete</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="server.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId31708" class="mozTocH3"></a><a name="ftp_request"></a>ftp_request</h3>
+    <i>ftp_request</i><br>
+    <br>
+    Requests the download of a file, generally to save directly to disk.<br>
+    <br>
+    <b>Message Fields</b> (<a moz-do-not-send="true"
+href="comm.html#msg">msg</a>)<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">recipient </td>
+          <td valign="top">string/number </td>
+          <td valign="top">The server's computer label or id. Typically
+            the server's label, used as a domain name. </td>
+        </tr>
+        <tr>
+          <td valign="top">application </td>
+          <td valign="top">string </td>
+          <td valign="top">The server's network. </td>
+        </tr>
+        <tr>
+          <td valign="top">context</td>
+          <td valign="top">string</td>
+          <td valign="top"><font color="#ffcc33">"ftp_request"</font></td>
+        </tr>
+        <tr>
+          <td valign="top">data</td>
+          <td valign="top">table</td>
+          <td valign="top">Must be a table with the following fields.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.path</td>
+          <td valign="top">string</td>
+          <td valign="top">Path of the requested file. This path is
+            interpreted from the <tt>SERVER_ROOT</tt> folder. If the
+            path ends in a <font color="#ffcc33">"/"</font>, is a
+            folder or is empty, the server will check for a file in the
+            respective folder first as <font color="#ffcc33">"index.html"</font>,
+            then <font color="#ffcc33">"index.htm"</font> and then <font
+              color="#ffcc33">"index.txt"</font>.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.application</td>
+          <td valign="top">string</td>
+          <td valign="top">The <a moz-do-not-send="true"
+              href="comm.html">comm</a> application identifier the
+            server will send the response as.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    A client application will usually generated a unique application
+    identifier for each running instance, so responses from the server
+    are received by the requesting client and application only. This
+    means the client application opens a <a moz-do-not-send="true"
+      href="comm.html">comm</a> connection and registers two interest
+    (usually with <a moz-do-not-send="true"
+      href="window.html#window:want_messages">window:want_messages</a>).
+    One with the application identifier the server is operating with,
+    for sent notifications, and one with the generated unique
+    application identifier for receiving from the server.<br>
+    <br>
+    The server responds with a <font color="#ffcc33">"ftp_response"</font>
+    message using the data.application value in the return message. The
+    data key of the message returned by the server contains two keys;
+    path and content. The path is the full address, including the
+    domain, of the file. The content is a string containing the contents
+    of the requested file. If the requested file is not found by the
+    server the requesting message is not received.<br>
+    <br>
+    The domain name of a server is usually its computer label, which
+    should be set. For example, assuming the server's label is <i>my.com</i>,
+    with the default network set up. A request for the file at <i>/public/here/there.dat</i>
+    with ftp protocol from the client:<br>
+    <pre>wnd:send_message (<font color="#ffcc33">"my.com"</font>, <font color="#ffcc33">"wide_area_network"</font>, <font color="#ffcc33">"ftp_request"</font>,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; { path = <font color="#ffcc33">"/here/there.dat"</font>, application = <font color="#ffcc33">"my_unique_app_id"</font> },
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; sendConnection)</pre>
+    The context of the message returned by the server to the connection
+    with the application identifier <font color="#ffcc33">"my_unique_app_id"</font>
+    will be <font color="#ffcc33">"ftp_response"</font>, and the path
+    key in the data of the message will be <font color="#ffcc33">"my.com/here/there.dat"</font>.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#http_request">http_request</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="server.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId49370" class="mozTocH3"></a><a name="http_request"></a>http_request</h3>
+    <i>http_request</i><br>
+    <br>
+    Requests the download of a file, generally a html or text file for
+    viewing.<br>
+    <br>
+    <b>Message Fields</b> (<a moz-do-not-send="true"
+href="comm.html#msg">msg</a>)<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">recipient </td>
+          <td valign="top">string/number </td>
+          <td valign="top">The server's computer label or id. Typically
+            the server's label, used as a domain name. </td>
+        </tr>
+        <tr>
+          <td valign="top">application </td>
+          <td valign="top">string </td>
+          <td valign="top">The server's network. </td>
+        </tr>
+        <tr>
+          <td valign="top">context</td>
+          <td valign="top">string</td>
+          <td valign="top"><font color="#ffcc33">"http_request"</font></td>
+        </tr>
+        <tr>
+          <td valign="top">data</td>
+          <td valign="top">table</td>
+          <td valign="top">Must be a table with the following fields.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.path</td>
+          <td valign="top">string</td>
+          <td valign="top">Path of the requested file. This path is
+            interpreted from the <tt>SERVER_ROOT</tt> folder. If the
+            path ends in a <font color="#ffcc33">"/"</font>, is a
+            folder or is empty, the server will check for a file in the
+            respective folder first as <font color="#ffcc33">"index.html"</font>,
+            then <font color="#ffcc33">"index.htm"</font> and then <font
+              color="#ffcc33">"index.txt"</font>.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.application</td>
+          <td valign="top">string</td>
+          <td valign="top">The comm application identifier the server
+            will send the response as.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    A client application will usually generated a unique application
+    identifier for each running instance, so responses from the server
+    are received by the requesting client and application only. This
+    means the client application opens a comm connection and registers
+    two interest (usually with <a moz-do-not-send="true"
+      href="window.html#window:want_messages">window:want_messages</a>).
+    One with the application identifier the server is operating with,
+    for sent notifications, and one with the generated unique
+    application identifier for receiving from the server.<br>
+    <br>
+    The server responds with a <font color="#ffcc33">"http_response"</font>
+    message using the data.application value in the return message. The
+    data key of the message returned by the server contains two keys;
+    path and content. The path is the full address, including the
+    domain, of the file. The content is a string containing the contents
+    of the requested file. If the requested file was not found by the
+    server the path is still the request path, but the content is a file
+    not found message page.<br>
+    <br>
+    The domain name of a server is usually its computer label, which
+    should be set. For example, assuming the server's label is <i>my.com</i>,
+    with the default network set up. A request for the file at <i>/public/here/there.txt</i>
+    with http protocol from the client:<br>
+    <pre>wnd:send_message (<font color="#ffcc33">"my.com"</font>, <font color="#ffcc33">"wide_area_network"</font>, <font color="#ffcc33">"http_request"</font>,
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  { path = <font color="#ffcc33">"/here/there.txt"</font>, application = <font color="#ffcc33">"my_unique_app_id"</font> },
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; sendConnection)</pre>
+    The context of the message returned by the server to the connection
+    with the application identifier <font color="#ffcc33">"my_unique_app_id"</font>
+    will be <font color="#ffcc33">"http_response"</font>, and the path
+    key in the data of the message will be <font color="#ffcc33">"my.com/here/there.txt"</font>.<br>
+    <br>
+    See <a moz-do-not-send="true" href="#ftp_request">ftp_request</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="server.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId94643" class="mozTocH3"></a><a
+        name="listing_request"></a>listing_request</h3>
+    <i>listing_request</i><br>
+    <br>
+    Requests a listing of the files and folders (directories) of the
+    given folder path.<br>
+    <br>
+    <b>Message Fields</b> (<a moz-do-not-send="true"
+href="comm.html#msg">msg</a>)<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">recipient </td>
+          <td valign="top">string/number </td>
+          <td valign="top">The server's computer label or id. Typically
+            the server's label, used as a domain name. </td>
+        </tr>
+        <tr>
+          <td valign="top">application </td>
+          <td valign="top">string </td>
+          <td valign="top">The server's network. </td>
+        </tr>
+        <tr>
+          <td valign="top">context</td>
+          <td valign="top">string</td>
+          <td valign="top"><font color="#ffcc33">"listing_request"</font></td>
+        </tr>
+        <tr>
+          <td valign="top">data</td>
+          <td valign="top">table</td>
+          <td valign="top">Must be a table with the following fields.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.password</td>
+          <td valign="top">string</td>
+          <td valign="top">The server access password.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.path</td>
+          <td valign="top">string</td>
+          <td valign="top">Server folder path to return the file and
+            folder listing of. This path is interpreted from the <tt>SERVER_ROOT</tt>
+            folder.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.application</td>
+          <td valign="top">string</td>
+          <td valign="top">The <a moz-do-not-send="true"
+              href="comm.html">comm</a> application identifier the
+            server will send the response as.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    A client application must specify an application identifier for the
+    returning messages. This means the client application opens a <a
+      moz-do-not-send="true" href="comm.html">comm </a> connection and
+    registers two interest (usually with <a moz-do-not-send="true"
+      href="window.html#window:want_messages"> window:want_messages</a>).
+    One with the application identifier the server is operating with,
+    for sent notifications, and one with the client application
+    identifier for receiving from the server.<br>
+    <br>
+    The server responds with a <font color="#ffcc33">"listing_response"</font>
+    message, using the data.application value in the return message. The
+    data key of the message returned by the server contains the
+    following keys:<br>
+    <pre>{
+&nbsp;&nbsp; path = string,
+&nbsp;&nbsp; files = table,&nbsp;&nbsp; -- indexed list of file names
+&nbsp;&nbsp; folders = table&nbsp; -- indexed list of folder names
+}</pre>
+    If for some reason (the password is incorrect, the path was not
+    valid, etc.) the message is not received by the server.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="server.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId768010" class="mozTocH3"></a><a
+        name="reset_password"></a>reset_password</h3>
+    <i>reset_password</i><br>
+    <br>
+    Remote server administration message to reset an (email) account's
+    password.<br>
+    <br>
+    <b>Message Fields</b> (<a moz-do-not-send="true"
+href="comm.html#msg">msg</a>)<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">recipient </td>
+          <td valign="top">string/number </td>
+          <td valign="top">The server's computer label or id. Typically
+            the server's label, used as a domain name. </td>
+        </tr>
+        <tr>
+          <td valign="top">application </td>
+          <td valign="top">string </td>
+          <td valign="top">The server's network. </td>
+        </tr>
+        <tr>
+          <td valign="top">context</td>
+          <td valign="top">string</td>
+          <td valign="top"><font color="#ffcc33">"reset_password"</font></td>
+        </tr>
+        <tr>
+          <td valign="top">data</td>
+          <td valign="top">table</td>
+          <td valign="top">Must be a table with the following fields.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.password</td>
+          <td valign="top">string</td>
+          <td valign="top">The server access password.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.account</td>
+          <td valign="top">string</td>
+          <td valign="top">The name of the account to reset.</td>
+        </tr>
+        <tr>
+          <td valign="top">data.client_password</td>
+          <td valign="top">string</td>
+          <td valign="top">Optionally the reset password for the
+            account. If omitted defaults to <font color="#ffcc33">"1234"</font>.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    If for some reason (the access password is incorrect, the account
+    name was not found, etc.) the message is not received by the server.<br>
+    <br>
+    See <a moz-do-not-send="true"
+href="server.html#function_set_account_password">set_account_password</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="server.html#top">top</a><br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

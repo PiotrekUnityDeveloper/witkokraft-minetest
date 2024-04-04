@@ -1,0 +1,643 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>htmlMap</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>htmlMap - WIN</h1>
+    Class <b>htmlMap</b><br>
+    Inherits from <a moz-do-not-send="true" href="__classBase.html">__classBase</a>.<br>
+    <br>
+    The htmlMap class provides a sequential index table of formatting
+    elements to draw a html document. While the class is defined as
+    local to the API, an object can be obtained through <a
+      moz-do-not-send="true"
+      href="browserWindow.html#browserWindow:get_map">browserWindow:get_map</a>,
+    which is necessary if drawing the document to a printer.<br>
+    <br>
+    <b>Properties</b><br>
+    <br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">line</td>
+          <td valign="top">number</td>
+          <td valign="top">The current line while constructing the map.</td>
+        </tr>
+        <tr>
+          <td valign="top">column</td>
+          <td valign="top">number</td>
+          <td valign="top">The current column while constructing the
+            map.</td>
+        </tr>
+        <tr>
+          <td valign="top">width</td>
+          <td valign="top">number</td>
+          <td valign="top">The width the map was formatted to.</td>
+        </tr>
+        <tr>
+          <td valign="top">color</td>
+          <td valign="top">number</td>
+          <td valign="top">The body text color of the document.</td>
+        </tr>
+        <tr>
+          <td valign="top">bgcolor</td>
+          <td valign="top">number</td>
+          <td valign="top">The body background color of the document.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Methods</b><br>
+    <ul id="mozToc">
+      <!--mozToc h3 1-->
+      <li><a href="#mozTocId427765">htmlMap:add</a></li>
+      <li><a href="#mozTocId925861">htmlMap:advance</a></li>
+      <li><a href="#mozTocId315528">htmlMap:constructor</a></li>
+      <li><a href="#mozTocId878324">htmlMap:get_range</a></li>
+      <li><a href="#mozTocId891050">htmlMap:get_width</a></li>
+      <li><a href="#mozTocId7407">htmlMap:last_line</a></li>
+      <li><a href="#mozTocId135041">htmlMap:lines</a></li>
+      <li><a href="#mozTocId801730">htmlMap:node_from_point</a></li>
+      <li><a href="#mozTocId683336">htmlMap:set_alignment</a></li>
+      <li><a href="#mozTocId992362">htmlMap:start_block</a></li>
+    </ul>
+    <br>
+    <b>Formatting Elements</b><br>
+    <br>
+    The htmlMap object is also an indexed table of formatting elements
+    of the document. Each line in the document has at least one
+    formatting element, starting from the top. No formatting element
+    spans multiple lines. The formatting element contains information to
+    draw that element at its correct location. The line and column
+    values are zero based, document relative. Each element contains the
+    following keys:<br>
+    <br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">line</td>
+          <td valign="top">number</td>
+          <td valign="top">The document line number the element is on.</td>
+        </tr>
+        <tr>
+          <td valign="top">column</td>
+          <td valign="top">number</td>
+          <td valign="top">The document column (character) position the
+            element starts at.</td>
+        </tr>
+        <tr>
+          <td valign="top">text</td>
+          <td valign="top">string</td>
+          <td valign="top">The text of the element. This value is always
+            a string but may be zero length.</td>
+        </tr>
+        <tr>
+          <td valign="top">color</td>
+          <td valign="top">number</td>
+          <td valign="top">The text color of the element.</td>
+        </tr>
+        <tr>
+          <td valign="top">bgcolor</td>
+          <td valign="top">number</td>
+          <td valign="top">The background color of the element.</td>
+        </tr>
+        <tr>
+          <td valign="top">erase</td>
+          <td valign="top">number</td>
+          <td valign="top">The color the document line should be erased
+            to, or nil if no erasure. The process must record line
+            erasures, as every element of the line records this value
+            but only the first of the line should erase the whole line.</td>
+        </tr>
+        <tr>
+          <td valign="top">align</td>
+          <td valign="top">string</td>
+          <td valign="top">The alignment of the element. Column
+            positions are already adjusted for alignment. This value
+            should be ignored during drawing.</td>
+        </tr>
+        <tr>
+          <td valign="top">node</td>
+          <td valign="top">table</td>
+          <td valign="top">The html node (of the htmlDoc object) this
+            formatting element's range is within.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    To gain a htmlMap object for printing call <a
+      moz-do-not-send="true"
+      href="browserWindow.html#browserWindow:get_map">browserWindow:get_map</a>,
+    where <i>view</i> is a <a moz-do-not-send="true"
+      href="browserWindow.html">browserWindow</a> object:<br>
+    <br>
+    <tt><font color="#000066">local</font> map = view:get_map
+      (page_width)</tt><br>
+    <br>
+    To print the line range of text only using the map:<br>
+    <pre><font color="#000066">function</font> appFrame:on_print_page (gdi, page, data)<br>   <font color="#000066">local</font> width, height = gdi:get_page_size ()<br>   <font color="#000066">local</font> map = view:get_map (width)<br>   <font color="#000066">local</font> top_line = ((page - <font color="#339999">1</font>) * height)<br>   <font color="#000066">local</font> first, last = map:get_range (top_line, top_line + height - <font color="#339999">1</font>)<br><br>   gdi:set_colors (term.colors.black, term.colors.white)<br><br>   <font color="#000066">if</font> first <font color="#000066">then</font><br>      <font color="#000066">for</font> i = first, last, <font color="#339999">1</font> <font color="#000066">do</font><br>         <font color="#000066">local</font> element = map[i]<br><br>         <font color="#000066">if</font> element.text:len () &gt; <font color="#339999">0</font> <font color="#000066">then</font><br>            gdi:write (element.text, element.column, (element.line - top_line))<br>         <font color="#000066">end</font><br>      <font color="#000066">end</font><br>   <font color="#000066">end</font><br><br>   <font color="#000066">return</font> (last &lt; #map)<br><font color="#000066">end</font></pre>
+    <br>
+    To print the line range in color using the map:<br>
+    <pre><font color="#000066">function</font> appFrame:on_print_page (gdi, page, data)<br>   <font color="#000066">local</font> width, height = gdi:get_page_size ()<br>   <font color="#000066">local</font> map = view:get_map (width)<br>   <font color="#000066">local</font> top_line = ((page - <font color="#339999">1</font>) * height)<br>   <font color="#000066">local</font> first, last = map:get_range (top_line, top_line + height - <font color="#339999">1</font>)<br><br>   <font color="#990000">-- color whole page to background</font><br>   gdi:set_colors (<font color="#000066">nil</font>, map.bgcolor)<br>   gdi:clear (<font color="#339999">0</font>, <font color="#339999">0</font>, width, height)<br><br>   <font color="#000066">if</font> first <font color="#000066">then</font><br>      <font color="#000066">local</font> erase_line = -<font color="#339999">1</font><br>      <font color="#000066">local</font> erase = <font color="#ffcc00">""</font><br><br>      <font color="#000066">if</font> map:get_width () &gt; <font color="#339999">0</font> <font color="#000066">then</font><br>         erase = <font color="#000066">string.rep</font> (<font color="#ffcc00">" "</font>, map:get_width ())<br>      <font color="#000066">end</font><br><br>      <font color="#000066">for</font> index = first, last, <font color="#339999">1</font> <font color="#000066">do</font><br>         <font color="#000066">local</font> element = map[index]<br><br>         <font color="#000066">if</font> element.erase and element.line ~= erase_line <font color="#000066">then</font><br>            gdi:set_colors (<font color="#000066">nil</font>, element.erase)<br>            gdi:write (erase, 0, (element.line - top_line))<br>            erase_line = element.line<br>         <font color="#000066">end</font><br><br>         <font color="#000066">if</font> element.text:len () &gt; <font color="#339999">0</font> <font color="#000066">then</font><br>            gdi:set_colors (element.color, element.bgcolor)<br>            gdi:write (element.text, element.column, (element.line - top_line))<br>         <font color="#000066">end</font><br>      <font color="#000066">end</font><br>   <font color="#000066">end</font><br><br>   <font color="#000066">return</font> (last &lt; #map)<br><font color="#000066">end</font></pre>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="html_api.html">HTML API</a>,
+    <a moz-do-not-send="true" href="api_reference.html">API Reference</a>,
+    <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId427765" class="mozTocH3"></a><a name="htmlMap:add"></a>htmlMap:add</h3>
+    <i> htmlMap:add (color, bgcolor, align, erase, node, text)</i><br>
+    <br>
+    Adds an element to the end of the map.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">color </td>
+          <td valign="top">number </td>
+          <td valign="top">The text color of the element. </td>
+        </tr>
+        <tr>
+          <td valign="top">bgcolor </td>
+          <td valign="top">number </td>
+          <td valign="top">The background color of the element. </td>
+        </tr>
+        <tr>
+          <td valign="top">align</td>
+          <td valign="top">string</td>
+          <td valign="top">The alignment of the element.</td>
+        </tr>
+        <tr>
+          <td valign="top">erase</td>
+          <td valign="top">number/nil</td>
+          <td valign="top">The line erasing color for the element, nil
+            if none.</td>
+        </tr>
+        <tr>
+          <td valign="top">node</td>
+          <td valign="top">table</td>
+          <td valign="top">The node the element is within.</td>
+        </tr>
+        <tr>
+          <td valign="top">text</td>
+          <td valign="top">string</td>
+          <td valign="top">The display text value for the element, which
+            may be nil if none.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    This method is used during the mapping process, and is not used to
+    draw the formatted document.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId925861" class="mozTocH3"></a><a
+        name="htmlMap:advance"></a>htmlMap:advance</h3>
+    <i> htmlMap:advance (color, bgcolor, align, erase, node)</i><br>
+    <br>
+    Advances the map formatting to the next line, making an entry if
+    necessary. If no entry is made the parameters are not used.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">color </td>
+          <td valign="top">number </td>
+          <td valign="top">The text color of the element. </td>
+        </tr>
+        <tr>
+          <td valign="top">bgcolor </td>
+          <td valign="top">number </td>
+          <td valign="top">The background color of the element. </td>
+        </tr>
+        <tr>
+          <td valign="top">align</td>
+          <td valign="top">string</td>
+          <td valign="top">The alignment of the element.</td>
+        </tr>
+        <tr>
+          <td valign="top">erase</td>
+          <td valign="top">number/nil</td>
+          <td valign="top">The line erasing color for the element, nil
+            if none.</td>
+        </tr>
+        <tr>
+          <td valign="top">node</td>
+          <td valign="top">table</td>
+          <td valign="top">The node the element is within.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    This method is used during the mapping process, and is not used to
+    draw the formatted document.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId315528" class="mozTocH3"></a><a
+        name="htmlMap:constructor"></a>htmlMap:constructor</h3>
+    <i> map htmlMap:constructor (width, color, bgcolor)</i><br>
+    <br>
+    Constructs and returns the instantiated html map object.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">width </td>
+          <td valign="top">number </td>
+          <td valign="top">The width to format the document to. </td>
+        </tr>
+        <tr>
+          <td valign="top">color</td>
+          <td valign="top">number</td>
+          <td valign="top">The body text color.</td>
+        </tr>
+        <tr>
+          <td valign="top">bgcolor </td>
+          <td valign="top">number </td>
+          <td valign="top">The body background color. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">map </td>
+          <td valign="top">htmlMap </td>
+          <td valign="top">The instantiated map object. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId878324" class="mozTocH3"></a><a
+        name="htmlMap:get_range"></a>htmlMap:get_range</h3>
+    <i> first_map, last_map htmlMap:get_range (first_line, last_line)</i><br>
+    <br>
+    Returns the one based table indexes of the formatting elements for
+    the zero based document line range given.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">first_line </td>
+          <td valign="top">number </td>
+          <td valign="top">The first line in the desired range. </td>
+        </tr>
+        <tr>
+          <td valign="top">last_line </td>
+          <td valign="top">number/nil </td>
+          <td valign="top">The last line (inclusive) in the desired
+            range. If nil the mapping elements for the first_line only
+            are returned. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">first_map </td>
+          <td valign="top">number/nil </td>
+          <td valign="top">The index of the first mapping element in the
+            range. If first_line is beyond the number of lines in the
+            document nil is returned. </td>
+        </tr>
+        <tr>
+          <td valign="top">last_map </td>
+          <td valign="top">number/nil </td>
+          <td valign="top">The index of the last mapping element in the
+            range. If last_line is beyond the number of lines in the
+            document this is the last map index. If first_line is beyond
+            then nil is returned. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="htmlMap.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId891050" class="mozTocH3"></a><a
+        name="htmlMap:get_width"></a>htmlMap:get_width</h3>
+    <i> width htmlMap:get_width ()</i><br>
+    <br>
+    Returns the formatted width of the document map.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">width </td>
+          <td valign="top">number </td>
+          <td valign="top">The document formatted width. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="htmlDoc.html#htmlDoc:get_width">htmlDoc:get_width</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="htmlMap.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId7407" class="mozTocH3"></a><a
+        name="htmlMap:last_line"></a>htmlMap:last_line</h3>
+    <i> line htmlMap:last_line&nbsp; ()</i><br>
+    <br>
+    Returns the zero based last document line in the map, or -1 if none.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">line </td>
+          <td valign="top">number </td>
+          <td valign="top">The last document line. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#htmlMap:lines">htmlMap:lines</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="htmlMap.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId135041" class="mozTocH3"></a><a
+        name="htmlMap:lines"></a>htmlMap:lines</h3>
+    <i> lines htmlMap:lines ()</i><br>
+    <br>
+    Returns the count of document lines in the map.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">lines </td>
+          <td valign="top">number </td>
+          <td valign="top">The number of lines in the document. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="#htmlMap:last_line">htmlMap:last_line</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="htmlMap.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId801730" class="mozTocH3"></a><a
+        name="htmlMap:node_from_point"></a>htmlMap:node_from_point</h3>
+    <i> node htmlMap:node_from_point (x, y)</i><br>
+    <br>
+    Returns the html node at the given point. The coordinates are left,
+    top zero based.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">x </td>
+          <td valign="top">number </td>
+          <td valign="top">The horizontal document relative position. </td>
+        </tr>
+        <tr>
+          <td valign="top">y </td>
+          <td valign="top">number </td>
+          <td valign="top">The vertical document relative position. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">node </td>
+          <td valign="top">table </td>
+          <td valign="top">The node at the given point or nil if none. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true"
+      href="browserWindow.html#browserWindow:node_from_point">browserWindow:node_from_point</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="htmlMap.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId683336" class="mozTocH3"></a><a
+        name="htmlMap:set_alignment"></a>htmlMap:set_alignment</h3>
+    <i>htmlMap:set_alignment ()</i><br>
+    <br>
+    Called at the end of mapping to adjust the positions of the elements
+    relevant to their alignment.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    This method is used during the mapping process, and is not used to
+    draw the formatted document.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="htmlMap.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId992362" class="mozTocH3"></a><a
+        name="htmlMap:start_block"></a>htmlMap:start_block</h3>
+    <i>htmlMap:start_block (color, bgcolor, align, erase, node)</i><br>
+    <br>
+    Prepares the map for a new block level element, making an entry if
+    necessary. If no entry is made the parameters are not used.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">color </td>
+          <td valign="top">number </td>
+          <td valign="top">The text color of the element. </td>
+        </tr>
+        <tr>
+          <td valign="top">bgcolor </td>
+          <td valign="top">number </td>
+          <td valign="top">The background color of the element. </td>
+        </tr>
+        <tr>
+          <td valign="top">align</td>
+          <td valign="top">string</td>
+          <td valign="top">The alignment of the element.</td>
+        </tr>
+        <tr>
+          <td valign="top">erase</td>
+          <td valign="top">number/nil</td>
+          <td valign="top">The line erasing color for the element, nil
+            if none.</td>
+        </tr>
+        <tr>
+          <td valign="top">node</td>
+          <td valign="top">table</td>
+          <td valign="top">The node the element is within.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    This method is used during the mapping process, and is not used to
+    draw the formatted document.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="htmlMap.html#top">top</a><br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="html_api.html">HTML API</a>,
+    <a moz-do-not-send="true" href="api_reference.html">API Reference</a>,
+    <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

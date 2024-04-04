@@ -1,0 +1,336 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>homePageFrame</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>private.homePageFrame - WIN</h1>
+    Class <b>homePageFrame</b><br>
+    Inherits from <a moz-do-not-send="true"
+      href="applicationFrame.html">applicationFrame</a>.<br>
+    <br>
+    The homePageFrame class provides the system's Home page frame, and
+    is privately defined in the win API.<br>
+    <br>
+    <b>Properties</b><br>
+    <br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">title</td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="labelWindow.html">labelWindow</a></td>
+          <td valign="top">Displays the desktop title.</td>
+        </tr>
+        <tr>
+          <td valign="top">list</td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="labelWindow.html">listWindow</a></td>
+          <td valign="top">List of installed applications.</td>
+        </tr>
+        <tr>
+          <td valign="top">lock_btn<br>
+          </td>
+          <td valign="top"><a moz-do-not-send="true"
+              href="buttonWindow.html">buttonWindow</a></td>
+          <td valign="top">Button to lock screen.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Methods</b><br>
+    <ul id="mozToc">
+      <!--mozToc h3 1-->
+      <li><a href="#mozTocId320006">homePageFrame:constructor</a></li>
+      <li><a href="#mozTocId929603">homePageFrame:load_list</a></li>
+      <li><a href="#mozTocId713875">homePageFrame:on_event</a></li>
+      <li><a href="#mozTocId614166">homePageFrame:on_frame_activate</a></li>
+      <li><a href="#mozTocId419987">homePageFrame:on_quit</a></li>
+      <li><a href="#mozTocId363939">homePageFrame:on_resize</a></li>
+    </ul>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId320006" class="mozTocH3"></a><a
+        name="homePageFrame:constructor"></a>private.homePageFrame:constructor</h3>
+    <i> frame homePageFrame:constructor (dir, title)</i><br>
+    <br>
+    Constructs and returns the instantiated home page frame window.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">dir<br>
+          </td>
+          <td valign="top">string </td>
+          <td valign="top">Desktop directory under <i>/win/devices</i>.
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">title </td>
+          <td valign="top">string </td>
+          <td valign="top">The desktop title. If <font color="#ffcc33">""</font>
+            then <font color="#ffcc33">"Home"</font> is used. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">frame </td>
+          <td valign="top">homePageFrame </td>
+          <td valign="top">The instantiated frame window. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId929603" class="mozTocH3"></a><a
+        name="homePageFrame:load_list"></a>private.homePageFrame:load_list</h3>
+    <i>homePageFrame:load_list ()</i><br>
+    <br>
+    Fills the installed applications list from the <i>desktop.ini</i>
+    file.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId713875" class="mozTocH3"></a><a
+        name="homePageFrame:on_event"></a>private.homePageFrame:on_event</h3>
+    <i> result homePageFrame:on_event (event, p1, p2, p3, p4, p5, ...)</i><br>
+    <br>
+    Implements control events.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">event </td>
+          <td valign="top">string </td>
+          <td valign="top">The event type. </td>
+        </tr>
+        <tr>
+          <td valign="top">p1 </td>
+          <td valign="top">any </td>
+          <td valign="top">First parameter to event or nil if not used.
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">p2</td>
+          <td valign="top">any</td>
+          <td valign="top">Second parameter to event or nil if not used.</td>
+        </tr>
+        <tr>
+          <td valign="top">p3</td>
+          <td valign="top">any</td>
+          <td valign="top">Third parameter to event or nil if not used.</td>
+        </tr>
+        <tr>
+          <td valign="top">p4</td>
+          <td valign="top">any</td>
+          <td valign="top">Fourth parameter to event or nil if not used.</td>
+        </tr>
+        <tr>
+          <td valign="top">p5</td>
+          <td valign="top">any</td>
+          <td valign="top">Fifth parameter to event or nil if not used.</td>
+        </tr>
+        <tr>
+          <td valign="top">...<br>
+          </td>
+          <td valign="top">any</td>
+          <td valign="top">Any additional parameters.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if handled, otherwise false. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true" href="window.html#window:on_event">window:on_event</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId614166" class="mozTocH3"></a><a
+        name="homePageFrame:on_frame_activate"></a>private.homePageFrame:on_frame_activate</h3>
+    <i>homePageFrame:on_frame_activate (active)</i><br>
+    <br>
+    If active, reloads the installed applications list and displays the
+    lock screen button as required.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">active </td>
+          <td valign="top">boolean </td>
+          <td valign="top">True if made active, false if inactive. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true"
+      href="parentFrame.html#parentFrame:on_frame_activate">parentFrame:on_frame_activate</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="homePageFrame.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId419987" class="mozTocH3"></a><a
+        name="homePageFrame:on_quit"></a>private.homePageFrame:on_quit</h3>
+    <i> result homePageFrame:on_quit ()</i><br>
+    <br>
+    Ensures the home page cannot be quit.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Always true. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true"
+      href="applicationFrame.html#applicationFrame:on_quit">applicationFrame:on_quit</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="homePageFrame.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId363939" class="mozTocH3"></a><a
+        name="homePageFrame:on_resize"></a>private.homePageFrame:on_resize</h3>
+    <i> result homePageFrame:on_resize ()</i><br>
+    <br>
+    Resizes the frame and repositions the controls.<br>
+    <br>
+    <b>Parameters</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">none </td>
+          <td valign="top"><br>
+          </td>
+          <td valign="top"><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Returns</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">result </td>
+          <td valign="top">boolean </td>
+          <td valign="top">Always true. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    See <a moz-do-not-send="true"
+      href="applicationFrame.html#applicationFrame:on_resize">applicationFrame:on_resize</a>.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="homePageFrame.html#top">top</a><br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

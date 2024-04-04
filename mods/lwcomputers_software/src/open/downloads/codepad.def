@@ -1,0 +1,57 @@
+; definition file for codepad
+
+; tab spaces
+tab=3
+
+; auto indent on enter to indent of previous line
+autoindent=true
+
+; remove spaces from line ends on save
+autotrim=true
+
+; auto save before running
+autosave=true
+
+; use code completion
+autocomplete=true
+
+; colors
+; keywords=term.colors.blue
+keywords=11
+; nouns = term.colors.cyan
+nouns=6
+; comments = term.colors.silver
+comments=8
+; strings = term.colors.orange
+strings=1
+; operators = term.colors.red
+operators=9
+; numbers = term.colors.green
+numbers=10
+
+; keywords
+keyword=and
+keyword=break
+keyword=do
+keyword=else
+keyword=elseif
+keyword=end
+keyword=false
+keyword=for
+keyword=function
+keyword=if
+keyword=in
+keyword=local
+keyword=nil
+keyword=not
+keyword=or
+keyword=repeat
+keyword=return
+keyword=then
+keyword=true
+keyword=until
+keyword=while
+
+; index patterns
+index=function
+index=^local

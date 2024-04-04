@@ -1,0 +1,176 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>File Setup</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;">File
+      setup - WIN</h1>
+    <b>Folder/file structure</b><br>
+    <pre>/<font color="#009900">boot</font>                             <i>boot file</i><br>/<font color="#009900">win.ini</font>                          <i>optional - system startup</i><br>/<font color="#009900">startup.cmd</font>                      <i>optional - LOS batch file run when cmd app starts</i><br>/<font color="#009900">license.txt</font>                      <i>licensing info</i><br>/<font color="#009900">win.log</font>                          <i>errors are logged here</i><br>/<font color="#330099">apis</font>                             <i>contains apis</i><br>/<font color="#330099">apps</font>                             <i>contains applications</i><br>/<font color="#330099">progs</font>                            <i>contains console programs</i><br>/<font color="#330099">win</font>                              <i>contains system files</i><br>/<font color="#330099">win</font>/<font color="#330099">devices</font>                      <i>folder containing device info</i><br>/<font color="#330099">win</font>/<font color="#330099">devices</font>/<font color="#009900">desktops.lua</font>         <i>table defining desktops</i><br>/<font color="#330099">win</font>/<font color="#330099">devices</font>/<font color="#009900">printers</font>             <i>list of printer channel names</i>
+/<font color="#330099">win</font>/<font color="#330099">devices</font>/<font color="#330099">term</font>                 <i>desktop folder for terminal</i><br>/<font color="#330099">win</font>/<font color="#330099">devices</font>/<font color="#330099">term</font>/<font color="#009900">desktop.ini</font>     <i>menu entries for this desktop</i><br>/<font color="#330099">win</font>/<font color="#330099">devices</font>/<font color="#330099">term</font>/<font color="#009900">startup.ini</font>     <i>optional - startup of this desktop</i><br>/<font color="#330099">win</font>/<font color="#330099">devices</font>/<font color="#330099">term</font>/<font color="#009900">theme.ini</font>       <i>optional - theme for this desktop</i>
+/<font color="#330099">tmp</font>                              <i>stores temporary files</i><br></pre>
+    <br>
+    <b>win.ini</b><br>
+    This is a key=value text file, with each entry on a new line. Any
+    blank lines or lines starting with a semi-colon are ignored. No
+    extra spaces should be used. The following keys are recognized:<br>
+    <br>
+    <i>password=<font color="#330099">password</font></i><br>
+    Specifies the system's password. This password needs to be entered
+    correctly on the Lock screen when invoked on the running system. If
+    no password is specified the Lock screen will not invoke. If a
+    password is set the system starts with each desktop that does not
+    specify <i>nolock=true</i> initially on lock screen.<br>
+    <br>
+    <i>pre=<font color="#330099">path</font></i><br>
+    Files to run before starting the system. Run before APIs are loaded.
+    There may be multiple <i>pre</i> entries, and they are run in
+    order.<br>
+    <br>
+    <i>api=<font color="#330099">path</font></i><br>
+    The path of any APIs to automatically load at start up. The <i>path</i>
+    is passed to win.load_api () and remain permanently loaded. There
+    may be multiple <i>api</i> entries, and are loaded in order. Note
+    that the api <i>/apis/html</i> is installed with the system.<br>
+    <br>
+    <i>comm=<font color="#330099">name</font></i><br>
+    <i><font color="#330099">name</font>time=count</i><br>
+    This entry defines a comm connection, of which there may be more
+    than one. These connections are established at start up and remain
+    connected. The first name entry is required, and the <i>'time</i>
+    is optional. The comm entry specifies the name of the connection.
+    The <i>'time</i> entry starts with the connection's name and is
+    appended with <i>time</i>, and specifies the count of <i>os.clock
+      ()</i> an operation will wait/attempt until a failure is accepted.
+    The default is 5.<br>
+    For example, to create a connection called "system":<br>
+    <pre>comm=system<br>systemtime=5</pre>
+    <br>
+    <b>Desktops</b><br>
+    To create a desktop place a sub-folder for the device to create
+    under the <i>/win/devices</i> directory with at least the <i>desktop.ini</i>
+    file in it, and make an entry in the <i>/win/devices/desktops.lua</i>
+    file. The <i>desktops.lua</i> file contains a table specifying the
+    desktops to create on startup. The sub-folder name for the desktop
+    must be the same as given in the <i>desktops.lua</i> table.<br>
+    <br>
+    <b>desktop.lua table keys</b><br>
+    <i>type="<font color="#330099">type</font>"</i><br>
+    The type of desktop device, <i>"term"</i> or <i>"monitor"</i>. At
+    most one <i>"term"</i> entry should be made, and this is the only
+    key used. The desktop folder <i>term</i> is assumed. While a
+    desktop is not required on the terminal, the terminal will be
+    useless on a running system.<br>
+    <br>
+    <i>dir="<font color="#330099">dir</font>"</i><br>
+    The name of the desktop folder under <i>/win/devices</i>.<br>
+    <br>
+    <i>channels=<font color="#330099">channels</font></i><br>
+    For multi-monitor devices this must be a list of digilines channels
+    for each monitor in order left to right, top to bottom facing the
+    monitor. For single monitor devices this can be a string or list of
+    one string with the digilines channel name of the monitor.<br>
+    <br>
+    <i>width=<font color="#330099">width</font></i><br>
+    The monitor width for multi-monitor devices. If this is a single
+    monitor this value should be 1.<br>
+    <br>
+    For example, to set up the terminal, and one 2x2 multi-monitor
+    desktop named <i>"monitor_1"</i> and one single monitor desktop
+    named <i>"monitor_2"</i>:<br>
+    <br>
+    <i>/win/devices/desktop.lua</i><br>
+    <pre><font color="#330099">return</font><br>{<br>&nbsp;&nbsp;&nbsp; {<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; type = <font color="#ffcc00">"term"</font>,<br>&nbsp;&nbsp;&nbsp; },<br>&nbsp;&nbsp;&nbsp; {<br> &nbsp;&nbsp; &nbsp;&nbsp;&nbsp; type = <font color="#ffcc00">"monitor"</font>,<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; dir = <font color="#ffcc00">"monitor_1"</font>,<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; channels = { <font color="#ffcc00">"mon1_1"</font>, <font color="#ffcc00">"mon1_2"</font>, <font color="#ffcc00">"mon1_3"</font>, <font color="#ffcc00">"mon1_4"</font> },<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; width = <font color="#66cccc">2</font>,<br>&nbsp;&nbsp;&nbsp; },<br>&nbsp;&nbsp;&nbsp; {<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; type = <font color="#ffcc00">"monitor"</font>,<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; dir = <font color="#ffcc00">"monitor_2"</font>,<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; channels = <font color="#ffcc00">"mon2"</font>,<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; width = <font color="#66cccc">1</font>,<br>&nbsp;&nbsp;&nbsp; },<br>}</pre>
+    Desktop files:<br>
+    <i>/win/devices/term/desktop.ini</i><br>
+    <i>/win/devices/monitor_1/desktop.ini</i><br>
+    <i>/win/devices/monitor_2/desktop.ini</i><br>
+    Each desktop can optional have a <i>startup.ini</i> file (and
+    usually does), and a <i>theme.ini</i> file. For any desktop that
+    does not have a <i>theme.ini</i> file one is created on startup
+    with the default settings.<br>
+    <br>
+    <b>desktop.ini file</b><br>
+    The desktop.ini file contains the menu entries for the desktop's
+    Home page. Each entry contains five lines, placed successively in
+    the file exactly, in order of appearance.<br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">Line 1<br>
+          </td>
+          <td valign="top">The program title - displayed in the Home
+            page list.</td>
+        </tr>
+        <tr>
+          <td valign="top">Line 2<br>
+          </td>
+          <td valign="top">Full path to the application file.</td>
+        </tr>
+        <tr>
+          <td valign="top">Line 3<br>
+          </td>
+          <td valign="top">Arguments for the program - optional, leave
+            blank for none. The list is white space delimited.</td>
+        </tr>
+        <tr>
+          <td valign="top">Line 4<br>
+          </td>
+          <td valign="top"><i>Blank line.</i></td>
+        </tr>
+        <tr>
+          <td valign="top">Line 5<br>
+          </td>
+          <td valign="top"><i>Blank line.</i></td>
+        </tr>
+      </tbody>
+    </table>
+    If this file is altered the changes take effect the next time the
+    Home page is displayed.<br>
+    <br>
+    <b>startup.ini</b><br>
+    This is a key=value text file, with each entry on a new line. Any
+    blank lines or lines starting with a semi-colon are ignored. No
+    extra spaces should be used. If this file is altered the system must
+    be rebooted for the changes to take effect. The following keys are
+    recognized:<br>
+    <br>
+    <i>run=<font color="#330099">path [arguments]</font></i><br>
+    The full path and optional arguments of an application to run
+    automatically on the desktop at start up. There may be multiple run
+    entries.<br>
+    <br>
+    <i>home=<font color="#330099">title</font></i><br>
+    The title to display on the Home page. If not specified defaults to
+    the computer's label or <i>"Home"</i> if none.<br>
+    <br>
+    <i>fullscreen=<font color="#330099">boolean</font></i><br>
+    If true this desktop starts in full screen mode (with the task bar
+    initially hidden).<br>
+    <br>
+    <i>nolock=<font color="#330099">boolean</font></i><br>
+    If true the lock screen will not display on this desktop.<br>
+    <br>
+    <b>theme.ini</b><br>
+    This is a serialized lua table, and is easier to edit it through the
+    manager application. Two settings will be customized frequently for
+    monitor desktops, <i>text_scale</i> and <i>keyboard_height</i> The
+    <i>text_scale</i> settings is the initial text scale for the
+    monitor. The <i>keyboard_height</i> setting is the number of lines
+    from the bottom of the monitor to the top of the on screen keyboard
+    overlay. This defaults to 5, and is the minimum trimmed by the
+    system. It is easiest to use the on screen keyboard when it is mid
+    center straight forward view (not around your feet). This setting
+    allows the keyboard to be displayed a the most comfortable position.
+    If this file is altered the system must be rebooted for the changes
+    to take effect.<br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+  </body>
+</html>

@@ -1,0 +1,514 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>HTML API</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>HTML API - WIN</h1>
+    The html API provides three classes for parsing and displaying html
+    documents: <a moz-do-not-send="true" href="htmlDoc.html">htmlDoc</a>,
+    <a moz-do-not-send="true" href="htmlMap.html">htmlMap</a> and <a
+      moz-do-not-send="true" href="browserWindow.html">browserWindow</a>.<br>
+    <br>
+    The <a moz-do-not-send="true" href="browserWindow.html">browserWindow</a>
+    class is the main class that is usually accessed, which uses the
+    other two class. The <a moz-do-not-send="true" href="htmlDoc.html">htmlDoc</a>
+    class represents the the document; its features are usually accessed
+    via the <a moz-do-not-send="true" href="browserWindow.html">browserWindow</a>
+    class object. The <a moz-do-not-send="true" href="htmlMap.html">htmlMap</a>
+    class is a liner representation of the html document's contents for
+    drawing. An object of this class is created and accessed directly
+    when drawing the document to a printer.<br>
+    <br>
+    Colors in the html documents may be their valid numeric value or a
+    name. See <a moz-do-not-send="true" href="#Colors">Colors</a> for
+    the recognized color numbers and names, which are case sensitive.<br>
+    <br>
+    The html document format is a native lua table structure. The top
+    table must have a html key, which must be a table. Typically the
+    html table contains a body key, which is a table, and possibly a
+    head key, which is also a table.<br>
+    <br>
+    The head section contains metadata for the document. The body
+    section forms the top node of the display contents of the document.
+    Each node, depending upon its type, can contain specific key entries
+    as properties of the node, and indexed entries which form the child
+    nodes. The keys are case sensitive.<br>
+    <br>
+    <b>Classes</b><br>
+    <br>
+    <a moz-do-not-send="true" href="htmlDoc.html">htmlDoc</a><br>
+    <a moz-do-not-send="true" href="htmlMap.html">htmlMap</a><br>
+    <a moz-do-not-send="true" href="browserWindow.html">browserWindow</a><br>
+    <br>
+    <b>Topics</b><br>
+    <ul id="mozToc">
+      <!--mozToc h2 1 h3 2-->
+      <li><a href="#mozTocId497237">Colous</a>
+        <ul>
+          <li><a href="#mozTocId142145">Colors</a></li>
+        </ul>
+      </li>
+      <li><a href="#mozTocId216649">Keys</a>
+        <ul>
+          <li><a href="#mozTocId223960">Body</a></li>
+          <li><a href="#mozTocId34376">Division</a></li>
+          <li><a href="#mozTocId34886">Head</a></li>
+          <li><a href="#mozTocId149117">Horizontal Line</a></li>
+          <li><a href="#mozTocId114785">Link</a></li>
+          <li><a href="#mozTocId62109">Paragraph</a></li>
+          <li><a href="#mozTocId717553">Other/Unspecified</a></li>
+        </ul>
+      </li>
+      <li><a href="#mozTocId729243"> Examples</a>
+        <ul>
+          <li><a href="#mozTocId227036">Example Html Documents</a></li>
+        </ul>
+      </li>
+    </ul>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <h2><a name="mozTocId497237" class="mozTocH2"></a>Colous</h2>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId142145" class="mozTocH3"></a><a name="Colors"></a>Colors</h3>
+    <table width="20%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top" nowrap="nowrap"><b>TML Name</b><br>
+          </td>
+          <td valign="top" nowrap="nowrap"><b>API Name</b><br>
+          </td>
+          <td valign="top" nowrap="nowrap" align="right"><b>Numeric
+              Value</b><br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">black</td>
+          <td valign="top">black</td>
+          <td valign="top" align="right">0<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">orange</td>
+          <td valign="top">orange</td>
+          <td valign="top" align="right">1<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">magenta</td>
+          <td valign="top">magenta</td>
+          <td valign="top" align="right">2<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">sky</td>
+          <td valign="top">sky</td>
+          <td valign="top" align="right">3<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">yellow</td>
+          <td valign="top">yellow</td>
+          <td valign="top" align="right">4<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">pink</td>
+          <td valign="top">pink</td>
+          <td valign="top" align="right">5<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">cyan</td>
+          <td valign="top">cyan</td>
+          <td valign="top" align="right">6<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">gray</td>
+          <td valign="top">gray</td>
+          <td valign="top" align="right">7<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">silver</td>
+          <td valign="top">silver</td>
+          <td valign="top" align="right">8<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">red</td>
+          <td valign="top">red</td>
+          <td valign="top" align="right">9<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">green</td>
+          <td valign="top">green</td>
+          <td valign="top" align="right">10<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">blue</td>
+          <td valign="top">blue</td>
+          <td valign="top" align="right">11<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">brown</td>
+          <td valign="top">brown</td>
+          <td valign="top" align="right">12<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">lime</td>
+          <td valign="top">lime</td>
+          <td valign="top" align="right">13<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">purple</td>
+          <td valign="top">purple</td>
+          <td valign="top" align="right">14<br>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top">white</td>
+          <td valign="top">white</td>
+          <td valign="top" align="right">15<br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h2><a name="mozTocId216649" class="mozTocH2"></a>Keys<br>
+    </h2>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId223960" class="mozTocH3"></a><a name="Body"></a>Body</h3>
+    <b>Keys</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">color </td>
+          <td valign="top">number/string </td>
+          <td valign="top">The default text color for the document. May
+            be a valid color value or a html color name.</td>
+        </tr>
+        <tr>
+          <td valign="top">bgcolor</td>
+          <td valign="top">number/string</td>
+          <td valign="top">The default background color for the
+            document. May be a valid color value or a html color name.</td>
+        </tr>
+        <tr>
+          <td valign="top">linkcolor</td>
+          <td valign="top">number/string</td>
+          <td valign="top">The default color for a link in the document.
+            May be a valid color value or a html color name.</td>
+        </tr>
+        <tr>
+          <td valign="top">align</td>
+          <td valign="top">string</td>
+          <td valign="top">The default alignment for the document, may
+            be: <font color="#ffcc00">"left"</font>, <font
+              color="#ffcc00">"right"</font> or <font color="#ffcc00">"center"</font>.</td>
+        </tr>
+        <tr>
+          <td valign="top">width</td>
+          <td valign="top">number/string</td>
+          <td valign="top">The minimum display width of the document, in
+            characters. No minimum width if omitted.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Any indexed entries form the contents of the document.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId34376" class="mozTocH3"></a><a name="Division"></a>Division</h3>
+    <b>Keys</b>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">tag </td>
+          <td valign="top">string </td>
+          <td valign="top">Must be <font color="#ffcc00">"d"</font>.
+            This key must exist. </td>
+        </tr>
+        <tr>
+          <td valign="top">color </td>
+          <td valign="top">number/string </td>
+          <td valign="top">The text color for the division. If not
+            specified the color is inherited from the parent node. May
+            be a valid color value or a html color name. </td>
+        </tr>
+        <tr>
+          <td valign="top">bgcolor</td>
+          <td valign="top">number/string</td>
+          <td valign="top">The background color for the division. If not
+            specified the color is inherited from the parent node. May
+            be a valid color value or a html color name.</td>
+        </tr>
+        <tr>
+          <td valign="top">align</td>
+          <td valign="top">string</td>
+          <td valign="top">The alignment of the division, may be: <font
+              color="#ffcc00">"left"</font>, <font color="#ffcc00">"right"</font>
+            or <font color="#ffcc00">"center"</font>. If not specified
+            the alignment is inherited from the parent.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Divisions are a block level element, similar to paragraphs but have
+    no implied line spacing after them. They usually contain child
+    nodes.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true" href="#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId34886" class="mozTocH3"></a><a name="Head"></a>Head</h3>
+    <b>Keys</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">title </td>
+          <td valign="top">string </td>
+          <td valign="top">The title property for the document. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="html_api.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId149117" class="mozTocH3"></a><a
+        name="Horizontal_Line"></a>Horizontal Line</h3>
+    <b>Keys</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">tag </td>
+          <td valign="top">string </td>
+          <td valign="top">Must be <font color="#ffcc00">"l"</font>.
+            This key must exist. </td>
+        </tr>
+        <tr>
+          <td valign="top">color </td>
+          <td valign="top">number/string </td>
+          <td valign="top">The text color for the line. If not specified
+            the color is inherited from the parent node. May be a valid
+            color value or a html color name. </td>
+        </tr>
+        <tr>
+          <td valign="top">bgcolor</td>
+          <td valign="top">number/string</td>
+          <td valign="top">The background color for the line. If not
+            specified the color is inherited from the parent node. May
+            be a valid color value or a html color name.</td>
+        </tr>
+        <tr>
+          <td valign="top">align</td>
+          <td valign="top">string</td>
+          <td valign="top">The alignment of the line, may be: <font
+              color="#ffcc00">"left"</font>, <font color="#ffcc00">"right"</font>
+            or <font color="#ffcc00">"center"</font>. If not specified
+            the alignment is inherited from the parent.</td>
+        </tr>
+        <tr>
+          <td valign="top">width</td>
+          <td valign="top">number</td>
+          <td valign="top">The percentage of the display width of the
+            line. If not specified 100 is used.</td>
+        </tr>
+        <tr>
+          <td valign="top">char</td>
+          <td valign="top">string</td>
+          <td valign="top">A single character string to use as the
+            repeated character for the line. If not specified <font
+              color="#ffcc00">"-"</font> is used.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Horizontal lines are block level elements and contain no child
+    nodes.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="html_api.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId114785" class="mozTocH3"></a><a name="Link"></a>Link</h3>
+    <b>Keys</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">tag </td>
+          <td valign="top">string </td>
+          <td valign="top">Must be <font color="#ffcc00">"a"</font>.
+            This key must exist. </td>
+        </tr>
+        <tr>
+          <td valign="top">color </td>
+          <td valign="top">number/string </td>
+          <td valign="top">The text color for the link. If not specified
+            the color is inherited from the body's linkcolor. May be a
+            valid color value or a html color name. </td>
+        </tr>
+        <tr>
+          <td valign="top">bgcolor</td>
+          <td valign="top">number/string</td>
+          <td valign="top">The background color for the link. If not
+            specified the color is inherited from the parent node. May
+            be a valid color value or a html color name.</td>
+        </tr>
+        <tr>
+          <td valign="top">href</td>
+          <td valign="top">string</td>
+          <td valign="top">The address to navigate to. It may be a fully
+            qualified or relative address.</td>
+        </tr>
+        <tr>
+          <td valign="top">protocol</td>
+          <td valign="top">string</td>
+          <td valign="top">The protocol to use for the linked file.
+            Recognized values are <font color="#ffcc00">"ftp:"</font>,
+            <font color="#ffcc00">"http:"</font>, <font color="#ffcc00">"ftp"</font>
+            and <font color="#ffcc00">"http"</font>. If the protocol is
+            not specified <font color="#ffcc00">"http:"</font> is
+            generally assumed. If the href value specifies the protocol
+            this key should be omitted.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Links are inline elements and usually contain a single string child
+    node, but may contain more.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="html_api.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId62109" class="mozTocH3"></a><a name="Paragraph"></a>Paragraph</h3>
+    <b>Keys</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">tag </td>
+          <td valign="top">string </td>
+          <td valign="top">Must be <font color="#ffcc00">"p"</font>.
+            This key must exist. </td>
+        </tr>
+        <tr>
+          <td valign="top">color </td>
+          <td valign="top">number/string </td>
+          <td valign="top">The text color for the paragraph. If not
+            specified the color is inherited from the parent node. May
+            be a valid color value or a html color name. </td>
+        </tr>
+        <tr>
+          <td valign="top">bgcolor</td>
+          <td valign="top">number/string</td>
+          <td valign="top">The background color for the paragraph. If
+            not specified the color is inherited from the parent node.
+            May be a valid color value or a html color name.</td>
+        </tr>
+        <tr>
+          <td valign="top">align</td>
+          <td valign="top">string</td>
+          <td valign="top">The alignment of the paragraph, may be: <font
+              color="#ffcc00">"left"</font>, <font color="#ffcc00">"right"</font>
+            or <font color="#ffcc00">"center"</font>. If not specified
+            the alignment is inherited from the parent.</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Paragraphs are a block level element and have an implied line
+    spacing after them. They usually contain child nodes.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="html_api.html#top">top</a><br>
+    <br>
+    <br>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId717553" class="mozTocH3"></a><a name="Other"></a>Other/Unspecified</h3>
+    <b>Keys</b><br>
+    <table width="100%" cellspacing="0" cellpadding="2" border="0">
+      <tbody>
+        <tr>
+          <td valign="top">color </td>
+          <td valign="top">number/string </td>
+          <td valign="top">The text color for the inline element. If not
+            specified the color is inherited from the parent node. May
+            be a valid color value or a html color name. </td>
+        </tr>
+        <tr>
+          <td valign="top">bgcolor </td>
+          <td valign="top">number/string </td>
+          <td valign="top">The background color for the inline element.
+            If not specified the color is inherited from the parent
+            node. May be a valid color value or a html color name. </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <b>Remarks</b><br>
+    Unknown tags or untaged tables are inline elements, and may contain
+    child nodes. They can be used for inline formatting.<br>
+    <br>
+    <br>
+    <a moz-do-not-send="true"
+href="html_api.html#top">top</a><br>
+    <br>
+    <h2><a name="mozTocId729243" class="mozTocH2"></a> Examples</h2>
+    <h3 style="background-color: rgb(192, 192, 255); padding: 8pt;"><a
+        name="mozTocId227036" class="mozTocH3"></a><a
+        name="Example_Html_Documents"></a>Example Html Documents</h3>
+    #1<br>
+    <pre>{<br>  html = {<br>    head = { title = <font color="#ffcc00">"foo"</font> },<br>    body = { color = <font color="#ffcc00">"black"</font>, linkcolor = <font color="#ffcc00">"blue"</font>, bgcolor = <font color="#ffcc00">"yellow"</font>,<br>      { tag = <font color="#ffcc00">"p"</font>, align = <font color="#ffcc00">"center"</font>, color = <font color="#ffcc00">"gray"</font>, bgcolor = <font color="#ffcc00">"cyan"</font>,<br>        <font color="#ffcc00">"\r"</font>,<br>        <font color="#ffcc00">"foo.com\r"</font>,<br>        <font color="#ffcc00">"======="</font><br>      },<br>      { tag = <font color="#ffcc00">"p"</font>, align = <font color="#ffcc00">"left"</font>,<br>        <font color="#ffcc00">"Welcome to foo, where "</font>, { color = <font color="#ffcc00">"red"</font>, <font color="#ffcc00">"everyone"</font> }, <font color="#ffcc00">" has loads of fun."</font><br>      },<br>      { tag = <font color="#ffcc00">"p"</font>, align = <font color="#ffcc00">"left"</font>,<br>        <font color="#ffcc00">"Be sure to check out our great departments."</font><br>      },<br>      { tag = <font color="#ffcc00">"p"</font>, align = <font color="#ffcc00">"left"</font>,<br>        <font color="#ffcc00">" "</font>, { tag = <font color="#ffcc00">"a"</font>, href = <font color="#ffcc00">"joe.html"</font>, <font color="#ffcc00">"Joe's Bar &amp; Grill"</font> }, <font color="#ffcc00">"\r"</font>,<br>        <font color="#ffcc00">" "</font>, { tag = <font color="#ffcc00">"a"</font>, href = "<font color="#ffcc00">mary.html"</font>, <font color="#ffcc00">"Mary's Florist"</font> }, <font color="#ffcc00">"\r"</font>,<br>        <font color="#ffcc00">" "</font>, { tag = <font color="#ffcc00">"a"</font>, href = <font color="#ffcc00">"fay.html"</font>, <font color="#ffcc00">"Fay's Dating"</font> }, <font color="#ffcc00">"\r"</font>,<br>        <font color="#ffcc00">" "</font>, { tag = <font color="#ffcc00">"a"</font>, href = <font color="#ffcc00">"downloads/myApp"</font>, protocol = <font color="#ffcc00">"ftp:"</font>, <font color="#ffcc00">"Download App"</font> }<br>      },<br>      { tag = <font color="#ffcc00">"l"</font>, width = <font color="#ffcc00">"50"</font>, align = <font color="#ffcc00">"center"</font>, color = <font color="#ffcc00">"brown"</font> }<br>    },<br>  }<br>}</pre>
+    <br>
+    #2<br>
+    <pre>{<br>&nbsp; html = {<br>    head = { title = <font color="#ffcc00">"Mary's Florist"</font> },<br>&nbsp;&nbsp;&nbsp; body = { color = <font color="#ffcc00">"blue"</font>, linkcolor = <font color="#ffcc00">"red"</font>, bgcolor = <font color="#ffcc00">"yellow"</font>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; { tag = <font color="#ffcc00">"p"</font>, align = <font color="#ffcc00">"center"</font>, color = <font color="#ffcc00">"pink"</font>, bgcolor = <font color="#ffcc00">"green"</font>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <font color="#ffcc00">"\r"</font>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; { color = <font color="#ffcc00">"yellow"</font>, <font color="#ffcc00">"{*}"</font> }, <font color="#ffcc00">" Mary's Florist "</font>, { color = <font color="#ffcc00">"yellow"</font>, <font color="#ffcc00">"{*}"</font> },<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <font color="#ffcc00">"\r"</font><br>&nbsp;&nbsp;    },<br>&nbsp;&nbsp;    { tag = <font color="#ffcc00">"p"</font>, align = <font color="#ffcc00">"left"</font>,<br>&nbsp;&nbsp;&nbsp;&nbsp;    { color = <font color="#ffcc00">"black"</font>, <font color="#ffcc00">" Our Extensive Range:\r"</font> },<br>&nbsp;&nbsp;&nbsp;&nbsp;    <font color="#ffcc00">"&nbsp; + Snapping Dragons.\r"</font>,<br>&nbsp;&nbsp;&nbsp;&nbsp;    <font color="#ffcc00">"&nbsp; + Violent Violets.\r"</font>,<br>&nbsp;&nbsp;&nbsp;   &nbsp; <font color="#ffcc00">"&nbsp; + Ivy that Poisoned Ivy.\r"</font>,<br>&nbsp;&nbsp;&nbsp;   &nbsp; <font color="#ffcc00">"&nbsp; + Two Lipped Tulips."</font><br>&nbsp;&nbsp;    },<br>&nbsp;&nbsp;    { tag = <font color="#ffcc00">"p"</font>, color = <font color="#ffcc00">"brown"</font>, align = <font color="#ffcc00">"center"</font>,<br>&nbsp;   &nbsp;&nbsp;&nbsp; { color = <font color="#ffcc00">"black"</font>, <font color="#ffcc00">"Mary's Florist"</font> }, <font color="#ffcc00">"\r"</font>,<br>&nbsp;   &nbsp;&nbsp;&nbsp; <font color="#ffcc00">"Where nature comes to life,\r"</font>,<br>&nbsp;   &nbsp;&nbsp;&nbsp; <font color="#ffcc00">"and tries to kill you."</font><br>&nbsp;&nbsp;    },<br>&nbsp;   &nbsp; { tag = <font color="#ffcc00">"p"</font>, align = <font color="#ffcc00">"center"</font>,<br>   &nbsp;&nbsp;&nbsp;&nbsp; { color = <font color="#ffcc00">"black"</font>, <font color="#ffcc00">"Proudly at "</font> }, { tag = <font color="#ffcc00">"a"</font>, href = <font color="#ffcc00">"http:foo.com"</font>, <font color="#ffcc00">"foo.com"</font> }<br>&nbsp;   &nbsp; }<br>&nbsp;&nbsp;&nbsp; },<br>  }<br>}</pre>
+    <br>
+    <a moz-do-not-send="true"
+href="html_api.html#top">top</a><br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="api_reference.html">API
+      Reference</a>, <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

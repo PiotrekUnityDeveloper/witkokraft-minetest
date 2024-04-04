@@ -1,0 +1,53 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>Application Writing</title>
+    <meta name="author" content="loosewheel">
+    <style>a:link {text-decoration:none;}</style>
+  </head>
+  <body style="font-family: sans-serif;">
+    <h1 style="background-color: rgb(128, 128, 255); padding: 8pt;"><a
+        name="top"></a>Application Writing - WIN</h1>
+    An application program should only create local objects. The
+    application calls <a moz-do-not-send="true"
+      href="globals.html#win.create_app_frame">win.create_app_frame</a>
+    to create an <a moz-do-not-send="true" href="applicationFrame.html">applicationFrame</a>
+    window, which is the main frame and top object of the application.
+    The application code extends upon the frame object to define to
+    program.<br>
+    <br>
+    A frame is always the work area size (the desktop not obscured by
+    the task bar). An application can only have one application frame
+    but can define any number of <a moz-do-not-send="true"
+      href="popupFrame.html">popupFrames</a>. Each <a
+      moz-do-not-send="true" href="popupFrame.html">popupFrame</a> can
+    also display a <a moz-do-not-send="true" href="popupFrame.html">popupFrame</a>.
+    Child windows, typically controls, are placed on these frame windows
+    to interact with the user and handle events.<br>
+    <br>
+    The system runs by routing events to the appropriate application
+    thread and window for action. While the event handlers should be
+    employed to provide delays and keep sync, os.sleep may be used.
+    Lengthy processes should also be broken into sub-processes so event
+    handlers return in a reasonable time.<br>
+    <br>
+    <b>Topics</b><br>
+    <br>
+    <a moz-do-not-send="true" href="minimum_application.html">Minimum
+      Application</a><br>
+    <a moz-do-not-send="true" href="starter_application.html">Starter
+      Application</a><br>
+    <a moz-do-not-send="true" href="application_with_menu.html">Application
+      with Menu</a><br>
+    <a moz-do-not-send="true" href="single_instance_application.html">Single
+      Instance Application</a><br>
+    <a moz-do-not-send="true" href="application_with_popup.html">Application
+      with Popup</a><br>
+    <br>
+    <br>
+    See also <a moz-do-not-send="true" href="index.html">WIN</a>.<br>
+    <br>
+    <br>
+  </body>
+</html>

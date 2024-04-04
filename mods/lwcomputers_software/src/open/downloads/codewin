@@ -1,0 +1,601 @@
+
+codeWindow = win.editWindow:base ()
+
+
+
+function codeWindow:constructor (parent, id, x, y, width, height, text, banner)
+	if not win.editWindow.constructor (self, parent, id, x, y, width, height, text, banner) then
+		return nil
+	end
+
+	self.code__colors =
+	{
+		keywords = self:get_color (),
+		nouns = self:get_color (),
+		comments = self:get_color (),
+		strings = self:get_color (),
+		operators = self:get_color (),
+		numbers = self:get_color ()
+	}
+
+	self.code__keywords = {}
+	self.code__nouns = {}
+	self.code__words = {}
+	self.code__indexes = {}
+	self.code__complete = ""
+	self.code__auto_indent = false
+	self.code__auto_trim = false
+	self.code__auto_save = false
+	self.code__auto_complete = false
+
+	return self
+end
+
+
+function codeWindow:get_auto_indent ()
+	return self.code__auto_indent
+end
+
+
+function codeWindow:set_auto_indent (indent)
+	self.code__auto_indent = indent and true or false
+end
+
+
+function codeWindow:get_auto_trim ()
+	return self.code__auto_trim
+end
+
+
+function codeWindow:set_auto_trim (trim)
+	self.code__auto_trim = trim and true or false
+end
+
+
+function codeWindow:get_auto_save ()
+	return self.code__auto_save
+end
+
+
+function codeWindow:set_auto_save (save)
+	self.code__auto_save = save and true or false
+end
+
+
+function codeWindow:get_auto_complete ()
+	return self.code__auto_complete
+end
+
+
+function codeWindow:set_auto_complete (complete)
+	self.code__auto_complete = complete and true or false
+end
+
+
+function codeWindow:get_keyword_color ()
+	return self.code__colors.keywords
+end
+
+
+function codeWindow:get_noun_color ()
+	return self.code__colors.nouns
+end
+
+
+function codeWindow:get_comment_color ()
+	return self.code__colors.comments
+end
+
+
+function codeWindow:get_string_color ()
+	return self.code__colors.strings
+end
+
+
+function codeWindow:get_operator_color ()
+	return self.code__colors.operators
+end
+
+
+function codeWindow:get_number_color ()
+	return self.code__colors.numbers
+end
+
+
+local function codeWindow_get_nouns (words, nouns, env, prefix, levels)
+	if levels > 0 then
+		for k, v in pairs (env) do
+			if type (k) == "string" and k ~= "_G" and
+				k ~= "api_refCount" and (k:find ("__", 1, true)) ~= 1 and
+				(prefix:find (k, 1, true)) == nil then
+
+				words[#words + 1] = prefix..k
+				nouns[prefix..k] = true
+
+				if type (v) == "table" then
+					codeWindow_get_nouns (words, nouns, v, prefix..k..".", levels - 1)
+				end
+			end
+		end
+	end
+end
+
+
+function codeWindow:load_definition (path)
+	local ini = fs.load_ini (path)
+	if ini then
+		self:set_tab_width (tonumber (ini:find("tab") or 0))
+		self:set_auto_indent ((ini:find ("autoindent") or "false") == "true")
+		self:set_auto_trim ((ini:find ("autotrim") or "false") == "true")
+		self:set_auto_save ((ini:find ("autosave") or "false") == "true")
+		self:set_auto_complete ((ini:find ("autocomplete") or "false") == "true")
+
+		self.code__colors.keywords = tonumber (ini:find ("keywords") or self:get_color ())
+		self.code__colors.nouns = tonumber (ini:find ("nouns") or self:get_color ())
+		self.code__colors.comments = tonumber (ini:find ("comments") or self:get_color ())
+		self.code__colors.strings = tonumber (ini:find ("strings") or self:get_color ())
+		self.code__colors.operators = tonumber (ini:find ("operators") or self:get_color ())
+		self.code__colors.numbers = tonumber (ini:find ("numbers") or self:get_color ())
+
+		self.code__nouns = { }
+		self.code__words = { }
+		self.code__keywords = { }
+		for word in ini:next ("keyword") do
+			self.code__keywords[word] = true
+			self.code__words[#self.code__words + 1] = word
+		end
+
+		self.code__indexes = { }
+		for word in ini:next ("index") do
+			self.code__indexes[#self.code__indexes + 1] = word
+		end
+
+		codeWindow_get_nouns (self.code__words, self.code__nouns, _G, "", 2)
+
+		table.sort (self.code__words)
+
+		return true
+	end
+
+	return false
+end
+
+
+local function codeWindow_code_complete (win)
+	if win.code__auto_complete then
+		local space = string.byte (" ", 1, 1)
+		local pos, line = win:get_cursor_pos ()
+
+		if #win.edit__data > line then
+			local text = win.edit__data[line + 1].str
+
+			if text:len () >= pos and (text:len () == pos or (text:byte (pos + 1)) == space) then
+				for start = pos, 0, -1 do
+					if start == 0 or text:byte (start, start) == space then
+						if start < pos then
+							local token = text:sub (start + 1, pos)
+
+							for w = 1, #win.code__words, 1 do
+								if (win.code__words[w]:find (token , 1, true)) == 1 then
+									win.code__complete = win.code__words[w]:sub (token:len() + 1)
+									return
+								end
+							end
+						end
+
+						break
+					end
+				end
+			end
+		end
+	end
+
+	win.code__complete = ""
+end
+
+
+local function codeWindow_next_word (win, line)
+	local word = string.match (line, "^%-%-.*")
+	if word then
+		return string.sub (line, string.len (word) + 1), word, win.code__colors.comments
+	end
+
+	word = string.match (line, "^%-%-%[%[.-%]%]")
+	if word then
+		return string.sub (line, string.len (word) + 1), word, win.code__colors.comments
+	end
+
+	word = string.match (line, "^\"\"")
+	if word then
+		return string.sub (line, string.len (word) + 1), word, win.code__colors.strings
+	end
+
+	word = string.match (line, "^\".-[^\\]\"")
+	if word then
+		return string.sub (line, string.len (word) + 1), word, win.code__colors.strings
+	end
+
+	word = string.match (line, "^\'\'")
+	if word then
+		return string.sub (line, string.len (word) + 1), word, win.code__colors.strings
+	end
+
+	word = string.match (line, "^\'.-[^\\]\'")
+	if word then
+		return string.sub (line, string.len (word) + 1), word, win.code__colors.strings
+	end
+
+	word = string.match (line, "^%[%[.-%]%]")
+	if word then
+		return string.sub (line, string.len (word) + 1), word, win.code__colors.strings
+	end
+
+	word = string.match (line, "^[%d]+")
+	if word then
+		return string.sub (line, string.len (word) + 1), word, win.code__colors.numbers
+	end
+
+	word = string.match (line, "^[%(%)%{%}%=%-%+%*%/%~%,%<%>%[%]%#%.%:%;]+")
+	if word then
+		return string.sub (line, string.len (word) + 1), word, win.code__colors.operators
+	end
+
+	word = string.match (line, "^[%w_%.]+")
+	if word then
+		if win.code__nouns[word] then
+			return string.sub (line, string.len (word) + 1), word, win.code__colors.nouns
+		end
+	end
+
+	word = string.match (line, "^[%w_]+")
+	if word then
+		if win.code__keywords[word] then
+			return string.sub (line, string.len (word) + 1), word, win.code__colors.keywords
+		elseif win.code__nouns[word] then
+			return string.sub (line, string.len (word) + 1), word, win.code__colors.nouns
+		else
+			return string.sub (line, string.len (word) + 1), word, win:get_color ()
+		end
+	end
+
+	word = string.match (line, "^[^%w_]")
+	if word then
+		return string.sub (line, string.len (word) + 1), word, win:get_color ()
+	end
+
+	return nil
+end
+
+
+local function codeWindow_draw_line (win, gdi, line, strline, is_selected)
+	local cursorx = 0
+	local thisline, word, color = codeWindow_next_word (win, strline)
+	local sel_color = win:get_colors ().selected_text
+
+	while word do
+		gdi:set_colors (is_selected and sel_color or color)
+		gdi:write (word, cursorx, line)
+
+		cursorx = cursorx + string.len (word)
+
+		thisline, word, color = codeWindow_next_word (win, thisline.."")
+	end
+end
+
+
+function codeWindow:draw (gdi, bounds)
+	if #self.edit__data == 1 and self.edit__data[1].len == 0 then
+		if self:get_banner ():len() > 0 then
+			gdi:set_colors (self.edit__colors.banner, self:get_bg_color ())
+			gdi:write (self:get_banner (), 0, 0)
+		end
+
+	else
+		local selstart, selend = self:get_sel (true)
+		local lastline, firstline = self:wnd_to_scroll (bounds.x, bounds.y)
+		lastline = firstline + bounds.height - 1
+
+		if firstline < 0 then
+			firstline = 0
+		elseif firstline >= #self.edit__data then
+			firstline = #self.edit__data - 1
+		end
+
+		if lastline < 0 then
+			lastline = 0
+		elseif lastline >= #self.edit__data then
+			lastline = #self.edit__data - 1
+		end
+
+		if lastline >= firstline then
+			if selstart == selend then
+				gdi:set_colors (nil, self:get_bg_color ())
+
+				for line = firstline, lastline, 1 do
+					codeWindow_draw_line (self, gdi, line, self.edit__data[line + 1].str, false)
+				end
+
+				if self.code__complete:len() > 0 then
+					local x, y = self:get_cursor_pos ()
+
+					if y >= firstline and y <= lastline then
+						gdi:set_colors (self:get_colors ().selected_text, self:get_colors ().selected_back)
+						gdi:write (self.code__complete, x, y)
+					end
+				end
+
+			else
+				local startLine, startChar = self:line_from_char (selstart)
+				local endLine, endChar = self:line_from_char (selend)
+
+				if startLine == endLine then
+					for line = firstline, lastline, 1 do
+						if line == startLine then
+							local cursorx = 0
+							local thisline, word, color = codeWindow_next_word (self, self.edit__data[line + 1].str)
+
+							while word do
+								local wlen = word:len ()
+
+								if cursorx < startChar and (cursorx + wlen) > startChar then
+									if (cursorx + wlen) > endChar then
+										local prefix = word:sub (1, startChar - cursorx)
+										local mid = word:sub (prefix:len () + 1, endChar - cursorx)
+										local suffix = word:sub (prefix:len () + mid:len () + 1)
+
+										gdi:set_colors (color, self:get_bg_color ())
+										gdi:write (prefix, cursorx, line)
+										cursorx = cursorx + prefix:len ()
+
+										gdi:set_colors (self:get_colors ().selected_text, self:get_colors ().selected_back)
+										gdi:write(mid, cursorx, line)
+										cursorx = cursorx + mid:len ()
+
+										gdi:set_colors (color, self:get_bg_color ())
+										gdi:write(suffix, cursorx, line)
+										cursorx = cursorx + suffix:len ()
+									else
+										local prefix = word:sub (1, startChar - cursorx)
+										local suffix = word:sub (prefix:len () + 1)
+
+										gdi:set_colors (color, self:get_bg_color ())
+										gdi:write (prefix, cursorx, line)
+										cursorx = cursorx + prefix:len ()
+
+										gdi:set_colors (self:get_colors ().selected_text, self:get_colors ().selected_back)
+										gdi:write (suffix, cursorx, line)
+										cursorx = cursorx + suffix:len ()
+									end
+
+								elseif cursorx < endChar and (cursorx + wlen) > endChar then
+									local prefix = word:sub (1, endChar - cursorx)
+									local suffix = word:sub (prefix:len() + 1)
+
+									gdi:set_colors (self:get_colors ().selected_text, self:get_colors ().selected_back)
+									gdi:write (prefix, cursorx, line)
+									cursorx = cursorx + prefix:len ()
+
+									gdi:set_colors (color, self:get_bg_color ())
+									gdi:write (suffix, cursorx, line)
+									cursorx = cursorx + suffix:len ()
+
+								else
+									if cursorx >= startChar and cursorx < endChar then
+										gdi:set_colors (self:get_colors ().selected_text, self:get_colors ().selected_back)
+									else
+										gdi:set_colors (color, self:get_bg_color ())
+									end
+									gdi:write (word, cursorx, line)
+									cursorx = cursorx + word:len ()
+
+								end
+
+								thisline, word, color = codeWindow_next_word (self, thisline.."")
+							end
+
+						else
+							gdi:set_colors (nil, self:get_bg_color ())
+							codeWindow_draw_line (self, gdi, line, self.edit__data[line + 1].str)
+
+						end
+					end
+				else
+					for line = firstline, lastline, 1 do
+						if line == startLine then
+							local cursorx = 0
+							local thisline, word, color = codeWindow_next_word (self, self.edit__data[line + 1].str)
+
+							while word do
+								local wlen = word:len ()
+
+								if cursorx < startChar and (cursorx + wlen) > startChar then
+									local prefix = word:sub (1, startChar - cursorx)
+									local suffix = word:sub (prefix:len () + 1)
+
+									gdi:set_colors (color, self:get_bg_color ())
+									gdi:write (prefix, cursorx, line)
+									cursorx = cursorx + prefix:len ()
+
+									gdi:set_colors (self:get_colors ().selected_text, self:get_colors ().selected_back)
+									gdi:write (suffix, cursorx, line)
+									cursorx = cursorx + suffix:len ()
+								else
+									if cursorx >= startChar then
+										gdi:set_colors (self:get_colors ().selected_text, self:get_colors ().selected_back)
+									else
+										gdi:set_colors (color, self:get_bg_color ())
+									end
+									gdi:write (word, cursorx, line)
+									cursorx = cursorx + word:len ()
+								end
+
+								thisline, word, color = codeWindow_next_word (self, thisline.."")
+							end
+
+						elseif line == endLine then
+							local cursorx = 0
+							local thisline, word, color = codeWindow_next_word (self, self.edit__data[line + 1].str)
+
+							while word do
+								local wlen = word:len ()
+
+								if cursorx < endChar and (cursorx + wlen) > endChar then
+									local prefix = word:sub (1, endChar - cursorx)
+									local suffix = word:sub (prefix:len () + 1)
+
+									gdi:set_colors (self:get_colors ().selected_text, self:get_colors ().selected_back)
+									gdi:write (prefix, cursorx, line)
+									cursorx = cursorx + prefix:len ()
+
+									gdi:set_colors (color, self:get_bg_color ())
+									gdi:write (suffix, cursorx, line)
+									cursorx = cursorx + suffix:len ()
+								else
+									if cursorx < endChar then
+										gdi:set_colors (self:get_colors ().selected_text, self:get_colors ().selected_back)
+									else
+										gdi:set_colors (color, self:get_bg_color ())
+									end
+									gdi:write (word, cursorx, line)
+									cursorx = cursorx + word:len ()
+
+								end
+
+								thisline, word, color = codeWindow_next_word (self, thisline.."")
+							end
+
+						else
+
+							if line > startLine and line < endLine then
+								gdi:set_colors (nil, self:get_colors ().selected_back)
+								codeWindow_draw_line (self, gdi, line, self.edit__data[line + 1].str, true)
+							else
+								gdi:set_colors (nil, self:get_bg_color ())
+								codeWindow_draw_line (self, gdi, line, self.edit__data[line + 1].str, false)
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+
+function codeWindow:on_key (key, ctrl, alt, shift)
+	if not ctrl and not alt and not shift then
+		if key == keys.KEY_ENTER then
+			if self.code__auto_indent then
+				if not self:get_read_only () then
+					self:replace_sel_tabled (
+						{
+							"",
+							string.match (self.edit__data[(self:line_from_char (self:get_sel (true))) + 1].str, "^%s*") or ""
+						},
+						nil,
+						win.EU_TYPE)
+				end
+
+				return true
+			end
+
+		elseif key == keys.KEY_TAB then
+			if self.code__complete:len () > 0 then
+				self:replace_sel_tabled ({ self.code__complete }, nil, win.EU_TYPE)
+
+				return true
+			end
+		end
+	end
+
+	return win.editWindow.on_key (self, key, ctrl, alt, shift)
+end
+
+
+function codeWindow:on_char (char, ascii)
+	win.editWindow.on_char (self, char, ascii)
+
+	if not self:get_read_only () then
+		codeWindow_code_complete (self)
+	end
+
+	return true
+end
+
+
+function codeWindow:set_sel (selstart, selend, autoscroll)
+	self.code__complete = ""
+
+	win.editWindow.set_sel (self, selstart, selend, autoscroll)
+end
+
+
+function codeWindow:get_text_with_trim ()
+	if self:get_auto_trim () then
+		local ss, se = self:get_sel (false)
+
+		for line = 1, #self.edit__data, 1 do
+			local index = self:line_index (line) - 1
+			local str = string.trim_right (self.edit__data[line].str)
+			local diff = self.edit__data[line].len - str:len()
+
+			if diff > 0 then
+				if index <= ss then
+					ss = ss - diff
+				end
+
+				if index <= se then
+					se = se - diff
+				end
+
+				self.edit__data[line].str = str
+				self.edit__data[line].len = str:len()
+			end
+		end
+
+		self:set_sel (ss, se, false)
+	end
+
+	return self:get_text ()
+end
+
+
+function codeWindow:get_indexes ()
+	local indexes = { }
+	for line = 1, #self.edit__data, 1 do
+		local found = false
+		for i = 1, #self.code__indexes, 1 do
+			if string.match(self.edit__data[line].str, self.code__indexes[i]) then
+				found = true
+				break
+			end
+		end
+
+		if found then
+			indexes[#indexes + 1] =
+			{
+				text = self.edit__data[line].str.."",
+				line = line - 1
+			}
+		end
+	end
+
+	return indexes
+end
+
+
+function codeWindow:goto_line (line)
+	if line >= 0 and line < #self.edit__data then
+		local startsel = self:line_index (line)
+		local endsel = startsel + self.edit__data[line + 1].len
+		local topLine = line - (math.modf ((self.height - 2) / 2))
+
+		self:set_sel (startsel, endsel, true)
+
+		if topLine >= 0 then
+			self:set_scroll_org (0, topLine)
+		else
+			self:set_scroll_org (0, 0)
+		end
+	end
+end
