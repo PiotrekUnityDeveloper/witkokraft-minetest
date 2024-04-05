@@ -1,8 +1,4 @@
 LUA_SER v=2
-Snpr_rails:T
-E
-Stcbs:T
-E
 Sts:T
 E
 Ssignalass:T
@@ -16,6 +12,10 @@ Sts:T
 E
 E
 Sinfluence_points:T
+E
+Snpr_rails:T
+E
+Stcbs:T
 E
 E
 END_SER
