@@ -1,13 +1,13 @@
 LUA_SER v=2
-Swagons:T
+Sptmap:T
 E
-Strains:T
+Swagons:T
 E
 Satc:T
 Scontrollers:T
 E
 E
-Sptmap:T
+Strains:T
 E
 E
 END_SER
