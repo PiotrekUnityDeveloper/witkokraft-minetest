@@ -4,8 +4,11 @@
 
 local S = minetest.get_translator("mobs_mc")
 
-local function spawn_check(pos, environmental_light, artificial_light, sky_light)
-	return artificial_light <= 11
+local function check_light(pos, environmental_light, artificial_light, sky_light)
+	if artificial_light > 11 then
+		return false, "To bright"
+	end
+	return true, ""
 end
 
 mcl_mobs.register_mob("mobs_mc:silverfish", {
@@ -27,7 +30,7 @@ mcl_mobs.register_mob("mobs_mc:silverfish", {
 		{"mobs_mc_silverfish.png"},
 	},
 	pathfinding = 1,
-	visual_size = {x = 3, y = 3},
+	visual_size = {x=3, y=3},
 	sounds = {
 		random = "mobs_mc_silverfish_idle",
 		death = "mobs_mc_silverfish_death",
@@ -36,7 +39,7 @@ mcl_mobs.register_mob("mobs_mc:silverfish", {
 	},
 	makes_footstep_sound = false,
 	walk_velocity = 0.6,
-	run_velocity = 2,
+	run_velocity = 1,
 	jump = true,
 	fear_height = 4,
 	replace_what = {
@@ -49,16 +52,15 @@ mcl_mobs.register_mob("mobs_mc:silverfish", {
 	},
 	replace_rate = 2,
 	animation = {
-		speed_normal = 25, speed_run = 50,
-		stand_start = 0, stand_end = 20,
-		walk_start = 0, walk_end = 20,
-		run_start = 0, run_end = 20,
+		speed_normal = 25,		speed_run = 50,
+		stand_start = 0,		stand_end = 20,
+		walk_start = 0,		walk_end = 20,
+		run_start = 0,		run_end = 20,
 	},
 	view_range = 16,
 	attack_type = "dogfight",
 	damage = 1,
-	spawn_check = spawn_check,
+	check_light = check_light,
 })
 
 mcl_mobs.register_egg("mobs_mc:silverfish", S("Silverfish"), "#6d6d6d", "#313131", 0)
-mcl_mobs:non_spawn_specific("mobs_mc:silverfish","overworld",0,11)

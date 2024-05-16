@@ -12,7 +12,6 @@ minetest.register_node("mcl_amethyst:amethyst_block",{
 	tiles = {"mcl_amethyst_amethyst_block.png"},
 	groups = {pickaxey = 1, building_block = 1},
 	sounds = sounds,
-	is_ground_content = true,
 	_mcl_hardness = 1.5,
 	_mcl_blast_resistance = 1.5,
 })
@@ -28,7 +27,6 @@ minetest.register_node("mcl_amethyst:budding_amethyst_block",{
 		dig_by_piston = 1,
 	},
 	sounds = sounds,
-	is_ground_content = true,
 	_mcl_hardness = 1.5,
 	_mcl_blast_resistance = 1.5,
 })
@@ -50,7 +48,6 @@ minetest.register_node("mcl_amethyst:calcite",{
 	tiles = {"mcl_amethyst_calcite_block.png"},
 	groups = {pickaxey = 1, building_block = 1},
 	sounds = mcl_sounds.node_sound_stone_defaults(),
-	is_ground_content = true,
 	_mcl_hardness = 0.75,
 	_mcl_blast_resistance = 0.75,
 })

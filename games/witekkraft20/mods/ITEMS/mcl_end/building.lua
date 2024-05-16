@@ -12,8 +12,7 @@ minetest.register_node("mcl_end:end_stone", {
 	description = S("End Stone"),
 	_doc_items_longdesc = doc.sub.items.temp.build,
 	tiles = {"mcl_end_end_stone.png"},
-	stack_max = 64,
-	groups = {pickaxey=1, building_block=1, material_stone=1},
+	groups = {pickaxey=1, building_block=1, material_stone=1, stonecuttable = 1},
 	sounds = mcl_sounds.node_sound_stone_defaults(),
 	after_dig_node = mcl_end.check_detach_chorus_plant,
 	_mcl_blast_resistance = 9,
@@ -25,11 +24,11 @@ minetest.register_node("mcl_end:end_bricks", {
 	_doc_items_longdesc = doc.sub.items.temp.build,
 	tiles = {"mcl_end_end_bricks.png"},
 	is_ground_content = false,
-	stack_max = 64,
-	groups = {pickaxey=1, building_block=1, material_stone=1},
+	groups = {pickaxey=1, building_block=1, material_stone=1, stonecuttable = 1},
 	sounds = mcl_sounds.node_sound_stone_defaults(),
 	_mcl_blast_resistance = 9,
 	_mcl_hardness = 3,
+	_mcl_stonecutter_recipes = {"mcl_end:end_stone"},
 })
 
 minetest.register_node("mcl_end:purpur_block", {
@@ -37,8 +36,7 @@ minetest.register_node("mcl_end:purpur_block", {
 	_doc_items_longdesc = doc.sub.items.temp.build,
 	tiles = {"mcl_end_purpur_block.png"},
 	is_ground_content = false,
-	stack_max = 64,
-	groups = {pickaxey=1, building_block=1, material_stone=1, purpur_block=1},
+	groups = {pickaxey=1, building_block=1, material_stone=1, purpur_block=1, stonecuttable = 1},
 	sounds = mcl_sounds.node_sound_stone_defaults(),
 	_mcl_blast_resistance = 6,
 	_mcl_hardness = 1.5,
@@ -47,7 +45,6 @@ minetest.register_node("mcl_end:purpur_block", {
 minetest.register_node("mcl_end:purpur_pillar", {
 	description = S("Purpur Pillar"),
 	_doc_items_longdesc = doc.sub.items.temp.build,
-	stack_max = 64,
 	paramtype2 = "facedir",
 	is_ground_content = false,
 	on_place = mcl_util.rotate_axis,
@@ -97,7 +94,7 @@ minetest.register_node("mcl_end:end_rod", {
 		},
 	},
 	on_place = function(itemstack, placer, pointed_thing)
-		if pointed_thing.type ~= "node" then
+		if pointed_thing.type ~= "node" or not placer or not placer:is_player() then
 			return itemstack
 		end
 
@@ -166,7 +163,7 @@ minetest.register_node("mcl_end:dragon_egg", {
 	selection_box = {
 		type = "regular",
 	},
-	groups = {handy = 1, falling_node = 1, deco_block = 1, not_in_creative_inventory = 1, dig_by_piston = 1 },
+	groups = {handy = 1, falling_node = 1, deco_block = 1, dig_by_piston = 1 },
 	sounds = mcl_sounds.node_sound_stone_defaults(),
 	_mcl_blast_resistance = 9,
 	_mcl_hardness = 3,
@@ -184,7 +181,20 @@ minetest.register_node("mcl_end:dragon_egg", {
 	end,
 })
 
+mcl_stairs.register_stair_and_slab("end_bricks", {
+	baseitem = "mcl_end:end_bricks",
+	description_stair = S("End Stone Brick Stairs"),
+	description_slab = S("End Stone Brick Slab"),
+	overrides = {_mcl_stonecutter_recipes = {"mcl_end:end_bricks","mcl_end:end_stone"}},{_mcl_stonecutter_recipes = {"mcl_end:end_bricks","mcl_end:end_stone"}}
+})
 
+mcl_stairs.register_stair_and_slab("purpur_block", {
+	baseitem = "mcl_end:purpur_block",
+	description_stair = S("Purpur Stairs"),
+	description_slab = S("Purpur Slab"),
+	recipeitem = "group:purpur_block",
+	overrides = {_mcl_stonecutter_recipes = {"mcl_end:purpur_block"}}
+})
 
 -- Crafting recipes
 minetest.register_craft({
@@ -211,5 +221,3 @@ minetest.register_craft({
 	},
 })
 
-mcl_stonecutter.register_recipe("mcl_end:end_stone", "mcl_end:end_bricks")
-mcl_stonecutter.register_recipe("mcl_end:purpur_block", "mcl_end:purpur_pillar")

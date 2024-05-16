@@ -10,8 +10,8 @@ local S = minetest.get_translator("mobs_mc")
 --###################
 
 -- Return overlay texture for horse/donkey/mule, e.g. chest, saddle or horse armor
-local horse_extra_texture = function(horse)
-	local base = horse._naked_texture
+local function horse_extra_texture(horse)
+	local base = horse._naked_texture or horse.base_texture[2]
 	local saddle = horse._saddle
 	local chest  = horse._chest
 	local armor = horse._horse_armor
@@ -50,9 +50,7 @@ end
 local can_equip_horse_armor = function(entity_id)
 	return entity_id == "mobs_mc:horse" or entity_id == "mobs_mc:skeleton_horse" or entity_id == "mobs_mc:zombie_horse"
 end
-local can_equip_chest = function(entity_id)
-	return entity_id == "mobs_mc:mule" or entity_id == "mobs_mc:donkey"
-end
+
 local can_breed = function(entity_id)
 	return entity_id == "mobs_mc:horse" or "mobs_mc:mule" or entity_id == "mobs_mc:donkey"
 end
@@ -93,27 +91,13 @@ for b=1, #horse_base do
 	end
 end
 
--- in e7898352d890c2414af653eba624939df9c0b8b4 (0.76-dev) all items from mobs_mc were moved to mcl_mobitems
--- this results in existing horses wearing armor would still have the old texture filename in their
--- properties this function updates them. It should be removed some time in the future when we can be
--- reasonably sure all horses that want it get the new nexture.
-local function update_textures(self)
-	local old = "mobs_mc_horse_armor_"
-	local txt = self.object:get_properties().textures
-	if txt[2]:find(old) then
-		txt[2] = txt[2]:gsub(old,"mcl_mobitems_horse_armor_")
-		self.object:set_properties({textures=txt})
-		return
-	end
-end
-
 -- Horse
 local horse = {
 	description = S("Horse"),
 	type = "animal",
 	spawn_class = "passive",
 	spawn_in_group_min = 2,
-	spawn_in_group = 4, -- was 6. nerfed until group size is a cap rather than per spawn cycle
+	spawn_in_group = 6,
 	visual = "mesh",
 	mesh = "mobs_mc_horse.b3d",
 	visual_size = {x=3.0, y=3.0},
@@ -166,7 +150,10 @@ local horse = {
 		max = 2,
 		looting = "common",},
 	},
-	on_spawn = update_textures,
+	on_spawn = function(self)
+		local tex = horse_extra_texture(self)
+		self.object:set_properties({textures = tex})
+	end,
 	do_custom = function(self, dtime)
 
 		if not self._horse_speed then
@@ -180,6 +167,7 @@ local horse = {
 			self._regentimer = 0
 		end
 		if not self.v2 then
+			local vsize = self.object:get_properties().visual_size
 			self.v2 = 0
 			self.max_speed_forward = 7
 			self.max_speed_reverse = 2
@@ -187,13 +175,13 @@ local horse = {
 			self.terrain_type = 3
 			self.driver_attach_at = {x = 0, y = 4.17, z = -1.75}
 			self.driver_eye_offset = {x = 0, y = 3, z = 0}
-			self.driver_scale = {x = 1/self.visual_size.x, y = 1/self.visual_size.y}
+			self.driver_scale = {x = 1/vsize.x, y = 1/vsize.y}
 		end
 
 		-- Slowly regenerate health
 		self._regentimer = self._regentimer + dtime
 		if self._regentimer >= 4 then
-			if self.health < self.hp_max then
+			if self.health < self.object:get_properties().hp_max then
 				self.health = self.health + 1
 			end
 			self._regentimer = 0
@@ -352,14 +340,12 @@ local horse = {
 			return
 		end
 
-		if mcl_mobs:protect(self, clicker) then
+		if mcl_mobs.protect(self, clicker) then
 			return
 		end
 
 		-- Make sure tamed horse is mature and being clicked by owner only
 		if self.tamed and not self.child and self.owner == clicker:get_player_name() then
-
-			local inv = clicker:get_inventory()
 
 			-- detatch player already riding horse
 			if self.driver and clicker == self.driver then
@@ -431,7 +417,7 @@ local horse = {
 
 			-- Used to capture horse
 			elseif not self.driver and iname ~= "" then
-				mcl_mobs:capture_mob(self, clicker, 0, 5, 60, false, nil)
+				mcl_mobs.capture_mob(self, clicker, 0, 5, 60, false, nil)
 			end
 		end
 	end,
@@ -589,13 +575,13 @@ mule.collisionbox = {
 mcl_mobs.register_mob("mobs_mc:mule", mule)
 mcl_entity_invs.register_inv("mobs_mc:mule","Mule",15,true)
 
---===========================
---Spawn Function
-mcl_mobs:spawn_specific(
-"mobs_mc:horse",
-"overworld",
-"ground",
-{
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:horse",
+	type_of_spawning = "ground",
+	dimension = "overworld",
+	aoc = 9,
+	min_height = mobs_mc.water_level + 3,
+	biomes = {
 	"flat",
 	"Plains",
 	"Plains_beach",
@@ -605,20 +591,17 @@ mcl_mobs:spawn_specific(
 	"SavannaM",
 	"Savanna_beach",
 	"Plains_beach",
-},
-0,
-minetest.LIGHT_MAX+1,
-30,
-15000,
-4,
-mobs_mc.water_level+3,
-mcl_vars.mg_overworld_max)
+	},
+	chance = 40,
+})
 
-mcl_mobs:spawn_specific(
-"mobs_mc:donkey",
-"overworld",
-"ground",
-{
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:donkey",
+	type_of_spawning = "ground",
+	dimension = "overworld",
+	aoc = 9,
+	min_height = mobs_mc.water_level + 3,
+	biomes = {
 	"flat",
 	"Plains",
 	"Plains_beach",
@@ -628,14 +611,10 @@ mcl_mobs:spawn_specific(
 	"SavannaM",
 	"Savanna_beach",
 	"Plains_beach",
-},
-9,
-minetest.LIGHT_MAX+1,
-30,
-15000,
-4,
-mobs_mc.water_level+3,
-mcl_vars.mg_overworld_max)
+	"CherryGrove",
+	},
+	chance = 10,
+})
 
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:horse", S("Horse"), "#c09e7d", "#eee500", 0)
@@ -643,5 +622,3 @@ mcl_mobs.register_egg("mobs_mc:skeleton_horse", S("Skeleton Horse"), "#68684f", 
 --mobs:register_egg("mobs_mc:zombie_horse", S("Zombie Horse"), "#2a5a37", "#84d080", 0)
 mcl_mobs.register_egg("mobs_mc:donkey", S("Donkey"), "#534539", "#867566", 0)
 mcl_mobs.register_egg("mobs_mc:mule", S("Mule"), "#1b0200", "#51331d", 0)
-mcl_mobs:non_spawn_specific("mobs_mc:mule","overworld",9,minetest.LIGHT_MAX+1)
-mcl_mobs:non_spawn_specific("mobs_mc:skeleton_horse","overworld",9,minetest.LIGHT_MAX+1)

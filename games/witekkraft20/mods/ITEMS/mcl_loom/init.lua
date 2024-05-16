@@ -1,164 +1,149 @@
 local S = minetest.get_translator(minetest.get_current_modname())
--- Loom Code. Used to craft banner designs easier. Still needs a GUI. https://minecraft.fandom.com/wiki/Loom
 local C = minetest.colorize
 local F = minetest.formspec_escape
 
-local pattern_names = {
-	"border",
-	"bricks",
-	"circle",
-	"cross",
-	"curly_border",
-	"diagonal_up_left",
-	"diagonal_up_right",
-	"diagonal_right",
-	"diagonal_left",
-	"gradient",
-	"gradient_up",
-	"half_horizontal_bottom",
-	"half_horizontal",
-	"half_vertical",
-	"half_vertical_right",
-	"thing",
-	"rhombus",
-	"small_stripes",
-	"square_bottom_left",
-	"square_bottom_right",
-	"square_top_left",
-	"square_top_right",
-	"straight_cross",
-	"stripe_bottom",
-	"stripe_center",
-	"stripe_downleft",
-	"stripe_downright",
-	"stripe_left",
-	"stripe_middle",
-	"stripe_right",
-	"stripe_top",
-	"triangle_bottom",
-	"triangle_top",
-	"triangles_bottom",
-	"triangles_top",
-}
+local dyerecipes = {}
+local preview_item_prefix = "mcl_banners:banner_preview_"
 
-local function form_patterns_table()
-	-- Buttons are 3.5 / 4 = 0.875 wide
-	local formspec = "style_type[item_image_button;noclip=false;content_offset=0]"
-	for i, item in ipairs(pattern_names) do
-		local x = ((i - 1) % 4) * 0.875
-		local y = (math.floor((i - 1) / 4)) * 0.875
-
-		formspec = formspec ..
-			string.format("item_image_button[%f,%f;0.875,0.875;%s;%s;]", x, y,
-				"mcl_banners:banner_preview_" .. item .. "_red", item)
-	end
-	return formspec
+for name,pattern in pairs(mcl_banners.patterns) do
+	for i=1,3 do for j = 1,3 do
+		if pattern[i] and pattern[i][j] == "group:dye" and table.indexof(dyerecipes,name) == -1 and pattern.type ~= "shapeless" then
+			table.insert(dyerecipes,name)
+			break
+		end
+	end	end
 end
 
-local dye_to_colorid_mapping = {}
-for colorid, colortab in pairs(mcl_banners.colors) do
-	dye_to_colorid_mapping[colortab[5]] = colorid
-end
-
-local function add_layer(banner, pattern, color)
-	local layers = minetest.deserialize(banner:get_meta():get_string("layers")) or {}
-	table.insert(layers, { pattern = pattern, color = dye_to_colorid_mapping[color:get_name()] })
-	banner:get_meta():set_string("layers", minetest.serialize(layers))
-	return banner
-end
-
-local function show_loom_formspec(pos, player)
-	local inv = minetest.get_meta(pos):get_inventory()
-
-	local banner = inv:get_stack("input", 1)
-	local dye = inv:get_stack("input", 2)
-	local pattern = inv:get_stack("input", 3)
-
-	local container_content = ""
-
-	if not banner:is_empty() and not dye:is_empty() then
-		if not pattern:is_empty() then
-			inv:set_stack("output", 1, add_layer(banner, pattern:get_name():split(":")[2]:split("_")[1], dye))
-			local item = pattern:get_name():split(":")[2]:split("_")[1]
-			container_content = string.format("item_image[0,0;0.875,0.875;%s]", "mcl_banners:banner_preview_" .. item .. "_red")
-		else
-			container_content = form_patterns_table()
+local function get_formspec(pos)
+	local patterns = {}
+	local count = 0
+	if pos then
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+		local color
+		local def = minetest.registered_items[inv:get_stack("dye", 1):get_name()]
+		local pitem = inv:get_stack("pattern", 1):get_name()
+		local pdef = minetest.registered_items[pitem]
+		if def and def.groups.dye and def._color then color = def._color end
+		local x_len = 0.1
+		local y_len = 0.1
+		if not inv:is_empty("banner") then
+			if color and pdef and pdef._pattern then
+				local it = preview_item_prefix .. pdef._pattern .. "_" .. color
+				local name = preview_item_prefix .. pdef._pattern .. "-" .. color
+				table.insert(patterns,string.format("item_image_button[%f,%f;%f,%f;%s;%s;%s]",0.1,0.1,1,1, it, "item_button_"..name, ""))
+			elseif dyerecipes and color then
+				for k,v in pairs(dyerecipes) do
+					if x_len > 5 then
+						y_len = y_len + 1
+						x_len = 0.1
+					end
+					local it = preview_item_prefix .. v .. "_" .. color
+					local name = preview_item_prefix .. v .. "-" .. color
+					table.insert(patterns,string.format("item_image_button[%f,%f;%f,%f;%s;%s;%s]",x_len,y_len,1,1, it, "item_button_"..name, ""))
+					x_len = x_len + 1
+					count = count + 1
+				end
+			end
 		end
 	end
 
-	local output = inv:get_stack("output", 1)
-	local preview = mcl_banners.make_banner_texture(mcl_banners.color_reverse(output:get_name()), minetest.deserialize(output:get_meta():get_string("layers")) or {})
+	local formspec = "formspec_version[4]"..
+	"size[11.75,10.425]"..
+	"label[0.375,0.375;" .. F(C(mcl_formspec.label_color, S("Loom"))) .. "]"..
 
-	local banner_model = "model[9.55,0.7;1.4,2.3;keeper;amc_banner_hanging.b3d;" ..
-	preview .. ";0,-180;false;false;x=0,y=0;0]"
+	mcl_formspec.get_itemslot_bg_v4(0.5,1,1,1,0)..
+	mcl_formspec.get_itemslot_bg_v4(0.5,1,1,1,0,"mcl_loom_itemslot_bg_banner.png")..
+	"list[context;banner;0.5,1;1,1;]"..
+	mcl_formspec.get_itemslot_bg_v4(1.75,1,1,1)..
+	mcl_formspec.get_itemslot_bg_v4(1.75,1,1,1,0,"mcl_loom_itemslot_bg_dye.png")..
+	"list[context;dye;1.75,1;1,1;]"..
+	mcl_formspec.get_itemslot_bg_v4(0.5,2.25,1,1)..
+	mcl_formspec.get_itemslot_bg_v4(0.5,2.25,1,1,0,"mcl_loom_itemslot_bg_pattern.png")..
+	"list[context;pattern;0.5,2.25;1,1;]"..
 
-	local formspec = table.concat({
-		"formspec_version[4]",
-		"size[11.75,10.425]",
-		"label[0.375,0.375;" .. F(C(mcl_formspec.label_color, S("Loom"))) .. "]",
+	"box[3.275,0.75;5.2,3.5;"..mcl_colors.DARK_GRAY.."]"..
+	"scroll_container[3.275,0.75;5.5,3.5;pattern_scroll;vertical;0.1]"..
+	table.concat(patterns)..
+	"scroll_container_end[]"..
+	"scrollbaroptions[arrows=show;thumbsize=30;min=0;max="..(count + 5).."]"..
+	"scrollbar[8.5,0.75;0.4,3.5;vertical;pattern_scroll;]"..
 
-		-- PLACEHOLDER: "box[0.375,0.75;3.5,3.5;#222222]",
-		"image[0.375,0.75;3.5,3.5;mcl_loom_inventory.png]",
+	mcl_formspec.get_itemslot_bg_v4(9.5,1.5,1,1)..
+	"list[context;output;9.5,1.5;1,1;]"..
 
-		-- Banner input slot
-		mcl_formspec.get_itemslot_bg_v4(1, 1.5, 1, 1),
-		banner:is_empty() and mcl_formspec.get_itemslot_bg_v4(1, 1.5, 1, 1, 0, "mcl_loom_inventory_banner.png") or "",
-		"list[nodemeta:" .. pos.x .. "," .. pos.y .. "," .. pos.z .. ";input;1,1.5;1,1;]",
+	"label[0.375,4.7;" .. F(C(mcl_formspec.label_color, S("Inventory"))) .. "]"..
+	mcl_formspec.get_itemslot_bg_v4(0.375, 5.1, 9, 3)..
+	"list[current_player;main;0.375,5.1;9,3;9]"..
 
-		-- Dye input slot
-		mcl_formspec.get_itemslot_bg_v4(2.25, 1.5, 1, 1),
-		dye:is_empty() and mcl_formspec.get_itemslot_bg_v4(2.25, 1.5, 1, 1, 0, "mcl_loom_inventory_dye.png") or "",
-		"list[nodemeta:" .. pos.x .. "," .. pos.y .. "," .. pos.z .. ";input;2.25,1.5;1,1;1]",
+	mcl_formspec.get_itemslot_bg_v4(0.375, 9.05, 9, 1)..
+	"list[current_player;main;0.375,9.05;9,1;]"..
 
-		-- Pattern input slot
-		mcl_formspec.get_itemslot_bg_v4(1.625, 2.75, 1, 1),
-		pattern:is_empty() and mcl_formspec.get_itemslot_bg_v4(1.625, 2.75, 1, 1, 0, "mcl_loom_inventory_pattern.png") or
-		"",
-		"list[nodemeta:" .. pos.x .. "," .. pos.y .. "," .. pos.z .. ";input;1.625,2.75;1,1;2]",
-
-		-- Container background
-		"image[4.450,0.7;3.6,3.6;mcl_inventory_background9.png;2]",
-
-		-- Scroll Container with buttons if needed
-		"scroll_container[4.5,0.75;3.5,3.5;scroll;vertical;0.875]",
-		container_content,
-		"scroll_container_end[]",
-
-		-- Scrollbar
-		-- TODO: style the scrollbar correctly when possible
-		"scrollbaroptions[min=0;max=" ..
-		math.max(math.floor(#pattern_names / 4) + 1 - 4, 0) .. ";smallstep=1;largesteps=1]",
-		"scrollbar[8,0.7;0.75,3.6;vertical;scroll;0]",
-
-		banner_model,
-
-		-- Output slot
-		mcl_formspec.get_itemslot_bg_v4(9.75, 3.1, 1, 1, 0.2),
-		"list[nodemeta:" .. pos.x .. "," .. pos.y .. "," .. pos.z .. ";output;9.75,3.1;1,1;]",
-
-		-- Player inventory
-		"label[0.375,4.7;" .. F(C(mcl_formspec.label_color, S("Inventory"))) .. "]",
-		mcl_formspec.get_itemslot_bg_v4(0.375, 5.1, 9, 3),
-		"list[current_player;main;0.375,5.1;9,3;9]",
-
-		mcl_formspec.get_itemslot_bg_v4(0.375, 9.05, 9, 1),
-		"list[current_player;main;0.375,9.05;9,1;]",
-	})
-
-	tt.reload_itemstack_description(inv:get_stack("output", 1))
-	minetest.show_formspec(player:get_player_name(), ("mcl_loom:%f_%f_%f"):format(pos.x, pos.y, pos.z), formspec)
+	"listring[context;output]"..
+	"listring[current_player;main]"..
+	"listring[context;sorter]"..
+	"listring[current_player;main]"..
+	"listring[context;banner]"..
+	"listring[current_player;main]"..
+	"listring[context;dye]"..
+	"listring[current_player;main]"..
+	"listring[context;pattern]"..
+	"listring[current_player;main]"
+	return formspec
 end
 
-minetest.register_on_player_receive_fields(function(player, formname, fields)
-	if not fields.quit and formname:find("mcl_loom") then
-		local p = formname:split(":")[2]:split("_")
-		local pos = vector.new(tonumber(p[1]), tonumber(p[2]), tonumber(p[3]))
-		local pattern; for k, _ in pairs(fields) do if k ~= "scroll" then pattern = k break end end; if not pattern then return end
-		local inv = minetest.get_meta(pos):get_inventory(); if not inv then return end
-		inv:set_stack("output", 1, add_layer(inv:get_stack("input", 1), pattern, inv:get_stack("input", 2)))
-		show_loom_formspec(pos, player)
+local function update_formspec(pos)
+	local meta = minetest.get_meta(pos)
+	meta:set_string("formspec", get_formspec(pos))
+end
+
+local function create_banner(stack, pattern, color)
+	local im = stack:get_meta()
+	local layers = {}
+	local old_layers = im:get_string("layers")
+	if old_layers ~= "" then
+		layers = minetest.deserialize(old_layers)
 	end
-end)
+	table.insert(layers,{
+		pattern = pattern,
+		color = "unicolor_"..mcl_dyes.colors[color].unicolor
+	})
+	im:set_string("description", mcl_banners.make_advanced_banner_description(stack:get_definition().description, layers))
+	im:set_string("layers", minetest.serialize(layers))
+	return stack
+end
+
+local function sort_stack(stack)
+	for group, list in pairs({ banner = "banner", dye = "dye", banner_pattern = "pattern" }) do
+		if minetest.get_item_group(stack:get_name(), group) > 0 then return list end
+	end
+end
+
+local function allow_put(pos, listname, index, stack, player)
+	local name = player:get_player_name()
+	if minetest.is_protected(pos, name) then
+		minetest.record_protection_violation(pos, name)
+		return 0
+	elseif listname == "output" then return 0
+	elseif listname == "banner" and minetest.get_item_group(stack:get_name(),"banner") == 0 then return 0
+	elseif listname == "dye" and minetest.get_item_group(stack:get_name(),"dye") == 0 then return 0
+	elseif listname == "pattern" and minetest.get_item_group(stack:get_name(),"banner_pattern") == 0 then return 0
+	elseif listname == "sorter" then
+		local inv = minetest.get_meta(pos):get_inventory()
+		local trg = sort_stack(stack, pos)
+		if trg then
+			local stack1 = ItemStack(stack):take_item()
+			if inv:room_for_item(trg, stack) then
+				return stack:get_count()
+			elseif inv:room_for_item(trg, stack1) then
+				return stack:get_stack_max() - inv:get_stack(trg, 1):get_count()
+			end
+		end
+		return 0
+	else
+		return stack:get_count()
+	end
+end
 
 minetest.register_node("mcl_loom:loom", {
 	description = S("Loom"),
@@ -170,69 +155,116 @@ minetest.register_node("mcl_loom:loom", {
 		"loom_side.png", "loom_front.png"
 	},
 	paramtype2 = "facedir",
+	is_ground_content = false,
 	groups = { axey = 2, handy = 1, deco_block = 1, material_wood = 1, flammable = 1 },
+	sounds = mcl_sounds.node_sound_wood_defaults(),
 	_mcl_blast_resistance = 2.5,
 	_mcl_hardness = 2.5,
 	on_construct = function(pos)
-		local inv = minetest.get_meta(pos):get_inventory()
-		inv:set_size("input", 3)
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+		inv:set_size("sorter", 1)
+		inv:set_size("banner", 1)
+		inv:set_size("dye", 1)
+		inv:set_size("pattern", 1)
 		inv:set_size("output", 1)
+		meta:set_string("formspec", get_formspec(pos))
 	end,
-	allow_metadata_inventory_put = function(pos, listname, index, stack, player)
-		if minetest.is_protected(pos, player:get_player_name()) or listname == "output" then
+	after_dig_node = mcl_util.drop_items_from_meta_container({"banner", "dye", "pattern", "output"}),
+	on_rightclick = update_formspec,
+	on_receive_fields = function(pos, formname, fields, sender)
+		local sender_name = sender:get_player_name()
+		if minetest.is_protected(pos, sender_name) then
+			minetest.record_protection_violation(pos, sender_name)
+			return
+		end
+
+		if fields then
+			local meta = minetest.get_meta(pos)
+			local inv = meta:get_inventory()
+			for k,v in pairs(fields) do
+				if tostring(k) and k:find("^item_button_"..preview_item_prefix) and
+				not inv:is_empty("banner") and not inv:is_empty("dye") and inv:is_empty("output") then
+					local str = k:gsub("^item_button_","")
+					str = str:gsub("^"..preview_item_prefix,"")
+					str = str:split("-")
+					local pattern = str[1]
+					local cdef = minetest.registered_items[inv:get_stack("dye",1):get_name()]
+					if not inv:is_empty("pattern") then
+						local pdef = minetest.registered_items[inv:get_stack("pattern",1):get_name()]
+						pattern = pdef._pattern
+						local pattern = inv:get_stack("pattern",1)
+						pattern:take_item()
+						inv:set_stack("pattern", 1, pattern)
+					elseif not mcl_dyes.colors[cdef._color] or table.indexof(dyerecipes,pattern) == -1 then
+						pattern = nil
+					end
+					if pattern then
+						local banner = inv:get_stack("banner",1)
+						local dye = inv:get_stack("dye",1)
+						dye:take_item()
+						local cbanner = banner:take_item()
+						inv:set_stack("dye", 1, dye)
+						inv:set_stack("banner", 1, banner)
+						inv:set_stack("output", 1, create_banner(cbanner,pattern,cdef._color))
+					end
+				end
+			end
+		end
+		update_formspec(pos)
+	end,
+
+	allow_metadata_inventory_take = function(pos, listname, index, stack, player)
+		if listname == "sorter" then return 0 end
+		local name = player:get_player_name()
+		if minetest.is_protected(pos, name) then
+			minetest.record_protection_violation(pos, name)
 			return 0
 		else
-			local name = stack:get_name()
-			if (index == 1 and not name:find("banner_item")) or (index == 2 and not name:find("mcl_dye")) or (index == 3 and not name:find("pattern")) then return 0 end
 			return stack:get_count()
 		end
 	end,
-	on_metadata_inventory_put = function(pos, _, _, _, player)
+	allow_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
+		if from_list == "sorter" or to_list == "sorter" then return 0 end
 		local inv = minetest.get_meta(pos):get_inventory()
-		if not inv:get_stack("input", 1):is_empty() and not inv:get_stack("input", 2):is_empty() then
-			show_loom_formspec(pos, player)
+		local stack = inv:get_stack(from_list,from_index)
+		return allow_put(pos, to_list, to_index, stack, player)
+	end,
+	allow_metadata_inventory_put = allow_put,
+	on_metadata_inventory_move = update_formspec,
+	on_metadata_inventory_put = function(pos, listname, index, stack, player)
+		if listname == "sorter" then
+			local inv = minetest.get_meta(pos):get_inventory()
+			inv:add_item(sort_stack(stack, pos), stack)
+			inv:set_stack("sorter", 1, ItemStack(""))
 		end
+		update_formspec(pos)
 	end,
-	on_metadata_inventory_take = function(pos, listname, index, stack, player)
-		local inv = minetest.get_meta(pos):get_inventory()
-		if listname == "output" then
-			local count = stack:get_count()
-			local first = inv:get_stack("input", 1); first:take_item(count); inv:set_stack("input", 1, first)
-			local second = inv:get_stack("input", 2); second:take_item(count); inv:set_stack("input", 2, second)
-		else
-			inv:set_stack("output", 1, "")
-		end
-		show_loom_formspec(pos, player)
-	end,
-	allow_metadata_inventory_move = function() return 0 end,
-	on_rightclick = function(pos, node, player, itemstack)
-		if not player:get_player_control().sneak then show_loom_formspec(pos, player) end
-	end,
-	after_dig_node = function(pos, _, oldmetadata, _)
-		local meta = minetest.get_meta(pos)
-		local meta2 = meta:to_table()
-		meta:from_table(oldmetadata)
-		local inv = meta:get_inventory()
-		for i = 1, inv:get_size("input") do
-			local stack = inv:get_stack("input", i)
-			if not stack:is_empty() then
-				minetest.add_item(vector.offset(pos,
-					math.random(0, 10) / 10 - 0.5,
-					0,
-					math.random(0, 10) / 10 - 0.5
-				), stack)
-			end
-		end
-		meta:from_table(meta2)
-	end,
+	on_metadata_inventory_take = update_formspec,
 })
 
-
 minetest.register_craft({
-	output = "mcl_functional:loom",
+	output = "mcl_loom:loom",
 	recipe = {
 		{ "", "", "" },
 		{ "mcl_mobitems:string", "mcl_mobitems:string", "" },
 		{ "group:wood", "group:wood", "" },
 	}
+})
+
+minetest.register_craft({
+	type = "fuel",
+	recipe = "mcl_loom:loom",
+	burntime = 15,
+})
+
+minetest.register_lbm({
+	label = "Update Loom formspecs and invs to allow new sneak+click behavior",
+	name = "mcl_loom:update_coolsneak",
+	nodenames = { "mcl_loom:loom" },
+	run_at_every_load = false,
+	action = function(pos, node)
+		minetest.get_meta(pos):get_inventory():set_size("sorter", 1)
+		update_formspec(pos)
+	end,
 })

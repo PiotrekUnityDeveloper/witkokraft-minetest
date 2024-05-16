@@ -38,7 +38,7 @@ function mesecon.push_button(pos, node)
 end
 
 local function on_button_place(itemstack, placer, pointed_thing)
-	if pointed_thing.type ~= "node" then
+	if pointed_thing.type ~= "node" or not placer or not placer:is_player() then
 		-- no interaction possible with entities
 		return itemstack
 	end
@@ -49,13 +49,8 @@ local function on_button_place(itemstack, placer, pointed_thing)
 	if not def then return end
 	local groups = def.groups
 
-	-- Check special rightclick action of pointed node
-	if def and def.on_rightclick then
-		if not placer:get_player_control().sneak then
-			return def.on_rightclick(under, node, placer, itemstack,
-				pointed_thing) or itemstack, false
-		end
-	end
+	local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+	if rc then return rc end
 
 	-- If the pointed node is buildable, let's look at the node *behind* that node
 	if def.buildable_to then
@@ -67,7 +62,22 @@ local function on_button_place(itemstack, placer, pointed_thing)
 	end
 
 	-- Only allow placement on full-cube solid opaque nodes
-	if (not groups) or (not groups.solid) or (not groups.opaque) or (def.node_box and def.node_box.type ~= "regular") then
+	if type(def.placement_prevented) == "function" then
+		if
+			def.placement_prevented({
+				itemstack = itemstack,
+				placer = placer,
+				pointed_thing = pointed_thing,
+			})
+		then
+			return itemstack
+		end
+	elseif
+		not groups
+		or not groups.solid
+		or not groups.opaque
+		or (def.node_box and def.node_box.type ~= "regular")
+	then
 		return itemstack
 	end
 
@@ -92,8 +102,10 @@ function mesecon.register_button(basename, description, texture, recipeitem, sou
 	groups_off.dig_by_water=1
 	groups_off.destroy_by_lava_flow=1
 	groups_off.dig_by_piston=1
-	groups_off.dig_immediate_piston=1
 	groups_off.button=1 -- button (off)
+	groups_off.attaches_to_base = 1
+	groups_off.attaches_to_side = 1
+	groups_off.attaches_to_top = 1
 
 	local groups_on = table.copy(groups_off)
 	groups_on.not_in_creative_inventory=1
@@ -103,14 +115,6 @@ function mesecon.register_button(basename, description, texture, recipeitem, sou
 		button_sound = "mesecons_button_push"
 	end
 	button_sounds["mesecons_button:button_"..basename.."_off"] = button_sound
-
-	if not longdesc then
-		if groups_off.material_wood ~= 0 then
-			longdesc = S("A wooden button is a redstone component made out of wood which can be pushed to provide redstone power. When pushed, it powers adjacent redstone components for 1.5 seconds. Wooden buttons may also be pushed by arrows.")
-		else
-			longdesc = S("A button is a redstone component which can be pushed to provide redstone power. When pushed, it powers adjacent redstone components for @1 seconds.", button_timer)
-		end
-	end
 
 	if push_by_arrow then
 		groups_off.button_push_by_arrow = 1
@@ -149,6 +153,14 @@ function mesecon.register_button(basename, description, texture, recipeitem, sou
 			state = mesecon.state.off,
 			rules = button_get_output_rules,
 		}},
+		_on_arrow_hit = function(pos, arrowent)
+			local node = minetest.get_node(pos)
+			local bdir = minetest.wallmounted_to_dir(node.param2)
+			if vector.equals(vector.add(pos, bdir), arrowent._stuckin) then
+				mesecon.push_button(pos, node)
+				return true
+			end
+		end,
 		_mcl_button_basename = basename,
 		_mcl_button_timer = button_timer,
 
@@ -241,39 +253,6 @@ mesecon.register_button(
 	false,
 	S("A polished blackstone button is a redstone component made out of polished blackstone which can be pushed to provide redstone power. When pushed, it powers adjacent redstone components for 1 second."),
 	"mesecons_button_push")
-
-local woods = {
-	{ "wood", "mcl_core:wood", "default_wood.png", S("Oak Button") },
-	{ "acaciawood", "mcl_core:acaciawood", "default_acacia_wood.png", S("Acacia Button") },
-	{ "birchwood", "mcl_core:birchwood", "mcl_core_planks_birch.png", S("Birch Button") },
-	{ "darkwood", "mcl_core:darkwood", "mcl_core_planks_big_oak.png", S("Dark Oak Button") },
-	{ "sprucewood", "mcl_core:sprucewood", "mcl_core_planks_spruce.png", S("Spruce Button") },
-	{ "junglewood", "mcl_core:junglewood", "default_junglewood.png", S("Jungle Button") },
-
-	{ "mangrove_wood", "mcl_mangrove:mangrove_wood", "mcl_mangrove_planks.png", S("Mangrove Button") },
-	{ "crimson_hyphae_wood", "mcl_crimson:crimson_hyphae_wood", "mcl_crimson_crimson_hyphae_wood.png", S("Crimson Button") },
-	{ "warped_hyphae_wood", "mcl_crimson:warped_hyphae_wood", "mcl_crimson_warped_hyphae_wood.png", S("Warped Button") },
-}
-
-for w=1, #woods do
-	mesecon.register_button(
-		woods[w][1],
-		woods[w][4],
-		woods[w][3],
-		woods[w][2],
-		mcl_sounds.node_sound_wood_defaults(),
-		{material_wood=1,handy=1,axey=1},
-		1.5,
-		true,
-		nil,
-		"mesecons_button_push_wood")
-
-	minetest.register_craft({
-		type = "fuel",
-		recipe = "mesecons_button:button_"..woods[w][1].."_off",
-		burntime = 5,
-	})
-end
 
 -- Add entry aliases for the Help
 if minetest.get_modpath("doc") then

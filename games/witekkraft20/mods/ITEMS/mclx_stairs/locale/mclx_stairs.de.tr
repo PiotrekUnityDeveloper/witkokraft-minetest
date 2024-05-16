@@ -1,4 +1,23 @@
 # textdomain: mclx_stairs
+Lapis Lazuli Slab=Lapislazuliplatte
+Double Lapis Lazuli Slab=Doppellapislazuliplatte
+Lapis Lazuli Stairs=Lapislazulitreppe
+Slab of Gold=Goldplatte
+Double Slab of Gold=Doppelgoldplatte
+Stairs of Gold=Goldtreppe
+Slab of Iron=Eisenplatte
+Double Slab of Iron=Doppeleisenplatte
+Stairs of Iron=Eisentreppe
+Cracked Stone Brick Stairs=Rissige Steinziegeltreppe
+Cracked Stone Brick Slab=Rissige Steinziegelplatte
+Double Cracked Stone Brick Slab=Doppelte rissige Steinziegelplatte
+Concrete Slab=Betonplatte
+Double Concrete Slab=Doppelte Betonplatte
+Concrete Stairs=Betontreppe
+
+
+##### not used anymore #####
+
 Oak Bark Stairs=Eichenrindentreppe
 Oak Bark Slab=Eichenrindenplatte
 Double Oak Bark Slab=Doppeleichenrindenplatte
@@ -17,18 +36,6 @@ Double Jungle Bark Slab=Doppelschungelbirkenplatte
 Dark Oak Bark Stairs=Schwarzeichenrindentreppe
 Dark Oak Bark Slab=Schwarzeichenrindenplatte
 Double Dark Oak Bark Slab=Doppelschwarzeichenrindenplatte
-Lapis Lazuli Slab=Lapislazuliplatte
-Double Lapis Lazuli Slab=Doppellapislazuliplatte
-Lapis Lazuli Stairs=Lapislazulitreppe
-Slab of Gold=Goldplatte
-Double Slab of Gold=Doppelgoldplatte
-Stairs of Gold=Goldtreppe
-Slab of Iron=Eisenplatte
-Double Slab of Iron=Doppeleisenplatte
-Stairs of Iron=Eisentreppe
-Cracked Stone Brick Stairs=Rissige Steinziegeltreppe
-Cracked Stone Brick Slab=Rissige Steinziegelplatte
-Double Cracked Stone Brick Slab=Doppelte rissige Steinziegelplatte
 White Concrete Stairs=Weiße Betontreppe
 White Concrete Slab=Weiße Betonplatte
 Double White Concrete Slab=Doppelte weiße Betonplatte
@@ -77,6 +84,3 @@ Double Lime Concrete Slab=Doppelte Betonplatte
 Light Blue Concrete Stairs=Hellblaue Betontreppe
 Light Blue Concrete Slab=Hellblaue Betonplatte
 Double Light Blue Concrete Slab=Doppelte hellblaue Betonplatte
-Concrete Slab=Betonplatte
-Double Concrete Slab=Doppelte Betonplatte
-Concrete Stairs=Betontreppe

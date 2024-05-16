@@ -1,110 +1,26 @@
 --License for code WTFPL and otherwise stated in readmes
+
 local S = minetest.get_translator("mobs_mc")
 
-local MAPBLOCK_SIZE = 16
+local slime_chunk_spawn_max = mcl_worlds.layer_to_y(40)
 
-local seed = minetest.get_mapgen_setting("seed")
-
-local slime_chunk_match
-local x_modifier
-local z_modifier
-
-local function split_by_char (inputstr, sep, limit)
-	if sep == nil then
-		sep = "%d"
-	end
-	local t = {}
-
-	local i = 0
-	for str in string.gmatch(inputstr, "(["..sep.."])") do
-		i = i --+ 1
-		table.insert(t, tonumber(str))
-		if limit and i >= limit then
-			break
-		end
-	end
-	return t
+local function in_slime_chunk(pos)
+	local pr = PseudoRandom(mcl_mapgen_core.get_block_seed(pos))
+	return pr:next(1,10) == 1
 end
 
---Seed: "16002933932875202103" == random seed
---Seed: "1807191622654296300" == cheese
---Seed: "1" = 1
-local function process_seed (seed)
-	--minetest.log("seed: " .. seed)
 
-	local split_chars = split_by_char(tostring(seed), nil, 10)
+-- If the light level is equal to or less than a random integer (from 0 to 7)
+-- If the fraction of the moon that is bright is greater than a random number (from 0 to 1)
+-- If these conditions are met and the altitude is acceptable, there is a 50% chance of spawning a slime.
+-- https://minecraft.fandom.com/wiki/Slime#Swamps
 
-	slime_chunk_match = split_chars[1]
-	x_modifier = split_chars[2]
-	z_modifier = split_chars[3]
-
-	--minetest.log("x_modifier: " .. tostring(x_modifier))
-	--minetest.log("z_modifier: " .. tostring(z_modifier))
-	--minetest.log("slime_chunk_match: " .. tostring(slime_chunk_match))
+local function swamp_spawn(pos)
+	if minetest.get_node_light(pos) > math.random(0,7) then return false end
+	if math.abs(4 - mcl_moon.get_moon_phase()) / 4 < math.random() then return false end --moon phase 4 is new moon in mcl_moon
+	if math.random(2) == 2 then return false end
+	return true
 end
-
-local processed = process_seed (seed)
-
-
-local function convert_to_chunk_value (co_ord, modifier)
-	local converted = math.floor(math.abs(co_ord) / MAPBLOCK_SIZE)
-
-	if modifier then
-		converted = (converted + modifier)
-	end
-	converted = converted % 10
-
-	--minetest.log("co_ord: " .. co_ord)
-	--minetest.log("converted: " .. converted)
-	return converted
-end
-
-assert(convert_to_chunk_value(-16) == 1, "Incorrect convert_to_chunk_value result")
-assert(convert_to_chunk_value(-15) == 0, "Incorrect convert_to_chunk_value result")
-assert(convert_to_chunk_value(-1) == 0, "Incorrect convert_to_chunk_value result")
-assert(convert_to_chunk_value(0) == 0, "Incorrect convert_to_chunk_value result")
-assert(convert_to_chunk_value(1) == 0, "Incorrect convert_to_chunk_value result")
-assert(convert_to_chunk_value(15) == 0, "Incorrect convert_to_chunk_value result")
-assert(convert_to_chunk_value(16) == 1, "Incorrect convert_to_chunk_value result")
-assert(convert_to_chunk_value(31) == 1, "Incorrect convert_to_chunk_value result")
-assert(convert_to_chunk_value(32) == 2, "Incorrect convert_to_chunk_value result")
-assert(convert_to_chunk_value(1599) == 9, "Incorrect convert_to_chunk_value result")
-assert(convert_to_chunk_value(1600) == 0, "Incorrect convert_to_chunk_value result")
-
-assert(convert_to_chunk_value(0,9) == 9, "Incorrect convert_to_chunk_value result")
-assert(convert_to_chunk_value(16,5) == 6, "Incorrect convert_to_chunk_value result")
-assert(convert_to_chunk_value(1599,4) == 3, "Incorrect convert_to_chunk_value result")
-
-local function calculate_chunk_value (pos, x_mod, z_mod)
-	local chunk_val = math.abs(convert_to_chunk_value(pos.x, x_mod) - convert_to_chunk_value(pos.z, z_mod)) % 10
-	return chunk_val
-end
-
-assert(calculate_chunk_value(vector.new(0,0,0)) == 0, "calculate_chunk_value failed")
-assert(calculate_chunk_value(vector.new(0,0,0), 1, 1) == 0, "calculate_chunk_value failed")
-assert(calculate_chunk_value(vector.new(0,0,0), 2, 1) == 1, "calculate_chunk_value failed")
-assert(calculate_chunk_value(vector.new(64,0,16)) == (4-1), "calculate_chunk_value failed")
-assert(calculate_chunk_value(vector.new(16,0,64)) == (3), "calculate_chunk_value failed")
-assert(calculate_chunk_value(vector.new(-160,0,-160)) == 0, "calculate_chunk_value failed")
-
-local function is_slime_chunk(pos)
-	if not pos then return end
-
-	local chunk_val = calculate_chunk_value (pos, x_modifier, z_modifier)
-	local slime_chunk = chunk_val == slime_chunk_match
-
-	--minetest.log("x: " ..pos.x ..  ", z:" .. pos.z)
-
-	--minetest.log("seed slime_chunk_match: " .. tostring(slime_chunk_match))
-	--minetest.log("chunk_val: " .. tostring(chunk_val))
-	--minetest.log("Is slime chunk: " .. tostring(slime_chunk))
-	return slime_chunk
-end
-
-local check_position = function (pos)
-	return is_slime_chunk(pos)
-end
-
 
 -- Returns a function that spawns children in a circle around pos.
 -- To be used as on_die callback.
@@ -138,12 +54,9 @@ local spawn_children_on_die = function(child_mob, spawn_distance, eject_speed)
 				end
 			end
 			local mob = minetest.add_entity(newpos, child_mob)
-			if not mother_stuck then
+			if mob and mob:get_pos() and not mother_stuck then
 				mob:set_velocity(dir * eject_speed)
 			end
-			mob:set_yaw(angle - math.pi/2)
-			table.insert(children, mob)
-			angle = angle + (math.pi*2) / spawn_count
 		end
 		-- If mother was murdered, children attack the killer after 1 second
 		if self.state == "attack" then
@@ -163,14 +76,14 @@ end
 
 local swamp_light_max = 7
 
-local function slime_spawn_check(pos, environmental_light, artificial_light, sky_light)
+local function slime_check_light(pos, environmental_light, artificial_light, sky_light)
 	local maxlight = swamp_light_max
 
-	if is_slime_chunk(pos) then
+	if pos.y <= slime_chunk_spawn_max and in_slime_chunk(pos) then
 		maxlight = minetest.LIGHT_MAX + 1
 	end
 
-	return artificial_light <= maxlight
+	return math.max(artificial_light, sky_light) <= maxlight
 end
 
 -- Slime
@@ -189,6 +102,7 @@ local slime_big = {
 	visual = "mesh",
 	mesh = "mobs_mc_slime.b3d",
 	makes_footstep_sound = true,
+	does_not_prevent_sleep = true,
 	sounds = {
 		jump = "green_slime_jump",
 		death = "green_slime_death",
@@ -202,9 +116,9 @@ local slime_big = {
 	drops = {},
 	-- TODO: Fix animations
 	animation = {
-		jump_speed = 17,
-		stand_speed = 17,
-		walk_speed = 17,
+		jump_speed = 14,
+		stand_speed = 14,
+		walk_speed = 7,
 		jump_start = 1,
 		jump_end = 20,
 		stand_start = 1,
@@ -217,15 +131,15 @@ local slime_big = {
 	attack_type = "dogfight",
 	passive = false,
 	jump = true,
-	walk_velocity = 1.9,
-	run_velocity = 1.9,
+	walk_velocity = 1.45, -- with no jump delay 1.9<-(was) is way too fast compare to origianl deltax speed of slime
+	run_velocity = 1.45,
 	walk_chance = 0,
-	jump_height = 5.2,
+	jump_height = 8, -- (was 5.8) JUMP!
 	fear_height = 0,
 	spawn_small_alternative = "mobs_mc:slime_small",
 	on_die = spawn_children_on_die("mobs_mc:slime_small", 1.0, 1.5),
 	use_texture_alpha = true,
-	spawn_check = slime_spawn_check,
+	check_light = slime_check_light,
 }
 mcl_mobs.register_mob("mobs_mc:slime_big", slime_big)
 
@@ -239,8 +153,8 @@ slime_small.collisionbox = {-0.51, -0.01, -0.51, 0.51, 1.00, 0.51}
 slime_small.visual_size = {x=6.25, y=6.25}
 slime_small.damage = 3
 slime_small.reach = 2.75
-slime_small.walk_velocity = 1.8
-slime_small.run_velocity = 1.8
+slime_small.walk_velocity = 1.45
+slime_small.run_velocity = 1.45
 slime_small.jump_height = 4.3
 slime_small.spawn_small_alternative = "mobs_mc:slime_tiny"
 slime_small.on_die = spawn_children_on_die("mobs_mc:slime_tiny", 0.6, 1.0)
@@ -263,8 +177,8 @@ slime_tiny.drops = {
 	min = 0,
 	max = 2,},
 }
-slime_tiny.walk_velocity = 1.7
-slime_tiny.run_velocity = 1.7
+slime_tiny.walk_velocity = 1.45
+slime_tiny.run_velocity = 1.45
 slime_tiny.jump_height = 3
 slime_tiny.spawn_small_alternative = nil
 slime_tiny.on_die = nil
@@ -276,12 +190,14 @@ local water_level = mobs_mc.water_level
 local cave_biomes = {
 	"FlowerForest_underground",
 	"JungleEdge_underground",
+	"BambooJungle_underground",
 	"StoneBeach_underground",
 	"MesaBryce_underground",
 	"Mesa_underground",
 	"RoofedForest_underground",
 	"Jungle_underground",
 	"Swampland_underground",
+	"MushroomIsland_underground",
 	"BirchForest_underground",
 	"Plains_underground",
 	"MesaPlateauF_underground",
@@ -313,86 +229,37 @@ local swampy_biomes = {"Swampland", "MangroveSwamp"}
 local swamp_min = water_level
 local swamp_max = water_level + 27
 
-mcl_mobs:spawn_specific(
-"mobs_mc:slime_tiny",
-"overworld",
-"ground",
-cave_biomes,
-0,
-minetest.LIGHT_MAX+1,
-30,
-12000,
-4,
-cave_min,
-cave_max,
-nil, nil, check_position)
+for slime_name,slime_chance in pairs({
+	["mobs_mc:slime_tiny"] = 1000,
+	["mobs_mc:slime_small"] = 1000,
+	["mobs_mc:slime_big"] = 1000
+}) do
+	mcl_mobs.spawn_setup({
+		name = slime_name,
+		type_of_spawning = "ground",
+		dimension = "overworld",
+		biomes = cave_biomes,
+		min_light = 0,
+		max_light = minetest.LIGHT_MAX+1,
+		min_height = cave_min,
+		max_height = cave_max,
+		chance = slime_chance,
+		check_position = in_slime_chunk,
+	})
 
-mcl_mobs:spawn_specific(
-"mobs_mc:slime_tiny",
-"overworld",
-"ground",
-swampy_biomes,
-0,
-swamp_light_max,
-30,
-12000,
-4,
-swamp_min,
-swamp_max)
-
-mcl_mobs:spawn_specific(
-"mobs_mc:slime_small",
-"overworld",
-"ground",
-cave_biomes,
-0,
-minetest.LIGHT_MAX+1,
-30,
-8500,
-4,
-cave_min,
-cave_max,
-nil, nil, check_position)
-
-mcl_mobs:spawn_specific(
-"mobs_mc:slime_small",
-"overworld",
-"ground",
-swampy_biomes,
-0,
-swamp_light_max,
-30,
-8500,
-4,
-swamp_min,
-swamp_max)
-
-mcl_mobs:spawn_specific(
-"mobs_mc:slime_big",
-"overworld",
-"ground",
-cave_biomes,
-0,
-minetest.LIGHT_MAX+1,
-30,
-10000,
-4,
-cave_min,
-cave_max,
-nil, nil, check_position)
-
-mcl_mobs:spawn_specific(
-"mobs_mc:slime_big",
-"overworld",
-"ground",
-swampy_biomes,
-0,
-swamp_light_max,
-30,
-10000,
-4,
-swamp_min,
-swamp_max)
+	mcl_mobs.spawn_setup({
+		name = slime_name,
+		type_of_spawning = "ground",
+		dimension = "overworld",
+		biomes = swampy_biomes,
+		min_light = 0,
+		max_light = swamp_light_max,
+		min_height = swamp_min,
+		max_height = swamp_max,
+		chance = slime_chance,
+		check_position = swamp_spawn,
+	})
+end
 
 -- Magma cube
 local magma_cube_big = {
@@ -409,14 +276,15 @@ local magma_cube_big = {
 	visual = "mesh",
 	mesh = "mobs_mc_magmacube.b3d",
 	makes_footstep_sound = true,
+	does_not_prevent_sleep = true,
 	sounds = {
 		jump = "mobs_mc_magma_cube_big",
 		death = "mobs_mc_magma_cube_big",
 		attack = "mobs_mc_magma_cube_attack",
 		distance = 16,
 	},
-	walk_velocity = 2.5,
-	run_velocity = 2.5,
+	walk_velocity = 1.45,
+	run_velocity = 1.45, -- (was 2.5) they are slow and huge
 	damage = 6,
 	reach = 3,
 	armor = 53,
@@ -432,11 +300,11 @@ local magma_cube_big = {
 		stand_speed = 20,
 		walk_speed = 20,
 		jump_start = 1,
-		jump_end = 40,
+		jump_end = 20,
 		stand_start = 1,
 		stand_end = 1,
 		walk_start = 1,
-		walk_end = 40,
+		walk_end = 20,
 	},
 	water_damage = 0,
 	lava_damage = 0,
@@ -468,7 +336,7 @@ magma_cube_small.visual_size = {x=6.25, y=6.25}
 magma_cube_small.damage = 3
 magma_cube_small.reach = 2.75
 magma_cube_small.walk_velocity = .8
-magma_cube_small.run_velocity = 2.0
+magma_cube_small.run_velocity = 1.75 -- (was 2.0)
 magma_cube_small.jump_height = 6
 magma_cube_small.damage = 4
 magma_cube_small.reach = 2.75
@@ -499,58 +367,23 @@ magma_cube_tiny.on_die = nil
 
 mcl_mobs.register_mob("mobs_mc:magma_cube_tiny", magma_cube_tiny)
 
-
-local magma_cube_biomes = {"Nether", "BasaltDelta"}
-local nether_min = mcl_vars.mg_nether_min
-local nether_max = mcl_vars.mg_nether_max
-
-mcl_mobs:spawn_specific(
-"mobs_mc:magma_cube_tiny",
-"nether",
-"ground",
-magma_cube_biomes,
-0,
-minetest.LIGHT_MAX+1,
-30,
-15000,
-4,
-nether_min,
-nether_max)
-
-mcl_mobs:spawn_specific(
-"mobs_mc:magma_cube_small",
-"nether",
-"ground",
-magma_cube_biomes,
-0,
-minetest.LIGHT_MAX+1,
-30,
-15500,
-4,
-nether_min,
-nether_max)
-
-mcl_mobs:spawn_specific(
-"mobs_mc:magma_cube_big",
-"nether",
-"ground",
-magma_cube_biomes,
-0,
-minetest.LIGHT_MAX+1,
-30,
-16000,
-4,
-nether_min,
-nether_max)
+for magma_name,magma_chance in pairs({
+	["mobs_mc:magma_cube_tiny"] = 100,
+	["mobs_mc:magma_cube_small"] = 100,
+	["mobs_mc:magma_cube_big"] = 100
+}) do
+	mcl_mobs.spawn_setup({
+		name = magma_name,
+		type_of_spawning = "ground",
+		dimension = "nether",
+		min_light = 0,
+		max_light = minetest.LIGHT_MAX+1,
+		chance = magma_chance,
+		biomes = {"Nether", "BasaltDelta"},
+	})
+end
 
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:magma_cube_big", S("Magma Cube"), "#350000", "#fcfc00")
 
--- non_spawn_specific is typically for mobs who don't spawn in the overworld, or mobs that don't spawn
--- naturally. However, slimes are a particular case where they spawn under different conditions in the same
--- dimension.
-mcl_mobs:non_spawn_specific("mobs_mc:slime_big","overworld",0,minetest.LIGHT_MAX+1)
-mcl_mobs:non_spawn_specific("mobs_mc:magma_cube_big","overworld",0, minetest.LIGHT_MAX+1)
 mcl_mobs.register_egg("mobs_mc:slime_big", S("Slime"), "#52a03e", "#7ebf6d")
-
--- FIXME: add spawn eggs for small and tiny slimes and magma cubes

@@ -3,9 +3,6 @@
 
 local S = minetest.get_translator(minetest.get_current_modname())
 
-local math = math
-local table = table
-
 --- Plant parts ---
 
 local MAX_FLOWER_AGE = 5 -- Maximum age of chorus flower before it dies
@@ -142,13 +139,9 @@ minetest.register_node("mcl_end:chorus_flower", {
 	node_placement_prediction = "",
 	on_place = function(itemstack, placer, pointed_thing)
 		local node_under = minetest.get_node(pointed_thing.under)
-		--local node_above = minetest.get_node(pointed_thing.above)
-		if placer and not placer:get_player_control().sneak then
-			-- Use pointed node's on_rightclick function first, if present
-			if minetest.registered_nodes[node_under.name] and minetest.registered_nodes[node_under.name].on_rightclick then
-				return minetest.registered_nodes[node_under.name].on_rightclick(pointed_thing.under, node_under, placer, itemstack) or itemstack
-			end
-		end
+
+		local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+		if rc then return rc end
 
 		--[[ Part 1: Check placement rules. Placement is legal if one of the following
 		conditions is met:
@@ -273,12 +266,9 @@ minetest.register_node("mcl_end:chorus_plant", {
 	on_place = function(itemstack, placer, pointed_thing)
 		local node_under = minetest.get_node(pointed_thing.under)
 		local node_above = minetest.get_node(pointed_thing.above)
-		if placer and not placer:get_player_control().sneak then
-			-- Use pointed node's on_rightclick function first, if present
-			if minetest.registered_nodes[node_under.name] and minetest.registered_nodes[node_under.name].on_rightclick then
-				return minetest.registered_nodes[node_under.name].on_rightclick(pointed_thing.under, node_under, placer, itemstack) or itemstack
-			end
-		end
+
+		local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+		if rc then return rc end
 
 		--[[ Part 1: Check placement rules. Placement is legal if this
 		condition is met:
@@ -533,13 +523,9 @@ end
 
 -- Randomly teleport player and update hunger
 local eat_chorus_fruit = function(itemstack, player, pointed_thing)
-	if player and pointed_thing and pointed_thing.type == "node" and not player:get_player_control().sneak then
-		local node_under = minetest.get_node(pointed_thing.under)
-		-- Use pointed node's on_rightclick function first, if present
-		if minetest.registered_nodes[node_under.name] and minetest.registered_nodes[node_under.name].on_rightclick then
-			return minetest.registered_nodes[node_under.name].on_rightclick(pointed_thing.under, node_under, player, itemstack) or itemstack
-		end
-	end
+	local rc = mcl_util.call_on_rightclick(itemstack, player, pointed_thing)
+	if rc then return rc end
+
 	local count = itemstack:get_count()
 	local new_itemstack = minetest.do_item_eat(4, nil, itemstack, player, pointed_thing)
 	local new_count = new_itemstack:get_count()
@@ -559,7 +545,6 @@ minetest.register_craftitem("mcl_end:chorus_fruit", {
 	on_secondary_use = eat_chorus_fruit,
 	groups = { food = 2, transport = 1, eatable = 4, can_eat_when_full = 1 },
 	_mcl_saturation = 2.4,
-	stack_max = 64,
 })
 
 minetest.register_craftitem("mcl_end:chorus_fruit_popped", {
@@ -568,7 +553,6 @@ minetest.register_craftitem("mcl_end:chorus_fruit_popped", {
 	wield_image = "mcl_end_chorus_fruit_popped.png",
 	inventory_image = "mcl_end_chorus_fruit_popped.png",
 	groups = { craftitem = 1 },
-	stack_max = 64,
 })
 
 --- Crafting ---

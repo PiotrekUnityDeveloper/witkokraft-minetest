@@ -14,42 +14,23 @@ tsm_railcorridors.nodes = {
 	spawner = "mcl_mobspawners:spawner",
 }
 
-local mg_name = minetest.get_mapgen_setting("mg_name")
-
-if mg_name == "v6" then
-	-- In v6, wood is chosen randomly.
-	--[[ Wood types for the corridors. Corridors are made out of full wood blocks
-	and posts. For each corridor system, a random wood type is chosen with the chance
-	specified in per mille. ]]
-	tsm_railcorridors.nodes.corridor_woods = {
-		{ wood = "mcl_core:wood", post = "mcl_fences:fence", chance = 900},
-		{ wood = "mcl_core:darkwood", post = "mcl_fences:dark_oak_fence", chance = 100},
-	}
-else
-	-- This generates dark oak wood in mesa biomes and oak wood everywhere else.
-	function tsm_railcorridors.nodes.corridor_woods_function(pos, node)
-		if minetest.get_item_group(node.name, "hardened_clay") ~= 0 then
-			return "mcl_core:darkwood", "mcl_fences:dark_oak_fence"
-		else
-			return "mcl_core:wood", "mcl_fences:fence"
-		end
+-- This generates dark oak wood in mesa biomes and oak wood everywhere else.
+function tsm_railcorridors.nodes.corridor_woods_function(pos, node)
+	if minetest.get_item_group(node.name, "hardened_clay") ~= 0 then
+		return "mcl_trees:wood_dark_oak", "mcl_fences:dark_oak_fence"
+	else
+		return "mcl_trees:wood_oak", "mcl_fences:oak_fence"
 	end
 end
 
+tsm_railcorridors.carts = { "mcl_minecarts:chest_minecart" }
 
--- TODO: Use minecart with chest instead of normal minecart
-tsm_railcorridors.carts = { "mcl_minecarts:minecart" }
-
-function tsm_railcorridors.on_construct_cart(pos, cart)
-	-- TODO: Fill cart with treasures
-
-	-- This is it? There's this giant hack announced in
-	-- the other file and I grep for the function and it's
-	-- a stub? :)
-
-	-- The path here using some minetest.after hackery was
-	-- deactivated in init.lua - reactivate when this does
-	-- something the function is called RecheckCartHack.
+function tsm_railcorridors.on_construct_cart(pos, cart, pr_carts)
+	local l = cart:get_luaentity()
+	local inv = mcl_entity_invs.load_inv(l,27)
+	local items = tsm_railcorridors.get_treasures(pr_carts)
+	mcl_loot.fill_inventory(inv, "main", items, pr_carts)
+	mcl_entity_invs.save_inv(l)
 end
 
 -- Fallback function. Returns a random treasure. This function is called for chests
@@ -72,7 +53,7 @@ function tsm_railcorridors.get_treasures(pr)
 		stacks_min = 1,
 		stacks_max = 1,
 		items = {
-			{ itemstring = "mcl_mobs:nametag", weight = 30 },
+			{ itemstring = "mcl_mobitems:nametag", weight = 30 },
 			{ itemstring = "mcl_core:apple_gold", weight = 20 },
 			{ itemstring = "mcl_books:book", weight = 10, func = function(stack, pr)
 				mcl_enchanting.enchant_uniform_randomly(stack, {"soul_speed"}, pr)
@@ -120,18 +101,6 @@ function tsm_railcorridors.get_treasures(pr)
 	}
 	}
 
-	-- Bonus loot for v6 mapgen: Otherwise unobtainable saplings.
-	if mg_name == "v6" then
-		table.insert(loottable, {
-			stacks_min = 1,
-			stacks_max = 3,
-			items = {
-				{ itemstring = "mcl_core:darksapling", weight = 1, amount_min = 1, amount_max = 3 },
-				{ itemstring = "mcl_core:birchsapling", weight = 1, amount_min = 1, amount_max = 2 },
-				{ itemstring = "", weight = 6 },
-			},
-		})
-	end
 	local items = mcl_loot.get_multi_loot(loottable, pr)
 
 	return items

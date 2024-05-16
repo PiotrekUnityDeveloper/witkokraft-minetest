@@ -246,14 +246,13 @@ function mesecon.mergetable(source, dest)
 	return rval
 end
 
--- 
 function mesecon.join_table(t1, t2)
 	local rval = mesecon.tablecopy(t2)
 	for i, v in ipairs(t1) do
 		table.insert(rval, mesecon.tablecopy(v))
 	end
 	return rval
-end 
+end
 
 function mesecon.register_node(name, spec_common, spec_off, spec_on)
 	spec_common.drop = spec_common.drop or name .. "_off"

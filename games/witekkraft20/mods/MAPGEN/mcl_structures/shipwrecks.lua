@@ -2,9 +2,7 @@ local modname = minetest.get_current_modname()
 local modpath = minetest.get_modpath(modname)
 --local S = minetest.get_translator(modname)
 
-local seed = minetest.get_mapgen_setting("seed")
 local water_level = minetest.get_mapgen_setting("water_level")
-local pr = PseudoRandom(seed)
 
 --schematics by chmodsayshello
 local schems = {
@@ -78,6 +76,7 @@ local ocean_biomes = {
 	"JungleM_ocean"
 }
 
+--[[
 local beach_biomes = {
 	"FlowerForest_beach",
 	"Forest_beach",
@@ -93,6 +92,7 @@ local beach_biomes = {
 	"JungleM_shore",
 	"Jungle_shore"
 }
+--]] --might be used for buried treasure ..
 
 mcl_structures.register_structure("shipwreck",{
 	place_on = {"group:sand","mcl_core:gravel"},
@@ -125,7 +125,7 @@ mcl_structures.register_structure("shipwreck",{
 				{ itemstring = "mcl_farming:carrot_item", weight = 7, amount_min = 4, amount_max = 8 },
 				{ itemstring = "mcl_farming:potato_item_poison", weight = 7, amount_min = 2, amount_max = 6 },
 				{ itemstring = "mcl_farming:potato_item", weight = 7, amount_min = 2, amount_max = 6 },
-				--{ itemstring = "TODO:moss_block", weight = 7, amount_min = 1, amount_max = 4 },
+				{ itemstring = "mcl_lush_caves:moss", weight = 7, amount_min = 1, amount_max = 4 },
 				{ itemstring = "mcl_core:coal_lump", weight = 6, amount_min = 2, amount_max = 8 },
 				{ itemstring = "mcl_mobitems:rotten_flesh", weight = 5, amount_min = 5, amount_max = 24 },
 				{ itemstring = "mcl_farming:potato_item", weight = 3, amount_min = 1, amount_max = 5 },
@@ -137,7 +137,7 @@ mcl_structures.register_structure("shipwreck",{
 						mcl_enchanting.enchant_uniform_randomly(stack, {"soul_speed"}) end },
 				{ itemstring = "mcl_armor:boots_leather_enchanted", weight = 3, func = function(stack, pr)
 						mcl_enchanting.enchant_uniform_randomly(stack, {"soul_speed"}) end },
-				--{ itemstring = "TODO:bamboo", weight = 2, amount_min = 1, amount_max = 3 },
+				{ itemstring = "mcl_bamboo:bamboo", weight = 2, amount_min = 1, amount_max = 3 },
 				{ itemstring = "mcl_farming:pumpkin", weight = 2, amount_min = 1, amount_max = 3 },
 				{ itemstring = "mcl_tnt:tnt", weight = 1, amount_min = 1, amount_max = 2 },
 

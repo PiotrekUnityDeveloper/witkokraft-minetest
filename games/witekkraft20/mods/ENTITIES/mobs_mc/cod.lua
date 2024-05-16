@@ -3,7 +3,6 @@
 --made for MC like Survival game
 --License for code WTFPL and otherwise stated in readmes
 
-local pi = math.pi
 local atann = math.atan
 local atan = function(x)
 	if not x or x ~= x then
@@ -13,16 +12,6 @@ local atan = function(x)
 	end
 end
 
-local dir_to_pitch = function(dir)
-	local dir2 = vector.normalize(dir)
-	local xz = math.abs(dir.x) + math.abs(dir.z)
-	return -math.atan2(-dir.y, xz)
-end
-
-local function degrees(rad)
-	return rad * 180.0 / math.pi
-end
-
 local S = minetest.get_translator(minetest.get_current_modname())
 
 --###################
@@ -30,6 +19,7 @@ local S = minetest.get_translator(minetest.get_current_modname())
 --###################
 
 local cod = {
+	description = S("Cod"),
 	type = "animal",
 	spawn_class = "water_ambient",
 	can_despawn = true,
@@ -40,14 +30,14 @@ local cod = {
 	xp_max = 3,
 	armor = 100,
 	rotate = 180,
-	spawn_in_group_min = 2, -- was 3
-	spawn_in_group = 4, -- was 8 nerfed until we can cap them properly locally. this is a group size, not a per spawn attempt
+	spawn_in_group_min = 3,
+	spawn_in_group = 8,
 	tilt_swim = true,
 	collisionbox = {-0.3, 0.0, -0.3, 0.3, 0.79, 0.3},
 	visual = "mesh",
 	mesh = "extra_mobs_cod.b3d",
 	textures = {
-		{"mobs_mc_cod.png"}
+		{"extra_mobs_cod.png"}
 	},
 	sounds = {
 	},
@@ -97,14 +87,14 @@ local cod = {
 			}
 			if object and not object:is_player() and object:get_luaentity() and object:get_luaentity().name == "mobs_mc:cod" then
 				self.state = "runaway"
-				self.object:set_rotation({x=0,y=(atan(vec.z / vec.x) + 3 * pi / 2) - self.rotate,z=0})
+				self.object:set_rotation({x=0,y=(atan(vec.z / vec.x) + 3 * math.pi / 2) - self.rotate,z=0})
 			end
 		end
 	end,
 	on_rightclick = function(self, clicker)
 		local bn = clicker:get_wielded_item():get_name()
 		if bn == "mcl_buckets:bucket_water" or bn == "mcl_buckets:bucket_river_water" then
-			self.object:remove()
+			self:safe_remove()
 			clicker:set_wielded_item("mcl_buckets:bucket_cod")
 			awards.unlock(clicker:get_player_name(), "mcl:tacticalFishing")
 		end
@@ -113,163 +103,17 @@ local cod = {
 
 mcl_mobs.register_mob("mobs_mc:cod", cod)
 
-
---spawning TODO: in schools
-
-local water = 0
-
-mcl_mobs:spawn_specific(
-"mobs_mc:cod",
-"overworld",
-"water",
-{
-"Mesa",
-"FlowerForest",
-"Swampland",
-"Taiga",
-"ExtremeHills",
-"Jungle",
-"Savanna",
-"BirchForest",
-"MegaSpruceTaiga",
-"MegaTaiga",
-"ExtremeHills+",
-"Forest",
-"Plains",
-"Desert",
-"ColdTaiga",
-"MushroomIsland",
-"IcePlainsSpikes",
-"SunflowerPlains",
-"IcePlains",
-"RoofedForest",
-"ExtremeHills+_snowtop",
-"MesaPlateauFM_grasstop",
-"JungleEdgeM",
-"ExtremeHillsM",
-"JungleM",
-"BirchForestM",
-"MesaPlateauF",
-"MesaPlateauFM",
-"MesaPlateauF_grasstop",
-"MesaBryce",
-"JungleEdge",
-"SavannaM",
-"FlowerForest_beach",
-"Forest_beach",
-"StoneBeach",
-"ColdTaiga_beach_water",
-"Taiga_beach",
-"Savanna_beach",
-"Plains_beach",
-"ExtremeHills_beach",
-"ColdTaiga_beach",
-"Swampland_shore",
-"MushroomIslandShore",
-"JungleM_shore",
-"Jungle_shore",
-"MesaPlateauFM_sandlevel",
-"MesaPlateauF_sandlevel",
-"MesaBryce_sandlevel",
-"Mesa_sandlevel",
-"RoofedForest_ocean",
-"JungleEdgeM_ocean",
-"BirchForestM_ocean",
-"BirchForest_ocean",
-"IcePlains_deep_ocean",
-"Jungle_deep_ocean",
-"Savanna_ocean",
-"MesaPlateauF_ocean",
-"ExtremeHillsM_deep_ocean",
-"Savanna_deep_ocean",
-"SunflowerPlains_ocean",
-"Swampland_deep_ocean",
-"Swampland_ocean",
-"MegaSpruceTaiga_deep_ocean",
-"ExtremeHillsM_ocean",
-"JungleEdgeM_deep_ocean",
-"SunflowerPlains_deep_ocean",
-"BirchForest_deep_ocean",
-"IcePlainsSpikes_ocean",
-"Mesa_ocean",
-"StoneBeach_ocean",
-"Plains_deep_ocean",
-"JungleEdge_deep_ocean",
-"SavannaM_deep_ocean",
-"Desert_deep_ocean",
-"Mesa_deep_ocean",
-"ColdTaiga_deep_ocean",
-"Plains_ocean",
-"MesaPlateauFM_ocean",
-"Forest_deep_ocean",
-"JungleM_deep_ocean",
-"FlowerForest_deep_ocean",
-"MushroomIsland_ocean",
-"MegaTaiga_ocean",
-"StoneBeach_deep_ocean",
-"IcePlainsSpikes_deep_ocean",
-"ColdTaiga_ocean",
-"SavannaM_ocean",
-"MesaPlateauF_deep_ocean",
-"MesaBryce_deep_ocean",
-"ExtremeHills+_deep_ocean",
-"ExtremeHills_ocean",
-"MushroomIsland_deep_ocean",
-"Forest_ocean",
-"MegaTaiga_deep_ocean",
-"JungleEdge_ocean",
-"MesaBryce_ocean",
-"MegaSpruceTaiga_ocean",
-"ExtremeHills+_ocean",
-"Jungle_ocean",
-"RoofedForest_deep_ocean",
-"IcePlains_ocean",
-"FlowerForest_ocean",
-"ExtremeHills_deep_ocean",
-"MesaPlateauFM_deep_ocean",
-"Desert_ocean",
-"Taiga_ocean",
-"BirchForestM_deep_ocean",
-"Taiga_deep_ocean",
-"JungleM_ocean",
-"FlowerForest_underground",
-"JungleEdge_underground",
-"StoneBeach_underground",
-"MesaBryce_underground",
-"Mesa_underground",
-"RoofedForest_underground",
-"Jungle_underground",
-"Swampland_underground",
-"MushroomIsland_underground",
-"BirchForest_underground",
-"Plains_underground",
-"MesaPlateauF_underground",
-"ExtremeHills_underground",
-"MegaSpruceTaiga_underground",
-"BirchForestM_underground",
-"SavannaM_underground",
-"MesaPlateauFM_underground",
-"Desert_underground",
-"Savanna_underground",
-"Forest_underground",
-"SunflowerPlains_underground",
-"ColdTaiga_underground",
-"IcePlains_underground",
-"IcePlainsSpikes_underground",
-"MegaTaiga_underground",
-"Taiga_underground",
-"ExtremeHills+_underground",
-"JungleM_underground",
-"ExtremeHillsM_underground",
-"JungleEdgeM_underground",
-},
-0,
-minetest.LIGHT_MAX+1,
-30,
-4000,
-3,
-water-16,
-water+1)
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:cod",
+	type_of_spawning = "water",
+	dimension = "overworld",
+	min_height = mobs_mc.water_level - 16,
+	max_height = mobs_mc.water_level + 1,
+	min_light = 0,
+	max_light = minetest.LIGHT_MAX + 1,
+	aoc = 7,
+	chance = 750,
+})
 
 --spawn egg
 mcl_mobs.register_egg("mobs_mc:cod", S("Cod"), "#c1a76a", "#e5c48b", 0)

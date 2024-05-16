@@ -1,15 +1,5 @@
 # textdomain: mcl_mangrove
-Mangrove Wood=Мангровая древесина
-The trunk of a Mangrove tree.=Ствол мангрового дерева.
-Mangrove Bark=Мангровая кора
-The bark of a Mangrove tree.=Кора мангрового дерева.
-Mangrove Wood Planks=Мангровые доски
-Mangrove Leaves=Мангровые листья
-Mangrove leaves are grown from mangrove trees.=Мангровые листья растут на мангровых деревьях.
-Stripped Mangrove Log=Обтёсанная мангровая древесина
-The stripped wood of a Mangrove tree=Обтёсанная мангровая древесина
-Stripped Mangrove Wood=Обтёсанная мангровая кора
-The stripped bark of a Mangrove tree=Обтёсанная мангровая кора
+Mangrove=
 Mangrove Roots=Мангровые корни
 Mangrove roots are decorative blocks that form as part of mangrove trees.=Мангровые корни это декоративный блок который формирует часть мангровых деревьев.
 Mangrove Propagule=Мангровый отросток
@@ -23,6 +13,21 @@ These cannot be crafted yet only occure when get in contact of water.=Нельз
 Muddy Mangrove Roots=Грязные мангровые корни
 crafted with Mud and Mangrove roots=Крафтится с помощью грязи и мангровых корней
 Muddy Mangrove Roots is a block from mangrove swamp.It drowns player a bit inside it.=Грязные мангровые корни это блок из мангровых болот. Игрок немного погружается внутрь них.
+
+
+##### not used anymore #####
+
+Mangrove Wood=Мангровая древесина
+The trunk of a Mangrove tree.=Ствол мангрового дерева.
+Mangrove Bark=Мангровая кора
+The bark of a Mangrove tree.=Кора мангрового дерева.
+Mangrove Wood Planks=Мангровые доски
+Mangrove Leaves=Мангровые листья
+Mangrove leaves are grown from mangrove trees.=Мангровые листья растут на мангровых деревьях.
+Stripped Mangrove Log=Обтёсанная мангровая древесина
+The stripped wood of a Mangrove tree=Обтёсанная мангровая древесина
+Stripped Mangrove Wood=Обтёсанная мангровая кора
+The stripped bark of a Mangrove tree=Обтёсанная мангровая кора
 Mangrove Door=Мангровая дверь
 Wooden doors are 2-block high barriers which can be opened or closed by hand and by a redstone signal.=Деревянные двери это преграды высотой в 2 блока, которые можно открывать и закрывать вручную и по сигналу редстоуна.
 To open or close a wooden door, rightclick it or supply its lower half with a redstone signal.=Чтобы открыть или закрыть деревянную дверь, кликните правой либо подайте к её нижней части сигнал редстоуна.

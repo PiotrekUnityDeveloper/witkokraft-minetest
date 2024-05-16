@@ -1,5 +1,9 @@
 # textdomain: mcl_beacons
-Beacon=Leuchtfeuer
 Beacon:=Leuchtfeuer:
 Primary Power:=Primäre Kraft:
 Inventory:=Inventar:
+
+
+##### not used anymore #####
+
+Beacon=Leuchtfeuer

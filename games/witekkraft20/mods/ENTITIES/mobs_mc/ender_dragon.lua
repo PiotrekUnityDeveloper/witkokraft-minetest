@@ -9,9 +9,9 @@ local POS_CHECK_FREQUENCY = 15
 local HEAL_AMMOUNT = 37
 
 local function heal(self)
-	local o = self.object
-	self.health = math.min(self.hp_max,self.health + HEAL_AMMOUNT)
+	self.health = math.min(self.object:get_properties().hp_max,self.health + HEAL_AMMOUNT)
 end
+
 local function check_beam(self)
 	for _, obj in ipairs(minetest.get_objects_inside_radius(self.object:get_pos(), 80)) do
 		local luaentity = obj:get_luaentity()
@@ -60,7 +60,8 @@ mcl_mobs.register_mob("mobs_mc:enderdragon", {
 	xp_min = 500,
 	xp_max = 500,
 	collisionbox = {-2, 3, -2, 2, 5, 2},
-	physical = false,
+	doll_size_override = { x = 0.16, y = 0.16 },
+	physical = true,
 	visual = "mesh",
 	mesh = "mobs_mc_dragon.b3d",
 	textures = {
@@ -77,7 +78,6 @@ mcl_mobs.register_mob("mobs_mc:enderdragon", {
 		attack = "mobs_mc_ender_dragon_attack",
 		distance = 60,
 	},
-	physical = true,
 	damage = 10,
 	knock_back = false,
 	jump = true,
@@ -85,38 +85,41 @@ mcl_mobs.register_mob("mobs_mc:enderdragon", {
 	fly = true,
 	makes_footstep_sound = false,
 	dogshoot_switch = 1,
-	dogshoot_count_max =5,
-	dogshoot_count2_max = 5,
+	dogshoot_count_max =1,
+	dogshoot_count2_max = 25,
 	passive = false,
 	attack_animals = true,
 	lava_damage = 0,
 	fire_damage = 0,
+	does_not_prevent_sleep = true,
 	on_rightclick = nil,
 	attack_type = "dogshoot",
 	arrow = "mobs_mc:dragon_fireball",
 	shoot_interval = 0.5,
 	shoot_offset = -1.0,
-	xp_min = 500,
-	xp_max = 500,
 	animation = {
 		fly_speed = 8, stand_speed = 8,
-		stand_start = 0,		stand_end = 20,
-		walk_start = 0,		walk_end = 20,
-		run_start = 0,		run_end = 20,
+		stand_start = 0,	stand_end = 40,
+		walk_start = 0,		walk_end = 40,
+		run_start = 0,		run_end = 40,
 	},
 	ignores_nametag = true,
-	do_custom = function(self,dtime)
-		mcl_bossbars.update_boss(self.object, "Ender Dragon", "light_purple")
-		if self._pos_timer == nil or self._pos_timer > POS_CHECK_FREQUENCY then
-			self._pos_timer = 0
+	player_active_range = 128,
+	force_step = function(self, dtime)
+		self._pos_timer = (self._pos_timer or  POS_CHECK_FREQUENCY) - dtime
+		if self._pos_timer < 0 then
+			self._pos_timer = POS_CHECK_FREQUENCY
 			check_pos(self)
 		end
+	end,
+	do_custom = function(self,dtime)
+		mcl_bossbars.update_boss(self.object, "Ender Dragon", "light_purple")
+
 		if self._beam_timer == nil or self._beam_timer > BEAM_CHECK_FREQUENCY then
 			self._beam_timer = 0
 			check_beam(self)
 		end
 		self._beam_timer = self._beam_timer + dtime
-		self._pos_timer = self._pos_timer + dtime
 	end,
 	on_die = function(self, pos, cmi_cause)
 		if self._portal_pos then
@@ -139,30 +142,19 @@ mcl_mobs.register_mob("mobs_mc:enderdragon", {
 	is_boss = true,
 })
 
-
-local mobs_griefing = minetest.settings:get_bool("mobs_griefing") ~= false
-
 -- dragon fireball (projectile)
 mcl_mobs.register_arrow("mobs_mc:dragon_fireball", {
 	visual = "sprite",
 	visual_size = {x = 1.25, y = 1.25},
 	textures = {"mobs_mc_dragon_fireball.png"},
-	velocity = 6,
+	velocity = 10,
 
 	-- direct hit, no fire... just plenty of pain
-	hit_player = function(self, player)
-		player:punch(self.object, 1.0, {
-			full_punch_interval = 0.5,
-			damage_groups = {fleshy = 12},
-		}, nil)
-	end,
+	hit_player = mcl_mobs.get_arrow_damage_func(12, "dragon_breath"),
 
 	hit_mob = function(self, mob)
-		minetest.sound_play("tnt_explode", {pos = mob:get_pos(), gain = 1.5, max_hear_distance = 2*64}, true)
-		mob:punch(self.object, 1.0, {
-			full_punch_interval = 0.5,
-			damage_groups = {fleshy = 12},
-		}, nil)
+		minetest.sound_play("tnt_explode", {pos = mob:get_pos(), gain = 1, max_hear_distance = 2*64}, true)
+		mcl_mobs.get_arrow_damage_func(12, "dragon_breath")(self, mob)
 	end,
 
 	-- node hit, explode
@@ -175,4 +167,3 @@ mcl_mobs.register_egg("mobs_mc:enderdragon", S("Ender Dragon"), "#252525", "#b31
 
 
 mcl_wip.register_wip_item("mobs_mc:enderdragon")
-mcl_mobs:non_spawn_specific("mobs_mc:enderdragon","overworld",0,minetest.LIGHT_MAX+1)

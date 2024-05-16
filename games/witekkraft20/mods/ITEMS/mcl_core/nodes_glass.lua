@@ -11,7 +11,6 @@ minetest.register_node("mcl_core:glass", {
 	paramtype = "light",
 	paramtype2 = "glasslikeliquidlevel",
 	sunlight_propagates = true,
-	stack_max = 64,
 	groups = {handy=1, glass=1, building_block=1, material_glass=1},
 	sounds = mcl_sounds.node_sound_glass_defaults(),
 	drop = "",
@@ -20,12 +19,16 @@ minetest.register_node("mcl_core:glass", {
 	_mcl_silk_touch_drop = true,
 })
 
+local messy_textures = {
+	["grey"] = "gray",
+}
+
 ------------------------
 -- Create Color Glass --
 ------------------------
 local canonical_color = "yellow"
-function mcl_core.add_stained_glass(desc, recipeitem, colorgroup, color)
 
+for color,colordef in pairs(mcl_dyes.colors) do
 	local longdesc, create_entry, entry_name
 	if mod_doc then
 		if color == canonical_color then
@@ -35,21 +38,23 @@ function mcl_core.add_stained_glass(desc, recipeitem, colorgroup, color)
 			create_entry = false
 		end
 	end
+	local texcol = color
+	if messy_textures[color] then
+		texcol = messy_textures[color]
+	end
 	minetest.register_node("mcl_core:glass_"..color, {
-		description = desc,
+		description = S("@1 Stained Glass", colordef.readable_name),
 		_doc_items_create_entry = create_entry,
 		_doc_items_entry_name = entry_name,
 		_doc_items_longdesc = longdesc,
 		drawtype = "glasslike_framed_optional",
 		is_ground_content = false,
-		tiles = {"mcl_core_glass_"..color..".png", "mcl_core_glass_"..color.."_detail.png"},
+		tiles = {"mcl_core_glass_"..texcol..".png", "mcl_core_glass_"..texcol.."_detail.png"},
 		paramtype = "light",
 		paramtype2 = "glasslikeliquidlevel",
 		sunlight_propagates = true,
 		use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "blend" or true,
-		stack_max = 64,
-		-- TODO: Add color to groups
-		groups = {handy=1, glass=1, building_block=1, material_glass=1},
+		groups = {handy=1, glass=1, building_block=1, material_glass=1, ["basecolor_"..color] = 1},
 		sounds = mcl_sounds.node_sound_glass_defaults(),
 		drop = "",
 		_mcl_blast_resistance = 0.3,
@@ -61,7 +66,7 @@ function mcl_core.add_stained_glass(desc, recipeitem, colorgroup, color)
 		output = "mcl_core:glass_"..color.." 8",
 		recipe = {
 			{"mcl_core:glass","mcl_core:glass","mcl_core:glass"},
-			{"mcl_core:glass",recipeitem,"mcl_core:glass"},
+			{"mcl_core:glass","mcl_dyes:"..color,"mcl_core:glass"},
 			{"mcl_core:glass","mcl_core:glass","mcl_core:glass"},
 		}
 	})
@@ -69,23 +74,7 @@ function mcl_core.add_stained_glass(desc, recipeitem, colorgroup, color)
 	if mod_doc and color ~= canonical_color then
 		doc.add_entry_alias("nodes", "mcl_core:glass_"..canonical_color, "nodes", "mcl_core:glass_"..color)
 	end
-
 end
 
----- colored glass
-mcl_core.add_stained_glass( S("Red Stained Glass"), "mcl_dye:red", "basecolor_red", "red")
-mcl_core.add_stained_glass( S("Green Stained Glass"), "mcl_dye:dark_green", "unicolor_dark_green", "green")
-mcl_core.add_stained_glass( S("Blue Stained Glass"), "mcl_dye:blue", "basecolor_blue", "blue")
-mcl_core.add_stained_glass( S("Light Blue Stained Glass"), "mcl_dye:lightblue", "unicolor_light_blue", "light_blue")
-mcl_core.add_stained_glass( S("Black Stained Glass"), "mcl_dye:black", "basecolor_black", "black")
-mcl_core.add_stained_glass( S("White Stained Glass"), "mcl_dye:white", "basecolor_white", "white")
-mcl_core.add_stained_glass( S("Yellow Stained Glass"), "mcl_dye:yellow", "basecolor_yellow", "yellow")
-mcl_core.add_stained_glass( S("Brown Stained Glass"), "mcl_dye:brown", "unicolor_dark_orange", "brown")
-mcl_core.add_stained_glass( S("Orange Stained Glass"), "mcl_dye:orange", "excolor_orange", "orange")
-mcl_core.add_stained_glass( S("Pink Stained Glass"), "mcl_dye:pink", "unicolor_light_red", "pink")
-mcl_core.add_stained_glass( S("Grey Stained Glass"), "mcl_dye:dark_grey", "unicolor_darkgrey", "gray")
-mcl_core.add_stained_glass( S("Lime Stained Glass"), "mcl_dye:green", "basecolor_green", "lime")
-mcl_core.add_stained_glass( S("Light Grey Stained Glass"), "mcl_dye:grey", "basecolor_grey", "silver")
-mcl_core.add_stained_glass( S("Magenta Stained Glass"), "mcl_dye:magenta", "basecolor_magenta", "magenta")
-mcl_core.add_stained_glass( S("Purple Stained Glass"), "mcl_dye:violet", "excolor_violet", "purple")
-mcl_core.add_stained_glass( S("Cyan Stained Glass"), "mcl_dye:cyan", "basecolor_cyan", "cyan")
+-- legacy: for some reason glass was the only place where grey was spelled with an a
+minetest.register_alias("mcl_core:glass_gray","mcl_core:glass_grey")

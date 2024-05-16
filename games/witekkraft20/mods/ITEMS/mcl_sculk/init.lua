@@ -1,10 +1,9 @@
 local S = minetest.get_translator(minetest.get_current_modname())
-
 mcl_sculk = {}
 
-local mt_sound_play = minetest.sound_play
+--local mt_sound_play = minetest.sound_play
 
-local spread_to = {"mcl_core:stone","mcl_core:dirt","mcl_core:sand","mcl_core:dirt_with_grass","group:grass_block","mcl_core:andesite","mcl_core:diorite","mcl_core:granite","mcl_core:mycelium","group:dirt","mcl_end:end_stone","mcl_nether:netherrack","mcl_blackstone:basalt","mcl_nether:soul_sand","mcl_blackstone:soul_soil","mcl_crimson:warped_nylium","mcl_crimson:crimson_nylium","mcl_core:gravel"}
+local spread_to = {"mcl_core:stone","mcl_core:dirt","mcl_core:sand","mcl_core:dirt_with_grass","group:grass_block","mcl_core:andesite","mcl_core:diorite","mcl_core:granite","mcl_core:mycelium","group:dirt","mcl_end:end_stone","mcl_nether:netherrack","mcl_blackstone:basalt","mcl_nether:soul_sand","mcl_blackstone:soul_soil","mcl_crimson:warped_nylium","mcl_crimson:crimson_nylium","mcl_core:gravel","mcl_deepslate:deepslate","mcl_deepslate:tuff"}
 
 local sounds = {
 	footstep = {name = "mcl_sculk_block", },
@@ -12,9 +11,9 @@ local sounds = {
 }
 
 local SPREAD_RANGE = 8
-local SENSOR_RANGE = 8
-local SENSOR_DELAY = 0.5
-local SHRIEKER_COOLDOWN = 10
+--local SENSOR_RANGE = 8
+--local SENSOR_DELAY = 0.5
+--local SHRIEKER_COOLDOWN = 10
 
 local adjacents = {
 	vector.new(1,0,0),
@@ -43,7 +42,7 @@ local function sensor_action(p,tp)
 end
 
 function minetest.sound_play(spec, parameters, ephemeral)
-	local rt = mt_sound_play(spec, parameters, ephemeral)
+	local rt = old_sound_play(spec, parameters, ephemeral)
 	if parameters.pos then
 		pos = parameters.pos
 	elseif parameters.to_player then
@@ -80,10 +79,21 @@ local function set_node_xp(pos,xp)
 	return meta:set_int("xp",xp)
 end
 
-local function sculk_on_destruct(pos)
+local function sculk_after_dig_node(pos, oldnode, oldmetadata, digger)
+	-- Check if node will yield its useful drop by the digger's tool
+	if digger and digger:is_player() then
+		local tool = digger:get_wielded_item()
+
+		if mcl_autogroup.can_harvest(oldnode.name, tool:get_name(), digger) then
+			if tool and mcl_enchanting.get_enchantments(tool, "silk_touch").silk_touch then
+				-- Don't drop experience when mined with silk touch
+				return
+			end
+		end
+	end
+
 	local xp = get_node_xp(pos)
-	local n = minetest.get_node(pos)
-	if n.param2 == 1 then
+	if oldnode.param2 == 1 then
 		xp = 1
 	end
 	local obs = mcl_experience.throw_xp(pos,xp)
@@ -125,7 +135,7 @@ local function spread_sculk (p, xp_amount)
 		local nn = retrieve_close_spreadable_nodes (p)
 		if nn and #nn > 0 then
 			if xp_amount > 0 then
-				local d = math.random(100)
+				--local d = math.random(100)
 				--[[ --enable to generate shriekers and sensors
 				if d <= 1 then
 					minetest.set_node(nn[1],{name = "mcl_sculk:shrieker"})
@@ -141,7 +151,6 @@ local function spread_sculk (p, xp_amount)
 
 
 				local r = math.min(math.random(#nn), xp_amount)
-				--minetest.log("r: ".. r)
 
 				for i=1,r do
 					minetest.set_node(nn[i],{name = "mcl_sculk:sculk" })
@@ -155,8 +164,6 @@ local function spread_sculk (p, xp_amount)
 				end
 				set_node_xp(nn[1],get_node_xp(nn[1]) + xp_amount % r)
 				return true
-				--self.object:remove()
-				--end
 			end
 		end
 	end
@@ -164,16 +171,11 @@ end
 
 function mcl_sculk.handle_death(pos, xp_amount)
 	if not pos or not xp_amount then return end
-	--local nu = minetest.get_node(vector.offset(p,0,-1,0))
 	return spread_sculk (pos, xp_amount)
 end
 
 minetest.register_on_dieplayer(function(player)
-	if mcl_sculk.handle_death(player:get_pos(), 5) then
-		--minetest.log("Player is dead. Sculk")
-	else
-		--minetest.log("Player is dead. not Sculk")
-	end
+	mcl_sculk.handle_death(player:get_pos(), 5)
 end)
 
 minetest.register_node("mcl_sculk:sculk", {
@@ -192,7 +194,7 @@ minetest.register_node("mcl_sculk:sculk", {
 	place_param2 = 1,
 	sounds = sounds,
 	is_ground_content = false,
-	on_destruct = sculk_on_destruct,
+	after_dig_node = sculk_after_dig_node,
 	_mcl_blast_resistance = 0.2,
 	_mcl_hardness = 0.6,
 	_mcl_silk_touch_drop = true,
@@ -215,23 +217,9 @@ minetest.register_node("mcl_sculk:vein", {
 		type = "wallmounted",
 	},
 	groups = {
-		handy = 1,
-		axey = 1,
-		shearsy = 1,
-		swordy = 1,
-		deco_block = 1,
-		dig_by_piston = 1,
-		destroy_by_lava_flow = 1,
-		sculk = 1,
-		dig_by_water = 1,
-		ladder = 1
+		handy = 1, axey = 1, shearsy = 1, swordy = 1, deco_block = 1,
+		dig_by_piston = 1, destroy_by_lava_flow = 1, sculk = 1, dig_by_water = 1,
 	},
-	after_destruct = function(pos, old)
-		mcl_core.update_trapdoor(pos, "destruct")
-	end,
-	after_place_node = function(pos)
-		mcl_core.update_trapdoor(pos, "place")
-	end,
 	sounds = sounds,
 	drop = "",
 	_mcl_shears_drop = true,
@@ -253,7 +241,7 @@ minetest.register_node("mcl_sculk:catalyst", {
 	groups = {handy = 1, hoey = 1, building_block=1, sculk = 1,},
 	place_param2 = 1,
 	is_ground_content = false,
-	on_destruct = sculk_on_destruct,
+	after_dig_node = sculk_after_dig_node,
 	_mcl_blast_resistance = 3,
 	light_source  = 6,
 	_mcl_hardness = 3,
@@ -273,7 +261,7 @@ minetest.register_node("mcl_sculk:sensor", {
 	groups = {handy = 1, hoey = 1, building_block=1, sculk = 1,},
 	place_param2 = 1,
 	is_ground_content = false,
-	on_destruct = sculk_on_destruct,
+	after_dig_node = sculk_after_dig_node,
 	_mcl_blast_resistance = 3,
 	light_source  = 6,
 	_mcl_hardness = 3,
@@ -291,7 +279,7 @@ minetest.register_node("mcl_sculk:shrieker", {
 	groups = {handy = 1, hoey = 1, building_block=1, sculk = 1,},
 	place_param2 = 0,
 	is_ground_content = false,
-	on_destruct = sculk_on_destruct,
+	after_dig_node = sculk_after_dig_node,
 	_mcl_blast_resistance = 3,
 	light_source  = 6,
 	_mcl_hardness = 3,

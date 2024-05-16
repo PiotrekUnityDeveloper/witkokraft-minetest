@@ -16,15 +16,11 @@ local function cocoa_place(itemstack, placer, pt, plantname)
 		return
 	end
 
-	-- Am I right-clicking on something that has a custom on_rightclick set?
-	if placer and not placer:get_player_control().sneak then
-		if minetest.registered_nodes[under.name] and minetest.registered_nodes[under.name].on_rightclick then
-			return minetest.registered_nodes[under.name].on_rightclick(pt.under, under, placer, itemstack) or itemstack
-		end
-	end
+	local rc = mcl_util.call_on_rightclick(itemstack, placer, pt)
+	if rc then return rc end
 
 	-- Check if pointing at jungle tree
-	if under.name ~= "mcl_core:jungletree"
+	if under.name ~= "mcl_trees:tree_jungle"
 	or minetest.get_node(pt.above).name ~= "air" then
 		return
 	end
@@ -100,6 +96,12 @@ local crop_def = {
 	on_rotate = false,
 	_mcl_blast_resistance = 3,
 	_mcl_hardness = 0.2,
+	_on_bone_meal = function(itemstack,placer,pointed_thing,pos,n)
+		if n.name == "mcl_cocoas:cocoa_1" or n.name == "mcl_cocoas:cocoa_2" then
+			return mcl_cocoas.grow(pos)
+		end
+		return false
+	end,
 }
 
 -- 2nd stage

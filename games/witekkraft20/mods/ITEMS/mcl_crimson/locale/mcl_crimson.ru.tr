@@ -1,5 +1,6 @@
 # textdomain: mcl_crimson
-
+Crimson=
+Warped=
 Warped Fungus=Искажённый грибок
 Warped fungus is a mushroom found in the nether's warped forest.=Искажённый грибок можно найти в искажённых лесах Незера
 Twisting Vines=Извилистые лианы
@@ -8,6 +9,15 @@ Nether Sprouts=Адские ростки
 Warped Roots=Искажённые корни
 Warped Wart Block=Искажённый блок адского нароста
 Shroomlight=Грибосвет
+Warped Nylium=Искажённый нилий
+Crimson Fungus=Багровый грибок
+Crimson fungus is a mushroom found in the nether's crimson forest.=Багровый грибок можно найти в багровых лесах Незера
+Crimson Roots=Багровые корни
+Crimson Nylium=Багровый нилий
+
+
+##### not used anymore #####
+
 Warped Hyphae=Искажённая ножка
 The stem of a warped hyphae=Ножка искажённого гриба
 Warped Hyphae Bark=Искажённые гифы
@@ -16,14 +26,10 @@ Stripped Warped Hyphae=Обтёсанная искажённая ножка
 The stripped hyphae of a warped fungus=Обтёсанная искажённая ножка
 Stripped Warped Hyphae Bark=Обтёсанные гифы
 The stripped hyphae bark of a warped fungus=Обтёсанные гифы искажённого гриба
-Warped Nylium=Искажённый нилий
 Warped Checknode - only to check!=Искажённый тестовый блок
 Warped Hyphae Wood=Искажённые доски
 Warped Stair=Искажённые ступени
 Warped Slab=Искажённая плита
-Crimson Fungus=Багровый грибок
-Crimson fungus is a mushroom found in the nether's crimson forest.=Багровый грибок можно найти в багровых лесах Незера
-Crimson Roots=Багровые корни
 Crimson Hyphae=Багровая ножка
 The stem of a crimson hyphae=Ножка багрового гриба
 Crimson Hyphae Bark=Багровые гифы
@@ -35,7 +41,6 @@ Crimson Hyphae Wood=Багровые доски
 Crimson Stair=Багровые ступени
 Crimson Slab=Багровая плита
 Double Crimson Slab=Двойная багровая плита
-Crimson Nylium=Багровый нилий
 Crimson Door=Багровая дверь
 Crimson Trapdoor=Багровый люк
 Crimson Fence=Багровый забор

@@ -1,7 +1,5 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 
-local math = math
-
 -- weather states, 'none' is default, other states depends from active mods
 mcl_weather.state = "none"
 
@@ -100,9 +98,17 @@ end
 -- Outdoor is defined as any node in the Overworld under open sky.
 -- FIXME: Nodes below glass also count as “outdoor”, this should not be the case.
 function mcl_weather.is_outdoor(pos)
-	local cpos = {x=pos.x, y=pos.y+1, z=pos.z}
+	local cpos = vector.offset(pos,0,1,0)
 	local dim = mcl_worlds.pos_to_dimension(cpos)
 	if minetest.get_node_light(cpos, 0.5) == 15 and dim == "overworld" then
+		return true
+	end
+	return false
+end
+
+function mcl_weather.can_see_outdoors(pos)
+	local light = minetest.get_natural_light(pos, 0.5)
+	if light ~= nil and light >= 1 then
 		return true
 	end
 	return false
@@ -123,11 +129,11 @@ function mcl_weather.is_underwater(player)
 	return false
 end
 
-local t, wci = 0, mcl_weather.check_interval
+local t = 0
 
 minetest.register_globalstep(function(dtime)
 	t = t + dtime
-	if t < wci then return end
+	if t < mcl_weather.check_interval then return end
 	t = 0
 
 	if mcl_weather.end_time == nil then

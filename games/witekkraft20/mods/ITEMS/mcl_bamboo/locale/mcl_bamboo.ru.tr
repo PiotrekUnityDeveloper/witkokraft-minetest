@@ -1,20 +1,24 @@
 # textdomain: mcl_bamboo
-
 ### bamboo_base.lua ###
-
 Bamboo=Бамбук
+Bamboo Raft=
+Chest Bamboo Raft=
+Bamboo Plant=
 Bamboo Mosaic Plank=Бамбуковая мозаика
+Scaffolding=Строительные леса
+Scaffolding is a temporary structure to easily climb up while building that is easily removed=
+Scaffolding horizontal=
+Scaffolding block...=
+
+
+##### not used anymore #####
+
 Bamboo Plank=Бамбуковые доски
 Stripped Bamboo Block=Обтёсанный бамбуковый блок
 Bamboo Block=Бамбуковый блок
-
 ### bamboo_items.lua ###
-
 A bamboo button is a redstone component made out of bamboo which can be pushed to provide redstone power. When pushed, it powers adjacent redstone components for 1 second.=Бамбуковая кнопка это компонент редстоуна, сделанный из бамбука, её можно нажать, чтобы получить сигнал редстоуна. При нажатии она включает соседние компоненты редстоуна на 1 с.
-
 A wooden pressure plate is a redstone component which supplies its surrounding blocks with redstone power while any movable object (including dropped items, players and mobs) rests on top of it.=Нажимная плита это компонент редстоуна, который выдает сигнал редстоуна окружающим его блокам, когда кто-то или что-то находится прямо на нём.
-
-Bamboo=Бамбук
 Bamboo Button=Бамбуковая кнопка
 Bamboo Door=Бамбуковая дверь
 Bamboo Fence=Бамбуковый забор
@@ -32,7 +36,6 @@ Double Bamboo Mosaic Slab=Двойная бамбуковая мозаичная
 Double Bamboo Plank Slab=Двойная плита из бамбуковых досок
 Double Bamboo Slab=Двойная бамбуковая плита
 Double Stripped Bamboo Slab=Двойная обтёсанная бамбуковая плита
-Scaffolding=Строительные леса
 Scaffolding (horizontal)=Строительные леса (горизонтальные)
 Scaffolding block used to climb up or out across areas.=Блок строительных лесов, используемый для подъема вверх или перемещения по другим участкам.
 Stripped Bamboo Slab=Обтёсанная бамбуковая плита

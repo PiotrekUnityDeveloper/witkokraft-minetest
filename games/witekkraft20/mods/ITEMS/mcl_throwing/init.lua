@@ -27,6 +27,7 @@ function mcl_throwing.throw(throw_item, pos, dir, velocity, thrower)
 
 	local itemstring = ItemStack(throw_item):get_name()
 	local obj = minetest.add_entity(pos, entity_mapping[itemstring])
+	if not obj or not obj:get_pos() then return end
 	obj:set_velocity({x=dir.x*velocity, y=dir.y*velocity, z=dir.z*velocity})
 	obj:set_acceleration({x=dir.x*-3, y=-GRAVITY, z=dir.z*-3})
 	if thrower then

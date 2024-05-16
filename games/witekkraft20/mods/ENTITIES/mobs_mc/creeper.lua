@@ -10,8 +10,8 @@ local S = minetest.get_translator("mobs_mc")
 
 
 mcl_mobs.register_mob("mobs_mc:creeper", {
-	description = S("Creeper"),
 	type = "monster",
+	description = S("Creeper"),
 	spawn_class = "hostile",
 	spawn_in_group = 1,
 	hp_min = 20,
@@ -40,8 +40,9 @@ mcl_mobs.register_mob("mobs_mc:creeper", {
 		distance = 16,
 	},
 	makes_footstep_sound = true,
-	walk_velocity = 1.05,
-	run_velocity = 2.0,
+	walk_velocity = .8,
+	run_velocity = 1.3, -- not dead yet slow, imagine fast crepeer...
+	runaway = true,
 	runaway_from = { "mobs_mc:ocelot", "mobs_mc:cat" },
 	attack_type = "explode",
 
@@ -50,21 +51,20 @@ mcl_mobs.register_mob("mobs_mc:creeper", {
 	explosion_strength = 3,
 	explosion_radius = 3.5,
 	explosion_damage_radius = 3.5,
-	explosiontimer_reset_radius = 3,
+	explosiontimer_reset_radius = 6,
 	reach = 3,
-	explosion_timer = 1.5,
+	explosion_timer = 2.5, -- (was 1.5) This was way too fast compare to mc,
 	allow_fuse_reset = true,
 	stop_to_explode = true,
 
 	-- Force-ignite creeper with flint and steel and explode after 1.5 seconds.
 	-- TODO: Make creeper flash after doing this as well.
-	-- TODO: Test and debug this code.
 	on_rightclick = function(self, clicker)
 		if self._forced_explosion_countdown_timer ~= nil then
 			return
 		end
 		local item = clicker:get_wielded_item()
-		if item:get_name() == "mcl_fire:flint_and_steel" then
+		if minetest.get_item_group(item:get_name(), "flint_and_steel") > 0 then
 			if not minetest.is_creative_enabled(clicker:get_player_name()) then
 				-- Wear tool
 				local wdef = item:get_definition()
@@ -94,7 +94,10 @@ mcl_mobs.register_mob("mobs_mc:creeper", {
 			if luaentity and luaentity.name:find("arrow") then
 				local shooter_luaentity = luaentity._shooter and luaentity._shooter:get_luaentity()
 				if shooter_luaentity and (shooter_luaentity.name == "mobs_mc:skeleton" or shooter_luaentity.name == "mobs_mc:stray") then
-					minetest.add_item({x=pos.x, y=pos.y+1, z=pos.z}, "mcl_jukebox:record_" .. math.random(9))
+					local loot = mcl_jukebox.get_random_creeper_loot()
+					if loot then
+						minetest.add_item({x=pos.x, y=pos.y+1, z=pos.z}, loot)
+					end
 				end
 			end
 		end
@@ -172,7 +175,7 @@ mcl_mobs.register_mob("mobs_mc:creeper_charged", {
 	explosion_strength = 6,
 	explosion_radius = 8,
 	explosion_damage_radius = 8,
-	explosiontimer_reset_radius = 3,
+	explosiontimer_reset_radius = 6,
 	reach = 3,
 	explosion_timer = 1.5,
 	allow_fuse_reset = true,
@@ -180,13 +183,12 @@ mcl_mobs.register_mob("mobs_mc:creeper_charged", {
 
 	-- Force-ignite creeper with flint and steel and explode after 1.5 seconds.
 	-- TODO: Make creeper flash after doing this as well.
-	-- TODO: Test and debug this code.
 	on_rightclick = function(self, clicker)
 		if self._forced_explosion_countdown_timer ~= nil then
 			return
 		end
 		local item = clicker:get_wielded_item()
-		if item:get_name() == "mcl_fire:flint_and_steel" then
+		if minetest.get_item_group(item:get_name(), "flint_and_steel") > 0 then
 			if not minetest.is_creative_enabled(clicker:get_player_name()) then
 				-- Wear tool
 				local wdef = item:get_definition()
@@ -216,7 +218,10 @@ mcl_mobs.register_mob("mobs_mc:creeper_charged", {
 			if luaentity and luaentity.name:find("arrow") then
 				local shooter_luaentity = luaentity._shooter and luaentity._shooter:get_luaentity()
 				if shooter_luaentity and (shooter_luaentity.name == "mobs_mc:skeleton" or shooter_luaentity.name == "mobs_mc:stray") then
-					minetest.add_item({x=pos.x, y=pos.y+1, z=pos.z}, "mcl_jukebox:record_" .. math.random(9))
+					local loot = mcl_jukebox.get_random_creeper_loot()
+					if loot then
+						minetest.add_item({x=pos.x, y=pos.y+1, z=pos.z}, loot)
+					end
 				end
 			end
 		end
@@ -264,153 +269,17 @@ mcl_mobs.register_mob("mobs_mc:creeper_charged", {
 	glow = 3,
 })
 
-mcl_mobs:spawn_specific(
-"mobs_mc:creeper",
-"overworld",
-"ground",
-{
-"Mesa",
-"FlowerForest",
-"Swampland",
-"Taiga",
-"ExtremeHills",
-"Jungle",
-"Savanna",
-"BirchForest",
-"MegaSpruceTaiga",
-"MegaTaiga",
-"ExtremeHills+",
-"Forest",
-"Plains",
-"Desert",
-"ColdTaiga",
-"IcePlainsSpikes",
-"SunflowerPlains",
-"IcePlains",
-"RoofedForest",
-"ExtremeHills+_snowtop",
-"MesaPlateauFM_grasstop",
-"JungleEdgeM",
-"ExtremeHillsM",
-"JungleM",
-"BirchForestM",
-"MesaPlateauF",
-"MesaPlateauFM",
-"MesaPlateauF_grasstop",
-"MesaBryce",
-"JungleEdge",
-"SavannaM",
-"FlowerForest_beach",
-"Forest_beach",
-"StoneBeach",
-"ColdTaiga_beach_water",
-"Taiga_beach",
-"Savanna_beach",
-"Plains_beach",
-"ExtremeHills_beach",
-"ColdTaiga_beach",
-"Swampland_shore",
-"JungleM_shore",
-"Jungle_shore",
-"MesaPlateauFM_sandlevel",
-"MesaPlateauF_sandlevel",
-"MesaBryce_sandlevel",
-"Mesa_sandlevel",
-"RoofedForest_ocean",
-"JungleEdgeM_ocean",
-"BirchForestM_ocean",
-"BirchForest_ocean",
-"IcePlains_deep_ocean",
-"Jungle_deep_ocean",
-"Savanna_ocean",
-"MesaPlateauF_ocean",
-"ExtremeHillsM_deep_ocean",
-"Savanna_deep_ocean",
-"SunflowerPlains_ocean",
-"Swampland_deep_ocean",
-"Swampland_ocean",
-"MegaSpruceTaiga_deep_ocean",
-"ExtremeHillsM_ocean",
-"JungleEdgeM_deep_ocean",
-"SunflowerPlains_deep_ocean",
-"BirchForest_deep_ocean",
-"IcePlainsSpikes_ocean",
-"Mesa_ocean",
-"StoneBeach_ocean",
-"Plains_deep_ocean",
-"JungleEdge_deep_ocean",
-"SavannaM_deep_ocean",
-"Desert_deep_ocean",
-"Mesa_deep_ocean",
-"ColdTaiga_deep_ocean",
-"Plains_ocean",
-"MesaPlateauFM_ocean",
-"Forest_deep_ocean",
-"JungleM_deep_ocean",
-"FlowerForest_deep_ocean",
-"MegaTaiga_ocean",
-"StoneBeach_deep_ocean",
-"IcePlainsSpikes_deep_ocean",
-"ColdTaiga_ocean",
-"SavannaM_ocean",
-"MesaPlateauF_deep_ocean",
-"MesaBryce_deep_ocean",
-"ExtremeHills+_deep_ocean",
-"ExtremeHills_ocean",
-"Forest_ocean",
-"MegaTaiga_deep_ocean",
-"JungleEdge_ocean",
-"MesaBryce_ocean",
-"MegaSpruceTaiga_ocean",
-"ExtremeHills+_ocean",
-"Jungle_ocean",
-"RoofedForest_deep_ocean",
-"IcePlains_ocean",
-"FlowerForest_ocean",
-"ExtremeHills_deep_ocean",
-"MesaPlateauFM_deep_ocean",
-"Desert_ocean",
-"Taiga_ocean",
-"BirchForestM_deep_ocean",
-"Taiga_deep_ocean",
-"JungleM_ocean",
-"FlowerForest_underground",
-"JungleEdge_underground",
-"StoneBeach_underground",
-"MesaBryce_underground",
-"Mesa_underground",
-"RoofedForest_underground",
-"Jungle_underground",
-"Swampland_underground",
-"BirchForest_underground",
-"Plains_underground",
-"MesaPlateauF_underground",
-"ExtremeHills_underground",
-"MegaSpruceTaiga_underground",
-"BirchForestM_underground",
-"SavannaM_underground",
-"MesaPlateauFM_underground",
-"Desert_underground",
-"Savanna_underground",
-"Forest_underground",
-"SunflowerPlains_underground",
-"ColdTaiga_underground",
-"IcePlains_underground",
-"IcePlainsSpikes_underground",
-"MegaTaiga_underground",
-"Taiga_underground",
-"ExtremeHills+_underground",
-"JungleM_underground",
-"ExtremeHillsM_underground",
-"JungleEdgeM_underground",
-},
-0,
-7,
-20,
-16500,
-2,
-mcl_vars.mg_overworld_min,
-mcl_vars.mg_overworld_max)
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:creeper",
+	type_of_spawning = "ground",
+	dimension = "overworld",
+	aoc = 2,
+	biomes_except = {
+		"MushroomIslandShore",
+		"MushroomIsland"
+	},
+	chance = 1000,
+})
 
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:creeper", S("Creeper"), "#0da70a", "#000000", 0)

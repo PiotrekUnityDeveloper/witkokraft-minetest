@@ -16,12 +16,13 @@ mcl_mobs.register_mob("mobs_mc:witch", {
 	description = S("Witch"),
 	type = "monster",
 	spawn_class = "hostile",
-	can_despawn = false,
+	can_despawn = true,
 	hp_min = 26,
 	hp_max = 26,
 	xp_min = 5,
 	xp_max = 5,
 	collisionbox = {-0.3, -0.01, -0.3, 0.3, 1.94, 0.3},
+	doll_size_override = { x = 0.95, y = 0.95 },
 	visual = "mesh",
 	mesh = "mobs_mc_witch.b3d",
 	textures = {
@@ -31,8 +32,8 @@ mcl_mobs.register_mob("mobs_mc:witch", {
 	makes_footstep_sound = true,
 	damage = 2,
 	reach = 2,
-	walk_velocity = 1.2,
-	run_velocity = 2.4,
+	walk_velocity = 1,
+	run_velocity = 1.4,
 	pathfinding = 1,
 	group_attack = true,
 	attack_type = "dogshoot",
@@ -86,30 +87,37 @@ mcl_mobs.register_arrow("mobs_mc:potion_arrow", {
 	velocity = 6,
 
 	-- direct hit, no fire... just plenty of pain
-	hit_player = function(self, player)
-		player:punch(self.object, 1.0, {
-			full_punch_interval = 1.0,
-			damage_groups = {fleshy = 2},
-		}, nil)
-	end,
-
-	hit_mob = function(self, mob)
-		mob:punch(self.object, 1.0, {
-			full_punch_interval = 1.0,
-			damage_groups = {fleshy = 2},
-		}, nil)
-	end,
+	hit_player = mcl_mobs.get_arrow_damage_func(2, "mob"),
+	hit_mob = mcl_mobs.get_arrow_damage_func(2, "mob"),
 
 	-- node hit, bursts into flame
 	hit_node = function(self, pos, node)
-		--TODO
+		local p = vector.offset(pos,0,1,0)
+		if minetest.get_node(p).name == "air" then
+			minetest.set_node(p, {name = "mcl_fire:fire"})
+		else
+			local p = minetest.find_node_near(p,1,{"air"})
+			if p then
+				minetest.set_node(p, {name = "mcl_fire:fire"})
+			end
+		end
 	end
 })
 
--- TODO: Spawn when witch works properly <- eventually -j4i
---mcl_mobs:spawn_specific("mobs_mc:witch", { "mcl_core:jungletree", "mcl_core:jungleleaves", "mcl_flowers:fern", "mcl_core:vine" }, {"air"}, 0, minetest.LIGHT_MAX-6, 12, 20000, 2, mobs_mc.water_level-6, mcl_vars.mg_overworld_max)
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:witch",
+	type_of_spawning = "ground",
+	dimension = "overworld",
+	aoc = 9,
+	biomes_except = {
+		"MushroomIslandShore",
+		"MushroomIsland",
+		"DeepDark",
+	},
+	chance = 200,
+})
 
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:witch", S("Witch"), "#340000", "#51a03e", 0, true)
-mcl_mobs:non_spawn_specific("mobs_mc:witch","overworld",0,7)
+
 mcl_wip.register_wip_item("mobs_mc:witch")

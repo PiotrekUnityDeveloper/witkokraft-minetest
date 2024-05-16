@@ -58,7 +58,6 @@ mcl_mobs.register_mob("mobs_mc:sheep", {
 	description = S("Sheep"),
 	type = "animal",
 	spawn_class = "passive",
-	passive = true,
 	hp_min = 8,
 	hp_max = 8,
 	xp_min = 1,
@@ -109,7 +108,7 @@ mcl_mobs.register_mob("mobs_mc:sheep", {
 		stand_start = 81, stand_end = 81,
 		walk_start = 81, walk_end = 121, walk_speed = 45,
 		run_start = 81, run_end = 121, run_speed = 60,
-		eat_start = 121, eat_start = 161, eat_loop = false,
+		eat_start = 121, eat_end = 161, eat_loop = false,
 	},
 	follow = { "mcl_farming:wheat_item" },
 	view_range = 12,
@@ -153,11 +152,11 @@ mcl_mobs.register_mob("mobs_mc:sheep", {
 			end
 		end)
 
-		minetest.after(2.5, function()
-			if self and self.object and self.state == 'eat' and self.health > 0 then
+		minetest.after(2.5, function(self)
+			if self and self.object and  self.object:get_pos() and self.state == 'eat' and self.health > 0 then
 				self.state = "walk"
 			end
-		end)
+		end,self)
 
 	end,
 
@@ -165,7 +164,6 @@ mcl_mobs.register_mob("mobs_mc:sheep", {
 	do_custom = function(self, dtime)
 		if not self.initial_color_set then
 			local r = math.random(0,100000)
-			local textures
 			if r <= 81836 then
 				-- 81.836%
 				self.color = "unicolor_white"
@@ -200,7 +198,7 @@ mcl_mobs.register_mob("mobs_mc:sheep", {
 			self.initial_color_set = true
 		end
 
-		local is_kay27 = self.nametag == "kay27"
+		local is_kay27 = self.object:get_properties().nametag == "kay27"
 
 		if self.color_change_timer then
 			local old_color = self.color
@@ -232,7 +230,7 @@ mcl_mobs.register_mob("mobs_mc:sheep", {
 		local item = clicker:get_wielded_item()
 
 		if self:feed_tame(clicker, 1, true, false) then return end
-		if mcl_mobs:protect(self, clicker) then return end
+		if mcl_mobs.protect(self, clicker) then return end
 
 		if minetest.get_item_group(item:get_name(), "shears") > 0 and not self.gotten and not self.child then
 			self.gotten = true
@@ -282,7 +280,7 @@ mcl_mobs.register_mob("mobs_mc:sheep", {
 			end
 			return
 		end
-		if mcl_mobs:capture_mob(self, clicker, 0, 5, 70, false, nil) then return end
+		if mcl_mobs.capture_mob(self, clicker, 0, 5, 70, false, nil) then return end
 	end,
 	on_breed = function(parent1, parent2)
 		-- Breed sheep and choose a fur color for the child.
@@ -293,8 +291,8 @@ mcl_mobs.register_mob("mobs_mc:sheep", {
 			local color1 = parent1.color
 			local color2 = parent2.color
 
-			local dye1 = mcl_dye.unicolor_to_dye(color1)
-			local dye2 = mcl_dye.unicolor_to_dye(color2)
+			local dye1 = mcl_dyes.unicolor_to_dye(color1)
+			local dye2 = mcl_dyes.unicolor_to_dye(color2)
 			local output
 			-- Check if parent colors could be mixed as dyes
 			if dye1 and dye2 then
@@ -333,56 +331,73 @@ mcl_mobs.register_mob("mobs_mc:sheep", {
 			return false
 		end
 	end,
+	_on_dispense = function(self, dropitem, pos, droppos, dropnode, dropdir)
+		if minetest.get_item_group(dropitem:get_name(), "shears") > 0 then
+			local pos = self.object:get_pos()
+			self.base_texture = { "blank.png", "mobs_mc_sheep.png" }
+			dropitem = self:use_shears({ "blank.png", "mobs_mc_sheep.png" }, dropitem)
+
+			if not self.color then
+				self.color = "unicolor_white"
+			end
+			if self.drops[2] then
+				minetest.add_item(pos, self.drops[2].name .. " " .. math.random(1, 3))
+			end
+			self.drops = {{ name = "mcl_mobitems:mutton", chance = 1, min = 1, max = 2 },}
+			return dropitem
+		end
+		return mcl_mobs.mob_class._on_dispense(self, dropitem, pos, droppos, dropnode, dropdir)
+	end
 })
-mcl_mobs:spawn_specific(
-"mobs_mc:sheep",
-"overworld",
-"ground",
-{
-	"flat",
-	"IcePlainsSpikes",
-	"ColdTaiga",
-	"ColdTaiga_beach",
-	"ColdTaiga_beach_water",
-	"MegaTaiga",
-	"MegaSpruceTaiga",
-	"ExtremeHills",
-	"ExtremeHills_beach",
-	"ExtremeHillsM",
-	"ExtremeHills+",
-	"ExtremeHills+_snowtop",
-	"StoneBeach",
-	"Plains",
-	"Plains_beach",
-	"SunflowerPlains",
-	"Taiga",
-	"Taiga_beach",
-	"Forest",
-	"Forest_beach",
-	"FlowerForest",
-	"FlowerForest_beach",
-	"BirchForest",
-	"BirchForestM",
-	"RoofedForest",
-	"Savanna",
-	"Savanna_beach",
-	"SavannaM",
-	"Jungle",
-	"Jungle_shore",
-	"JungleM",
-	"JungleM_shore",
-	"JungleEdge",
-	"JungleEdgeM",
-	"Swampland",
-	"Swampland_shore"
-},
-9,
-minetest.LIGHT_MAX+1,
-30,
-15000,
-3,
-mcl_vars.mg_overworld_min,
-mcl_vars.mg_overworld_max)
+
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:sheep",
+	type_of_spawning = "ground",
+	dimension = "overworld",
+	aoc = 9,
+	min_height = mobs_mc.water_level + 3,
+	biomes = {
+		"flat",
+		"IcePlainsSpikes",
+		"ColdTaiga",
+		"ColdTaiga_beach",
+		"ColdTaiga_beach_water",
+		"MegaTaiga",
+		"MegaSpruceTaiga",
+		"ExtremeHills",
+		"ExtremeHills_beach",
+		"ExtremeHillsM",
+		"ExtremeHills+",
+		"ExtremeHills+_snowtop",
+		"StoneBeach",
+		"Plains",
+		"Plains_beach",
+		"SunflowerPlains",
+		"Taiga",
+		"Taiga_beach",
+		"Forest",
+		"Forest_beach",
+		"FlowerForest",
+		"FlowerForest_beach",
+		"BirchForest",
+		"BirchForestM",
+		"RoofedForest",
+		"Savanna",
+		"Savanna_beach",
+		"SavannaM",
+		"Jungle",
+		"BambooJungle",
+		"Jungle_shore",
+		"JungleM",
+		"JungleM_shore",
+		"JungleEdge",
+		"JungleEdgeM",
+		"Swampland",
+		"Swampland_shore",
+		"CherryGrove",
+	},
+	chance = 120,
+})
 
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:sheep", S("Sheep"), "#e7e7e7", "#ffb5b5", 0)

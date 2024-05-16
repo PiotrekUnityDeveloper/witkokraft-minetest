@@ -1,15 +1,11 @@
-local math, tonumber, vector, minetest, mcl_mobs = math, tonumber, vector, minetest, mcl_mobs
 local mob_class = mcl_mobs.mob_class
-local validate_vector = mcl_util.validate_vector
-
 local active_particlespawners = {}
-local disable_blood = minetest.settings:get_bool("mobs_disable_blood")
+local enable_blood = minetest.settings:get_bool("mcl_damage_particles", true)
 local DEFAULT_FALL_SPEED = -9.81*1.5
-
-local PATHFINDING = "gowp"
 
 local player_transfer_distance = tonumber(minetest.settings:get("player_transfer_distance")) or 128
 if player_transfer_distance == 0 then player_transfer_distance = math.huge end
+
 
 -- custom particle effects
 function mcl_mobs.effect(pos, amount, texture, min_size, max_size, radius, gravity, glow, go_down)
@@ -120,26 +116,13 @@ function mob_class:mob_sound(soundname, is_opinion, fixed_pitch)
 			pitch = pitch + math.random(-10, 10) * 0.005
 		end
 		-- Should be 0.1 to 0.2 for mobs. Cow and zombie farms loud. At least have cool down.
-		minetest.sound_play(sound, {
-			object = self.object,
-			gain = 1.0,
+		local sound_params = self.sound_params and table.copy(self.sound_params) or {
 			max_hear_distance = self.sounds.distance,
 			pitch = pitch,
-		}, true)
+		}
+		sound_params.object = self.object
+		minetest.sound_play(sound, sound_params, true)
 		self.opinion_sound_cooloff = 1
-	end
-end
-
-function mob_class:step_opinion_sound(dtime)
-	if self.state ~= "attack" and self.state ~= PATHFINDING then
-
-		if self.opinion_sound_cooloff > 0 then
-			self.opinion_sound_cooloff = self.opinion_sound_cooloff - dtime
-		end
-		-- mob plays random sound at times. Should be 120. Zombie and mob farms are ridiculous
-		if math.random(1, 70) == 1 then
-			self:mob_sound("random", true)
-		end
 	end
 end
 
@@ -169,7 +152,7 @@ function mob_class:remove_texture_mod(mod)
 			table.insert(remove, i)
 		end
 	end
-	for i=#remove, 1 do
+	for i=#remove, 1, -1 do
 		table.remove(self.texture_mods, remove[i])
 	end
 	self.object:set_texture_mod(full_mod)
@@ -177,14 +160,14 @@ end
 
 function mob_class:damage_effect(damage)
 	-- damage particles
-	if (not disable_blood) and damage > 0 then
-
+	if enable_blood and damage > 0 then
 		local amount_large = math.floor(damage / 2)
 		local amount_small = damage % 2
 
 		local pos = self.object:get_pos()
 
-		pos.y = pos.y + (self.collisionbox[5] - self.collisionbox[2]) * .5
+		local cbox = self.object:get_properties().collisionbox
+		pos.y = pos.y + (cbox[5] - cbox[2]) * .5
 
 		local texture = "mobs_blood.png"
 		-- full heart damage (one particle for each 2 HP damage)
@@ -254,14 +237,14 @@ function mob_class:set_animation(anim, fixed_frame)
 	elseif not self.object:get_attach() then
 		self.jockey = nil
 	end
-	
+
 	if self.state == "die" and anim ~= "die" and anim ~= "stand" then
 		return
 	end
 
 
 
-	if self.fly and self:flight_check() and anim == "walk" then anim = "fly" end
+	if self:flight_check() and self.fly and anim == "walk" then anim = "fly" end
 
 	self._current_animation = self._current_animation or ""
 
@@ -290,7 +273,7 @@ function mob_class:set_animation(anim, fixed_frame)
 end
 
 -- above function exported for mount.lua
-function mcl_mobs:set_animation(self, anim)
+function mcl_mobs.set_animation(self, anim)
 	self:set_animation(anim)
 end
 
@@ -300,7 +283,7 @@ local function dir_to_pitch(dir)
 	return -math.atan2(-dir.y, xz)
 end
 
-local function who_are_you_looking_at (self, dtime)
+function mob_class:who_are_you_looking_at()
 	local pos = self.object:get_pos()
 
 	local stop_look_at_player_chance = math.random(833/self.curiosity)
@@ -322,15 +305,10 @@ local function who_are_you_looking_at (self, dtime)
 			self._locked_object = nil
 		end
 	elseif not self._locked_object then
-		if mcl_util.check_dtime_timer(self, dtime, "step_look_for_someone", 0.2) then
-			--minetest.log("Change look check: ".. self.name)
-
+		if math.random(1, 30) then
 			-- For the wither this was 20/60=0.33, so probably need to rebalance and divide rates.
 			-- but frequency of check isn't good as it is costly. Making others too infrequent requires testing
-			local chance = 150/self.curiosity
-
-			if chance < 1 then chance = 1 end
-			local look_at_player_chance = math.random(chance)
+			local look_at_player_chance = math.random(math.max(1,20/self.curiosity))
 
 			-- was 5000 but called in loop based on entities. so div by 12 as estimate avg of entities found,
 			-- then div by 20 as less freq lookup
@@ -339,12 +317,10 @@ local function who_are_you_looking_at (self, dtime)
 
 			for _, obj in pairs(minetest.get_objects_inside_radius(pos, 8)) do
 				if obj:is_player() and vector.distance(pos,obj:get_pos()) < 4 then
-					--minetest.log("Change look to player: ".. self.name)
 					self._locked_object = obj
 					break
 				elseif obj:is_player() or (obj:get_luaentity() and obj:get_luaentity().name == self.name and self ~= obj:get_luaentity()) then
 					if look_at_player then
-						--minetest.log("Change look to mob: ".. self.name)
 						self._locked_object = obj
 						break
 					end
@@ -358,11 +334,10 @@ end
 function mob_class:check_head_swivel(dtime)
 	if not self.head_swivel or type(self.head_swivel) ~= "string" then return end
 
-
-	who_are_you_looking_at (self, dtime)
+	self:who_are_you_looking_at()
 
 	local final_rotation = vector.zero()
-	local oldp,oldr = self.object:get_bone_position(self.head_swivel)
+	local _,oldr = self.object:get_bone_position(self.head_swivel)
 
 	if self._locked_object and (self._locked_object:is_player() or self._locked_object:get_luaentity()) and self._locked_object:get_hp() > 0 then
 		local _locked_object_eye_height = 1.5
@@ -375,8 +350,6 @@ function mob_class:check_head_swivel(dtime)
 		if _locked_object_eye_height then
 
 			local self_rot = self.object:get_rotation()
-			-- If a mob is attached, should we really be messing with what they are looking at?
-			-- Should this be excluded?
 			if self.object:get_attach() and self.object:get_attach():get_rotation() then
 				self_rot = self.object:get_attach():get_rotation()
 			end
@@ -406,14 +379,10 @@ function mob_class:check_head_swivel(dtime)
 		end
 	elseif not self._locked_object and math.abs(oldr.y) > 3 and math.abs(oldr.x) < 3 then
 		final_rotation = vector.multiply(oldr, 0.9)
-	else
-		--final_rotation = vector.new(0,0,0)
 	end
 
 	mcl_util.set_bone_position(self.object,self.head_swivel, vector.new(0,self.bone_eye_height,self.horizontal_head_height), final_rotation)
 end
-
-
 
 function mob_class:set_animation_speed()
 	local v = self.object:get_velocity()
@@ -429,8 +398,7 @@ function mob_class:set_animation_speed()
 				self.object:set_animation_frame_speed(25)
 			end
 		end
-		--set_speed
-		if validate_vector(self.acc) then
+		if self.acc and mcl_mobs.check_vector(self.acc) then
 			self.object:add_velocity(self.acc)
 		end
 	end

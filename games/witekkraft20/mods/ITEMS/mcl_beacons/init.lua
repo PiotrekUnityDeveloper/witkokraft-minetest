@@ -12,8 +12,6 @@ mcl_beacons = {
 	blocks ={"mcl_core:diamondblock","mcl_core:ironblock","mcl_core:goldblock","mcl_core:emeraldblock","mcl_nether:netheriteblock"},
 	fuel = {"mcl_core:diamond","mcl_core:emerald","mcl_core:iron_ingot","mcl_core:gold_ingot","mcl_nether:netherite_ingot"}
 }
-local beacon_blocklist = mcl_beacons.blocks
-local beacon_fuellist = mcl_beacons.fuel
 
 local pallete_order = {
 	glass_cyan		 		= 1,
@@ -88,6 +86,14 @@ local function get_beacon_beam(glass_nodename)
 	return pallete_order[glass_string]
 end
 
+local function set_node_if_clear(pos,node)
+	local tn = minetest.get_node(pos)
+	local def = minetest.registered_nodes[tn.name]
+	if tn.name == "air" or (def and def.buildable_to) then
+		minetest.set_node(pos,node)
+	end
+end
+
 minetest.register_node("mcl_beacons:beacon_beam", {
 	tiles = {"blank.png^[noalpha^[colorize:#b8bab9"},
 	drawtype = "nodebox",
@@ -148,7 +154,7 @@ local function remove_beacon_beam(pos)
 				minetest.get_voxel_manip():read_from_map({x=pos.x,y=y,z=pos.z}, {x=pos.x,y=y,z=pos.z})
 				node = minetest.get_node({x=pos.x,y=y,z=pos.z})
 			end
-			
+
 			if node.name == "mcl_beacons:beacon_beam" then
 				minetest.remove_node({x=pos.x,y=y,z=pos.z})
 			end
@@ -162,7 +168,7 @@ local function beacon_blockcheck(pos)
 		for block_x = (pos.x-y_offset),(pos.x+y_offset) do
 			for block_z = (pos.z-y_offset),(pos.z+y_offset) do
 				local valid_block = false --boolean which stores if block is valid or not
-				for _, beacon_block in pairs(beacon_blocklist) do
+				for _, beacon_block in pairs(mcl_beacons.blocks) do
 					if beacon_block == minetest.get_node({x=block_x,y=block_y,z=block_z}).name and not valid_block then --is the block in the pyramid a valid beacon block
 						valid_block =true
 					end
@@ -230,12 +236,30 @@ local function apply_effects_to_all_players(pos)
 	end
 end
 
+local function allow_metadata_inventory_take(pos, listname, index, stack, player)
+	local name = player:get_player_name()
+	if minetest.is_protected(pos, name) then
+		minetest.record_protection_violation(pos, name)
+		return 0
+	end
+	return stack:get_count()
+end
+
+local function allow_metadata_inventory_put(pos, listname, index, stack, player)
+	return allow_metadata_inventory_take(pos, listname, index, stack, player)
+end
+
+local function allow_metadata_inventory_move(pos, from_list, from_index, to_list, to_index, count, player)
+	return 0
+end
+
 minetest.register_node("mcl_beacons:beacon", {
 	description = S"Beacon",
 	drawtype = "mesh",
 	collisionbox = {-0.5, -0.5, -0.5, 0.5, 0.5, 0.5},
 	mesh = "mcl_beacon.b3d",
 	tiles = {"beacon_UV.png"},
+	is_ground_content = false,
 	use_texture_alpha = "clip",
 	on_construct = function(pos)
 		local meta = minetest.get_meta(pos)
@@ -253,6 +277,9 @@ minetest.register_node("mcl_beacons:beacon", {
 		end
 		remove_beacon_beam(pos)
 	end,
+	allow_metadata_inventory_put = allow_metadata_inventory_put,
+	allow_metadata_inventory_move = allow_metadata_inventory_move,
+	allow_metadata_inventory_take = allow_metadata_inventory_take,
 	on_receive_fields = function(pos, formname, fields, sender)
 		if fields.swiftness or fields.regeneration or fields.leaping or fields.strenght then
 			local sender_name = sender:get_player_name()
@@ -267,14 +294,14 @@ minetest.register_node("mcl_beacons:beacon", {
 			local meta = minetest.get_meta(pos)
 			local inv = meta:get_inventory()
 			local input = inv:get_stack("input",1)
-		
+
 			if input:is_empty() then
 				return
 			end
 
 			local valid_item = false
 
-			for _, item in ipairs(beacon_fuellist) do
+			for _, item in ipairs(mcl_beacons.fuel) do
 				if input:get_name() == item then
 					valid_item = true
 				end
@@ -321,16 +348,16 @@ minetest.register_node("mcl_beacons:beacon", {
 				awards.unlock(sender:get_player_name(),"mcl:beacon")
 				input:take_item()
 				inv:set_stack("input",1,input)
-				
+
 				local beam_palette_index = 0
 				remove_beacon_beam(pos)
 				for y = pos.y +1, pos.y + 201 do
 					local node = minetest.get_node({x=pos.x,y=y,z=pos.z})
-					if node.name == ignore then
+					if node.name == "ignore" then
 						minetest.get_voxel_manip():read_from_map({x=pos.x,y=y,z=pos.z}, {x=pos.x,y=y,z=pos.z})
 						node = minetest.get_node({x=pos.x,y=y,z=pos.z})
 					end
-					
+
 
 					if  minetest.get_item_group(node.name, "glass") ~= 0 or minetest.get_item_group(node.name,"material_glass") ~= 0 then
 						beam_palette_index = get_beacon_beam(node.name)
@@ -354,12 +381,12 @@ minetest.register_node("mcl_beacons:beacon", {
 mesecon.register_mvps_stopper("mcl_beacons:beacon")
 mcl_wip.register_wip_item("mcl_beacons:beacon")
 
-function register_beaconblock (itemstring)--API function for other mods
-	table.insert(beacon_blocklist, itemstring)
+function mcl_beacons.register_beaconblock (itemstring)--API function for other mods
+	table.insert(mcl_beacons.blocks, itemstring)
 end
 
-function register_beaconfuel(itemstring)
-	table.insert(beacon_fuellist, itemstring)
+function mcl_beacons.register_beaconfuel(itemstring)
+	table.insert(mcl_beacons.fuel, itemstring)
 end
 
 minetest.register_abm{
@@ -372,15 +399,15 @@ minetest.register_abm{
 		local node_above = minetest.get_node({x=pos.x,y=pos.y+1,z=pos.z})
 		local node_current = minetest.get_node(pos)
 
-		if node_below.name == "air" then
+		if node_below.name ~= "mcl_beacons:beacon" and minetest.get_item_group(node_below.name,"material_glass") == 0 and node_below.name ~= "mcl_beacons:beacon_beam" then
 			if minetest.get_node({x=pos.x,y=pos.y-2,z=pos.z}).name == "mcl_beacons:beacon" then
-				minetest.set_node({x=pos.x,y=pos.y-1,z=pos.z},{name="mcl_beacons:beacon_beam",param2=0})
+				set_node_if_clear({x=pos.x,y=pos.y-1,z=pos.z},{name="mcl_beacons:beacon_beam",param2=0})
 			end
 			remove_beacon_beam(pos)
 		elseif node_above.name == "air" or (node_above.name == "mcl_beacons:beacon_beam" and node_above.param2 ~= node_current.param2) then
-			minetest.set_node({x=pos.x,y=pos.y+1,z=pos.z},{name="mcl_beacons:beacon_beam",param2=node_current.param2})
+			set_node_if_clear({x=pos.x,y=pos.y+1,z=pos.z},{name="mcl_beacons:beacon_beam",param2=node_current.param2})
 		elseif minetest.get_item_group(node_above.name, "glass") ~= 0 or minetest.get_item_group(node_above.name,"material_glass") ~= 0 then
-			minetest.set_node({x=pos.x,y=pos.y+2,z=pos.z},{name="mcl_beacons:beacon_beam",param2=get_beacon_beam(node_above.name)})
+			set_node_if_clear({x=pos.x,y=pos.y+2,z=pos.z},{name="mcl_beacons:beacon_beam",param2=get_beacon_beam(node_above.name)})
 		end
 	end,
 }
@@ -397,7 +424,7 @@ minetest.register_abm{
 
 minetest.register_craft({
 	output = "mcl_beacons:beacon",
-	recipe = { 
+	recipe = {
 		{"mcl_core:glass", "mcl_core:glass", "mcl_core:glass"},
 		{"mcl_core:glass", "mcl_mobitems:nether_star", "mcl_core:glass"},
 		{"mcl_core:obsidian", "mcl_core:obsidian", "mcl_core:obsidian"}

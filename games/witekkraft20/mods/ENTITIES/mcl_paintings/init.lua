@@ -5,17 +5,7 @@ dofile(minetest.get_modpath(modname).."/paintings.lua")
 
 local S = minetest.get_translator(modname)
 
-local math = math
-
 local wood = "[combine:16x16:-192,0=mcl_paintings_paintings.png"
-
-local function is_protected(pos, name)
-	if minetest.is_protected(pos, name) then
-		minetest.record_protection_violation(pos, name)
-		return true
-	end
-	return false
-end
 
 -- Check if there's a painting for provided painting size.
 -- If yes, returns the arguments.
@@ -68,24 +58,6 @@ local function get_random_painting(x, y)
 	return get_painting(x, y, r), r
 end
 
---[[local function size_to_minmax(size)
-	local min, max
-	if size == 2 then
-		min = -0.5
-		max = 1.5
-	elseif size == 3 then
-		min = -1.5
-		max = 1.5
-	elseif size == 4 then
-		min = -1.5
-		max = 2.5
-	else
-		min = -0.5
-		max = 0.5
-	end
-	return min, max
-end]]
-
 local function size_to_minmax_entity(size)
 	return -size/2, size/2
 end
@@ -132,13 +104,15 @@ local function set_entity(object)
 end
 
 minetest.register_entity("mcl_paintings:painting", {
-	visual = "cube",
-	visual_size = { x=0.999, y=0.999, z=1/32 },
-	selectionbox = { -1/64, -0.5, -0.5, 1/64, 0.5, 0.5 },
-	physical = false,
-	collide_with_objects = false,
-	textures = { wood, wood, wood, wood, wood, wood },
-	hp_max = 1,
+	initial_properties = {
+		visual = "cube",
+		visual_size = { x=0.999, y=0.999, z=1/32 },
+		selectionbox = { -1/64, -0.5, -0.5, 1/64, 0.5, 0.5 },
+		physical = false,
+		collide_with_objects = false,
+		textures = { wood, wood, wood, wood, wood, wood },
+		hp_max = 1,
+	},
 
 	_motive = 0,
 	_pos = nil,
@@ -177,11 +151,16 @@ minetest.register_entity("mcl_paintings:painting", {
 			if not pos then
 				pos = self.object:get_pos()
 			end
-			if not minetest.is_protected(pos, kname) then
-				self.object:remove()
-				if not minetest.is_creative_enabled(kname) then
-					minetest.add_item(pos, "mcl_paintings:painting")
-				end
+			if not mcl_util.check_position_protection(pos, puncher) then
+				-- Slightly delay removing the painting so nodes behind it won't be dug (particularly in creative mode)
+				minetest.after(0.15, function(object)
+					if object and object:get_pos() then
+						object:remove()
+					end
+					if not minetest.is_creative_enabled(kname) then
+						minetest.add_item(pos, "mcl_paintings:painting")
+					end
+				end, self.object)
 			end
 		end
 	end,
@@ -195,12 +174,8 @@ minetest.register_craftitem("mcl_paintings:painting", {
 			return itemstack
 		end
 
-		local node = minetest.get_node(pointed_thing.under)
-		if placer and not placer:get_player_control().sneak then
-			if minetest.registered_nodes[node.name] and minetest.registered_nodes[node.name].on_rightclick then
-				return minetest.registered_nodes[node.name].on_rightclick(pointed_thing.under, node, placer, itemstack) or itemstack
-			end
-		end
+		local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+		if rc then return rc end
 
 		local dir = vector.subtract(pointed_thing.above, pointed_thing.under)
 		dir = vector.normalize(dir)
@@ -257,7 +232,6 @@ minetest.register_craftitem("mcl_paintings:painting", {
 			local _, exmax = size_to_minmax_entity(xsize)
 			local _, eymax = size_to_minmax_entity(ysize)
 			local pposa = vector.subtract(ppos, vector.multiply(dir, 0.5-5/256))
-			local name = placer:get_player_name()
 			local pexmax
 			local peymax = eymax - 0.5
 			local n
@@ -268,7 +242,7 @@ minetest.register_craftitem("mcl_paintings:painting", {
 				pexmax = exmax - 0.5
 				n = 1
 			end
-			if is_protected(ppos, name) then return itemstack end
+			if mcl_util.check_position_protection(ppos, placer) then return itemstack end
 			local ppos2
 			if dir.z ~= 0 then
 				pposa = vector.add(pposa, {x=pexmax, y=peymax, z=0})
@@ -277,7 +251,7 @@ minetest.register_craftitem("mcl_paintings:painting", {
 				pposa = vector.add(pposa, {x=0, y=peymax, z=pexmax})
 				ppos2 = vector.add(ppos, {x = 0, y = ysize-1, z = (xsize-1)*n})
 			end
-			if is_protected(ppos2, name) then return itemstack end
+			if mcl_util.check_position_protection(ppos2, placer) then return itemstack end
 			local painting, pid = get_random_painting(xsize, ysize)
 			if not painting then
 				minetest.log("error", "[mcl_paintings] No painting found for size "..xsize..","..ysize.."!")

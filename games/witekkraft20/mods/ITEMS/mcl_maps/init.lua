@@ -4,21 +4,16 @@ local modname = minetest.get_current_modname()
 local modpath = minetest.get_modpath(modname)
 local S = minetest.get_translator(modname)
 
-local math = math
-local vector = vector
-local table = table
-local pairs = pairs
-
-local pos_to_string = minetest.pos_to_string
-local string_to_pos = minetest.string_to_pos
-local get_item_group = minetest.get_item_group
-local dynamic_add_media = minetest.dynamic_add_media
-local get_connected_players = minetest.get_connected_players
-
 local storage = minetest.get_mod_storage()
 local worldpath = minetest.get_worldpath()
 local map_textures_path = worldpath .. "/mcl_maps/"
 --local last_finished_id = storage:get_int("next_id") - 1
+
+-- TODO: when < minetest 5.9 isn't supported anymore, remove this variable check and replace all occurences of [hud_elem_type_field] with type
+local hud_elem_type_field = "type"
+if not minetest.features.hud_def_type_field then
+	hud_elem_type_field = "hud_elem_type"
+end
 
 minetest.mkdir(map_textures_path)
 
@@ -30,9 +25,7 @@ local function load_json_file(name)
 end
 
 local texture_colors = load_json_file("colors")
-local palettes_grass = load_json_file("palettes_grass")
-local palettes_foliage = load_json_file("palettes_foliage")
-local palettes_water = load_json_file("palettes_water")
+local palettes = load_json_file("palettes")
 
 local color_cache = {}
 
@@ -51,8 +44,8 @@ function mcl_maps.create_map(pos)
 	storage:set_int("next_id", next_id + 1)
 	local id = tostring(next_id)
 	meta:set_string("mcl_maps:id", id)
-	meta:set_string("mcl_maps:minp", pos_to_string(minp))
-	meta:set_string("mcl_maps:maxp", pos_to_string(maxp))
+	meta:set_string("mcl_maps:minp", minetest.pos_to_string(minp))
+	meta:set_string("mcl_maps:maxp", minetest.pos_to_string(maxp))
 	tt.reload_itemstack_description(itemstack)
 
 	creating_maps[id] = true
@@ -83,7 +76,9 @@ function mcl_maps.create_map(pos)
 							local def = minetest.registered_nodes[nodename]
 							if def then
 								local texture
-								if def.palette then
+								if def.palette and def.palette ~= "" and ( def.paramtype2 == "color" or
+									def.paramtype2 == "colorwallmounted" or def.paramtype2 == "colorfacedir" or
+									def.paramtype2 == "color4dir" ) then
 									texture = def.palette
 								elseif def.tiles then
 									texture = def.tiles[1]
@@ -94,16 +89,12 @@ function mcl_maps.create_map(pos)
 								if texture then
 									texture = texture:match("([^=^%^]-([^.]+))$"):split("^")[1]
 								end
-								if def.palette == "mcl_core_palette_grass.png" then
-									local palette = palettes_grass[texture]
+								if def.palette and def.palette ~= "" and ( def.paramtype2 == "color" or
+									def.paramtype2 == "colorwallmounted" or def.paramtype2 == "colorfacedir" or
+									def.paramtype2 == "color4dir" ) then
+									local palette = palettes[texture]
 									color = palette and { palette = palette }
-								elseif def.palette == "mcl_core_palette_foliage.png" then
-									local palette = palettes_foliage[texture]
-									color = palette and { palette = palette }
-								elseif def.palette == "mcl_core_palette_water.png" then
-									local palette = palettes_water[texture]
-									color = palette and { palette = palette }
-								else
+								elseif texture_colors then
 									color = texture_colors[texture]
 								end
 							end
@@ -148,7 +139,7 @@ function mcl_maps.create_map(pos)
 end
 
 function mcl_maps.load_map(id, callback)
-	if id == "" or creating_maps[id] then
+	if not id or id == "" or creating_maps[id] then
 		return false
 	end
 
@@ -161,7 +152,7 @@ function mcl_maps.load_map(id, callback)
 			-- minetest.dynamic_add_media() blocks in
 			-- Minetest 5.3 and 5.4 until media loads
 			loaded_maps[id] = true
-			result = dynamic_add_media(map_textures_path .. texture, function()
+			result = minetest.dynamic_add_media(map_textures_path .. texture, function()
 			end)
 			if callback then
 				callback(texture)
@@ -169,7 +160,7 @@ function mcl_maps.load_map(id, callback)
 		else
 			-- minetest.dynamic_add_media() never blocks
 			-- in Minetest 5.5, callback runs after load
-			result = dynamic_add_media(map_textures_path .. texture, function()
+			result = minetest.dynamic_add_media(map_textures_path .. texture, function()
 				loaded_maps[id] = true
 				if callback then
 					callback(texture)
@@ -224,7 +215,6 @@ minetest.register_craftitem("mcl_maps:empty_map", {
 	inventory_image = "mcl_maps_map_empty.png",
 	on_place = fill_map,
 	on_secondary_use = fill_map,
-	stack_max = 64,
 })
 
 local filled_def = {
@@ -233,7 +223,6 @@ local filled_def = {
 	_doc_items_longdesc = S("When created, the map saves the nearby area as an image that can be viewed any time by holding the map."),
 	_doc_items_usagehelp = S("Hold the map in your hand. This will display a map on your screen."),
 	inventory_image = "mcl_maps_map_filled.png^(mcl_maps_map_filled_markings.png^[colorize:#000000)",
-	stack_max = 64,
 	groups = { not_in_creative_inventory = 1, filled_map = 1, tool = 1 },
 }
 
@@ -246,6 +235,7 @@ filled_wield_def.wield_scale = { x = 1, y = 1, z = 1 }
 filled_wield_def.paramtype = "light"
 filled_wield_def.drawtype = "mesh"
 filled_wield_def.node_placement_prediction = ""
+filled_wield_def.range = minetest.registered_items[""].range
 filled_wield_def.on_place = mcl_util.call_on_rightclick
 filled_wield_def._mcl_wieldview_item = "mcl_maps:filled_map"
 
@@ -278,19 +268,15 @@ end
 
 local old_add_item = minetest.add_item
 function minetest.add_item(pos, stack)
-	if not pos then
-		minetest.log("warning", "Trying to add item with missing pos: " .. tostring(stack))
-		return
-	end
 	stack = ItemStack(stack)
-	if get_item_group(stack:get_name(), "filled_map") > 0 then
+	if minetest.get_item_group(stack:get_name(), "filled_map") > 0 then
 		stack:set_name("mcl_maps:filled_map")
 	end
 	return old_add_item(pos, stack)
 end
 
 tt.register_priority_snippet(function(itemstring, _, itemstack)
-	if itemstack and get_item_group(itemstring, "filled_map") > 0 then
+	if itemstack and minetest.get_item_group(itemstring, "filled_map") > 0 then
 		local id = itemstack:get_meta():get_string("mcl_maps:id")
 		if id ~= "" then
 			return "#" .. id, mcl_colors.GRAY
@@ -316,7 +302,7 @@ minetest.register_craft({
 local function on_craft(itemstack, player, old_craft_grid, craft_inv)
 	if itemstack:get_name() == "mcl_maps:filled_map" then
 		for _, stack in pairs(old_craft_grid) do
-			if get_item_group(stack:get_name(), "filled_map") > 0 then
+			if minetest.get_item_group(stack:get_name(), "filled_map") > 0 then
 				itemstack:get_meta():from_table(stack:get_meta():to_table())
 				return itemstack
 			end
@@ -332,7 +318,7 @@ local huds = {}
 
 minetest.register_on_joinplayer(function(player)
 	local map_def = {
-		hud_elem_type = "image",
+		[hud_elem_type_field] = "image",
 		text = "blank.png",
 		position = { x = 0.75, y = 0.8 },
 		alignment = { x = 0, y = -1 },
@@ -353,7 +339,7 @@ minetest.register_on_leaveplayer(function(player)
 end)
 
 minetest.register_globalstep(function(dtime)
-	for _, player in pairs(get_connected_players()) do
+	for _, player in pairs(minetest.get_connected_players()) do
 		local wield = player:get_wielded_item()
 		local texture = mcl_maps.load_map_item(wield)
 		local hud = huds[player]
@@ -373,8 +359,8 @@ minetest.register_globalstep(function(dtime)
 
 			local pos = vector.round(player:get_pos())
 			local meta = wield:get_meta()
-			local minp = string_to_pos(meta:get_string("mcl_maps:minp"))
-			local maxp = string_to_pos(meta:get_string("mcl_maps:maxp"))
+			local minp = minetest.string_to_pos(meta:get_string("mcl_maps:minp"))
+			local maxp = minetest.string_to_pos(meta:get_string("mcl_maps:maxp"))
 
 			local marker = "mcl_maps_player_arrow.png"
 

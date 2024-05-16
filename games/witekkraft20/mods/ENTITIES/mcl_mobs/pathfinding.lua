@@ -1,11 +1,10 @@
-local math, vector, minetest, mcl_mobs = math, vector, minetest, mcl_mobs
 local mob_class = mcl_mobs.mob_class
 
 local PATHFINDING_FAIL_THRESHOLD = 100 -- no. of ticks to fail before giving up. 20p/s. 5s helps them get through door
-local PATHFINDING_FAIL_WAIT = 30 -- how long to wait before trying to path again
+local PATHFINDING_FAIL_WAIT = 10 -- how long to wait before trying to path again
 local PATHING_START_DELAY = 4 -- When doing non-prioritised pathing, how long to wait until last mob pathed
 
-local PATHFINDING_SEARCH_DISTANCE = 50 -- How big the square is that pathfinding will look
+local PATHFINDING_SEARCH_DISTANCE = 64 -- How big the square is that pathfinding will look
 
 local PATHFINDING = "gowp"
 
@@ -75,12 +74,11 @@ local function generate_enriched_path(wp_in, door_open_pos, door_close_pos, cur_
 	local wp_out = {}
 
 	-- TODO  Just pass in door position and the index before is open, the index after is close
-	local current_door_index = -1
 
 	for i, cur_pos in pairs(wp_in) do
 		local action = nil
 
-		local cur_pos_to_add = vector.add(cur_pos, one_down)
+		local cur_pos_to_add
 		if door_open_pos and vector.equals (cur_pos, door_open_pos) then
 			mcl_log ("Door open match")
 			action = {type = "door", action = "open", target = cur_door_pos}
@@ -114,7 +112,8 @@ local last_pathing_time = os.time()
 
 function mob_class:ready_to_path(prioritised)
 	mcl_log("Check ready to path")
-	if self._pf_last_failed and (os.time() - self._pf_last_failed) < PATHFINDING_FAIL_WAIT then
+	-- Ensure mobs stuck in the same place don't all retrigger at the same time
+	if self._pf_last_failed and (os.time() - self._pf_last_failed) < (PATHFINDING_FAIL_WAIT + math.random(1, PATHFINDING_FAIL_WAIT)) then
 		mcl_log("Not ready to path as last fail is less than threshold: " .. (os.time() - self._pf_last_failed))
 		return false
 	else
@@ -135,11 +134,11 @@ local function calculate_path_through_door (p, cur_door_pos, t)
 		mcl_log("Plot route through door from pos: " .. minetest.pos_to_string(p))
 	end
 
-	local enriched_path = nil
+	local enriched_path
 	local wp, prospective_wp
 
-	local pos_closest_to_door = nil
-	local other_side_of_door = nil
+	local pos_closest_to_door
+	local other_side_of_door
 
 	if cur_door_pos then
 		mcl_log("Found a door near: " .. minetest.pos_to_string(cur_door_pos))
@@ -280,10 +279,10 @@ function mob_class:gopath(target, callback_arrived, prioritised)
 		end
 		self.current_target = current_location
 		self.waypoints = wp
-		self.state = PATHFINDING
+		self:set_state(PATHFINDING)
 		return true
 	else
-		self.state = "walk"
+		self:set_state("walk")
 		self.waypoints = nil
 		self.current_target = nil
 		--	minetest.log("no path found")
@@ -291,10 +290,6 @@ function mob_class:gopath(target, callback_arrived, prioritised)
 end
 
 function mob_class:interact_with_door(action, target)
-	local p = self.object:get_pos()
-	--local t = minetest.get_timeofday()
-	--local dd = minetest.find_nodes_in_area(vector.offset(p,-1,-1,-1),vector.offset(p,1,1,1),{"group:door"})
-	--for _,d in pairs(dd) do
 	if target then
 		mcl_log("Door target is: ".. minetest.pos_to_string(target))
 
@@ -302,7 +297,8 @@ function mob_class:interact_with_door(action, target)
 		if n.name:find("_b_") or n.name:find("_t_") then
 			mcl_log("Door")
 			local def = minetest.registered_nodes[n.name]
-			local closed = n.name:find("_b_1") or n.name:find("_t_1")
+			local meta = minetest.get_meta(target)
+			local closed = meta:get_int("is_open") == 0
 			--if self.state == PATHFINDING then
 				if closed and action == "open" and def.on_rightclick then
 					mcl_log("Open door")
@@ -356,7 +352,7 @@ function mob_class:check_gowp(dtime)
 		self.waypoints = nil
 		self._target = nil
 		self.current_target = nil
-		self.state = "stand"
+		self:set_state("stand")
 		self.order = "stand"
 		self.object:set_velocity({x = 0, y = 0, z = 0})
 		self.object:set_acceleration({x = 0, y = 0, z = 0})
@@ -392,7 +388,7 @@ function mob_class:check_gowp(dtime)
 		local failed_attempts = self.current_target["failed_attempts"]
 		if failed_attempts >= PATHFINDING_FAIL_THRESHOLD then
 			mcl_log("Failed to reach position (" .. minetest.pos_to_string(self.current_target["pos"]) .. ") too many times. Abandon route. Times tried: " .. failed_attempts)
-			self.state = "stand"
+			self:set_state("stand")
 			self.current_target = nil
 			self.waypoints = nil
 			self._target = nil

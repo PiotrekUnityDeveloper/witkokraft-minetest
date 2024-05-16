@@ -5,3 +5,6 @@ Packed Mud=
 Packed mud is a decorative block used to craft mud bricks.=
 Mud Bricks=
 Decorative block crafted from packed mud.=
+Mud Brick Stair=
+Mud Brick Slab=
+Double Mud Brick Slab=

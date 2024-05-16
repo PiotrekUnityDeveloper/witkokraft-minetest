@@ -31,11 +31,14 @@ local place_frequency_min = 235
 local place_frequency_max = 245
 
 minetest.register_entity("mobs_mc:ender_eyes", {
-	visual = "mesh",
-	mesh = "mobs_mc_spider.b3d",
-	visual_size = {x=1.01/3, y=1.01/3},
-	textures = {
-		"mobs_mc_enderman_eyes.png",
+	initial_properties = {
+		visual = "mesh",
+		mesh = "mobs_mc_spider.b3d",
+		visual_size = {x=1.01/3, y=1.01/3},
+		glow = 50,
+		textures = {
+			"mobs_mc_enderman_eyes.png",
+		},
 	},
 	on_step = function(self)
 		if self and self.object then
@@ -44,7 +47,6 @@ minetest.register_entity("mobs_mc:ender_eyes", {
 			end
 		end
 	end,
-	glow = 50,
 })
 
 local S = minetest.get_translator("mobs_mc")
@@ -258,7 +260,6 @@ mcl_mobs.register_mob("mobs_mc:enderman", {
 	description = S("Enderman"),
 	type = "monster",
 	spawn_class = "passive",
-	can_despawn = true,
 	passive = true,
 	pathfinding = 1,
 	hp_min = 40,
@@ -266,11 +267,14 @@ mcl_mobs.register_mob("mobs_mc:enderman", {
 	xp_min = 5,
 	xp_max = 5,
 	collisionbox = {-0.3, -0.01, -0.3, 0.3, 2.89, 0.3},
+	doll_size_override = { x = 0.8, y = 0.8 },
 	visual = "mesh",
 	mesh = "mobs_mc_enderman.b3d",
 	textures = create_enderman_textures(),
 	visual_size = {x=3, y=3},
 	makes_footstep_sound = true,
+	can_despawn = true,
+	spawn_in_group = 2,
 	on_spawn = function(self)
 		local spider_eyes=false
 		for n = 1, #self.object:get_children() do
@@ -292,8 +296,8 @@ mcl_mobs.register_mob("mobs_mc:enderman", {
 		random = {name="mobs_mc_enderman_random", gain=0.5},
 		distance = 16,
 	},
-	walk_velocity = 0.2,
-	run_velocity = 3.4,
+	walk_velocity = 0.5, -- ( was 0.2 ) he isnt that slow in mc?
+	run_velocity = 2.75, -- runs fast!
 	damage = 7,
 	reach = 2,
 	particlespawners = psdefs,
@@ -374,12 +378,7 @@ mcl_mobs.register_mob("mobs_mc:enderman", {
 		for n = 1, #objs do
 			local obj = objs[n]
 			if obj then
-				if minetest.is_player(obj) then
-					-- Warp from players during day.
-					--if (minetest.get_timeofday() * 24000) > 5001 and (minetest.get_timeofday() * 24000) < 19000 then
-					--	self:teleport(nil)
-					--end
-				else
+				if not minetest.is_player(obj) then
 					local lua = obj:get_luaentity()
 					if lua then
 						if lua.name == "mcl_bows:arrow_entity" or lua.name == "mcl_throwing:snowball_entity" then
@@ -446,7 +445,6 @@ mcl_mobs.register_mob("mobs_mc:enderman", {
 				end
 			end
 		end
-
 		-- ATTACK ENDERMITE
 		local enderpos = self.object:get_pos()
 		if math.random(1,140) == 1 then
@@ -462,7 +460,6 @@ mcl_mobs.register_mob("mobs_mc:enderman", {
 				end
 			end
 		end
-
 		-- TAKE AND PLACE STUFF BEHAVIOUR BELOW.
 		if not mobs_griefing then
 			return
@@ -653,206 +650,59 @@ mcl_mobs.register_mob("mobs_mc:enderman", {
 })
 
 -- End spawn
-mcl_mobs:spawn_specific(
-"mobs_mc:enderman",
-"end",
-"ground",
-{
-"End",
-"EndIsland",
-"EndMidlands",
-"EndBarrens",
-"EndBorder",
-"EndSmallIslands"
-},
-0,
-minetest.LIGHT_MAX+1,
-30,
-3000,
-12,
-mcl_vars.mg_end_min,
-mcl_vars.mg_end_max)
--- Overworld spawn
-mcl_mobs:spawn_specific(
-"mobs_mc:enderman",
-"overworld",
-"ground",
-{
-"Mesa",
-"FlowerForest",
-"Swampland",
-"Taiga",
-"ExtremeHills",
-"Jungle",
-"Savanna",
-"BirchForest",
-"MegaSpruceTaiga",
-"MegaTaiga",
-"ExtremeHills+",
-"Forest",
-"Plains",
-"Desert",
-"ColdTaiga",
-"IcePlainsSpikes",
-"SunflowerPlains",
-"IcePlains",
-"RoofedForest",
-"ExtremeHills+_snowtop",
-"MesaPlateauFM_grasstop",
-"JungleEdgeM",
-"ExtremeHillsM",
-"JungleM",
-"BirchForestM",
-"MesaPlateauF",
-"MesaPlateauFM",
-"MesaPlateauF_grasstop",
-"MesaBryce",
-"JungleEdge",
-"SavannaM",
-"FlowerForest_beach",
-"Forest_beach",
-"StoneBeach",
-"ColdTaiga_beach_water",
-"Taiga_beach",
-"Savanna_beach",
-"Plains_beach",
-"ExtremeHills_beach",
-"ColdTaiga_beach",
-"Swampland_shore",
-"JungleM_shore",
-"Jungle_shore",
-"MesaPlateauFM_sandlevel",
-"MesaPlateauF_sandlevel",
-"MesaBryce_sandlevel",
-"Mesa_sandlevel",
-"RoofedForest_ocean",
-"JungleEdgeM_ocean",
-"BirchForestM_ocean",
-"BirchForest_ocean",
-"IcePlains_deep_ocean",
-"Jungle_deep_ocean",
-"Savanna_ocean",
-"MesaPlateauF_ocean",
-"ExtremeHillsM_deep_ocean",
-"Savanna_deep_ocean",
-"SunflowerPlains_ocean",
-"Swampland_deep_ocean",
-"Swampland_ocean",
-"MegaSpruceTaiga_deep_ocean",
-"ExtremeHillsM_ocean",
-"JungleEdgeM_deep_ocean",
-"SunflowerPlains_deep_ocean",
-"BirchForest_deep_ocean",
-"IcePlainsSpikes_ocean",
-"Mesa_ocean",
-"StoneBeach_ocean",
-"Plains_deep_ocean",
-"JungleEdge_deep_ocean",
-"SavannaM_deep_ocean",
-"Desert_deep_ocean",
-"Mesa_deep_ocean",
-"ColdTaiga_deep_ocean",
-"Plains_ocean",
-"MesaPlateauFM_ocean",
-"Forest_deep_ocean",
-"JungleM_deep_ocean",
-"FlowerForest_deep_ocean",
-"MegaTaiga_ocean",
-"StoneBeach_deep_ocean",
-"IcePlainsSpikes_deep_ocean",
-"ColdTaiga_ocean",
-"SavannaM_ocean",
-"MesaPlateauF_deep_ocean",
-"MesaBryce_deep_ocean",
-"ExtremeHills+_deep_ocean",
-"ExtremeHills_ocean",
-"Forest_ocean",
-"MegaTaiga_deep_ocean",
-"JungleEdge_ocean",
-"MesaBryce_ocean",
-"MegaSpruceTaiga_ocean",
-"ExtremeHills+_ocean",
-"Jungle_ocean",
-"RoofedForest_deep_ocean",
-"IcePlains_ocean",
-"FlowerForest_ocean",
-"ExtremeHills_deep_ocean",
-"MesaPlateauFM_deep_ocean",
-"Desert_ocean",
-"Taiga_ocean",
-"BirchForestM_deep_ocean",
-"Taiga_deep_ocean",
-"JungleM_ocean",
-"FlowerForest_underground",
-"JungleEdge_underground",
-"StoneBeach_underground",
-"MesaBryce_underground",
-"Mesa_underground",
-"RoofedForest_underground",
-"Jungle_underground",
-"Swampland_underground",
-"BirchForest_underground",
-"Plains_underground",
-"MesaPlateauF_underground",
-"ExtremeHills_underground",
-"MegaSpruceTaiga_underground",
-"BirchForestM_underground",
-"SavannaM_underground",
-"MesaPlateauFM_underground",
-"Desert_underground",
-"Savanna_underground",
-"Forest_underground",
-"SunflowerPlains_underground",
-"ColdTaiga_underground",
-"IcePlains_underground",
-"IcePlainsSpikes_underground",
-"MegaTaiga_underground",
-"Taiga_underground",
-"ExtremeHills+_underground",
-"JungleM_underground",
-"ExtremeHillsM_underground",
-"JungleEdgeM_underground",
-},
-0,
-7,
-30,
-19000,
-2,
-mcl_vars.mg_overworld_min,
-mcl_vars.mg_overworld_max)
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:enderman",
+	type_of_spawning = "ground",
+	dimension = "end",
+	aoc = 9,
+	min_height = mcl_vars.mg_end_min,
+	max_height = mcl_vars.mg_end_max,
+	min_light = 0,
+	chance = 100,
+})
 
+-- Overworld spawn
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:enderman",
+	type_of_spawning = "ground",
+	dimension = "overworld",
+	aoc = 9,
+	min_light = 0,
+	max_light = 7,
+	min_height = mcl_vars.mg_overworld_min,
+	max_height = mcl_vars.mg_overworld_max,
+	biomes_except = {
+		"MushroomIslandShore",
+		"MushroomIsland"
+	},
+	chance = 100,
+})
 -- Nether spawn (rare)
-mcl_mobs:spawn_specific(
-"mobs_mc:enderman",
-"nether",
-"ground",
-{
-"Nether",
-"SoulsandValley",
-},
-0,
-11,
-30,
-27500,
-4,
-mcl_vars.mg_nether_min,
-mcl_vars.mg_nether_max)
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:enderman",
+	type_of_spawning = "ground",
+	dimension = "nether",
+	min_light = 0,
+	aoc = 9,
+	biomes = {
+		"Nether",
+		"SoulsandValley",
+	},
+	chance = 1000,
+})
+
 
 -- Warped Forest spawn (common)
-mcl_mobs:spawn_specific(
-"mobs_mc:enderman",
-"nether",
-"ground",
-{
-"WarpedForest"
-},
-0,
-11,
-30,
-5000,
-4,
-mcl_vars.mg_nether_min,
-mcl_vars.mg_nether_max)
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:enderman",
+	type_of_spawning = "ground",
+	dimension = "nether",
+	aoc = 9,
+	biomes = {
+		"WarpedForest",
+	},
+	chance = 100,
+})
 
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:enderman", S("Enderman"), "#252525", "#151515", 0)

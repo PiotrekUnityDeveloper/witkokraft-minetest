@@ -6,27 +6,21 @@
 -- License for Media: CC-BY-SA 4
 -- Copyright (C) 2023, Michieal. See: License.txt.
 
--- LOCALS
-local modname = minetest.get_current_modname()
-local S = minetest.get_translator(modname)
-local node_sound = mcl_sounds.node_sound_wood_defaults()
-local pi = 3.1415926
+local S = minetest.get_translator(minetest.get_current_modname())
 
-local lectern_def = {
+minetest.register_node("mcl_lectern:lectern", {
 	description = S("Lectern"),
 	_tt_help = S("Lecterns not only look good, but are job site blocks for Librarians."),
 	_doc_items_longdesc = S("Lecterns not only look good, but are job site blocks for Librarians."),
 	_doc_items_usagehelp = S("Place the Lectern on a solid node for best results. May attract villagers, so it's best to place outside of where you call 'home'."),
-	sounds = node_sound,
+	sounds = mcl_sounds.node_sound_wood_defaults(),
 	paramtype = "light",
 	use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "opaque" or false,
 	paramtype2 = "facedir",
 	drawtype = "mesh",
-	-- visual_scale = 1.0, -- Default is 1.0.
 	mesh = "mcl_lectern_lectern.obj",
 	tiles = {"mcl_lectern_lectern.png", },
 	groups = {handy = 1, axey = 1, flammable = 2, fire_encouragement = 5, fire_flammability = 5, solid = 1},
-	drops = "mcl_lectern:lectern",
 	sunlight_propagates = true,
 	walkable = true,
 	is_ground_content = false,
@@ -53,78 +47,36 @@ local lectern_def = {
 	},
 
 	on_place = function(itemstack, placer, pointed_thing)
-		local above = pointed_thing.above
-		local under = pointed_thing.under
 
-		local pos = under
-		local pname = placer:get_player_name()
-		if minetest.is_protected(pos, pname) then
-			minetest.record_protection_violation(pos, pname)
+		if not placer or not placer:is_player() then
+			return itemstack
+		end
+
+		local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+		if rc then return rc end
+
+		if minetest.is_protected(pointed_thing.above, placer:get_player_name()) then
+			minetest.record_protection_violation(pointed_thing.above, placer:get_player_name())
 			return
 		end
 
-		-- Use pointed node's on_rightclick function first, if present
-		local node = minetest.get_node(pointed_thing.under)
-		if placer and not placer:get_player_control().sneak then
-			if minetest.registered_nodes[node.name] and minetest.registered_nodes[node.name].on_rightclick then
-				return minetest.registered_nodes[node.name].on_rightclick(pointed_thing.under, node, placer, itemstack) or itemstack
-			end
-		end
-		local dir = vector.subtract(under, above)
-		local wdir = minetest.dir_to_wallmounted(dir)
-		local fdir = minetest.dir_to_facedir(dir)
-		if wdir == 0 then
-			return itemstack
-			-- IE., no Hanging Lecterns for you!
-		end
-		if wdir == 1 then
-			-- (only make standing nodes...)
-			-- Determine the rotation based on player's yaw
-			local yaw = pi * 2 - placer:get_look_horizontal()
-
-			-- Convert to 16 dir.
-			local rotation_level = math.round((yaw / (pi * 2)) * 16)
-
-			-- put the rotation level within bounds.
-			if rotation_level > 15 then
-				rotation_level = 0
-			elseif rotation_level < 0 then
-				rotation_level = 15
-			end
-
-			fdir = math.floor(rotation_level / 4) -- collapse that to 4 dir.
-			local lectern_node = ItemStack(itemstack)
-			-- Place the node!
-			local _, success = minetest.item_place_node(lectern_node, placer, pointed_thing, fdir)
-
-			-- Add placement sound.
-			local idef = lectern_node:get_definition()
-			if success then
-				if idef.sounds and idef.sounds.place then
-					minetest.sound_play(idef.sounds.place, {pos=above, gain=1}, true)
-				end
-			end
-			
+		if minetest.dir_to_wallmounted(vector.subtract(pointed_thing.under,  pointed_thing.above)) == 1 then
+			local _, success = minetest.item_place_node(itemstack, placer, pointed_thing, minetest.dir_to_facedir(vector.direction(placer:get_pos(),pointed_thing.above)))
 			if not success then
-				return itemstack
+				return
 			end
-			if not minetest.is_creative_enabled(placer:get_player_name()) then
-				itemstack:take_item()
-			end
+			minetest.sound_play(mcl_sounds.node_sound_wood_defaults().place, {pos=pointed_thing.above, gain=1}, true)
 		end
 		return itemstack
 	end,
-}
+})
 
-minetest.register_node("mcl_lectern:lectern", lectern_def)
 mcl_wip.register_wip_item("mcl_lectern:lectern")
 
 -- April Fools setup
 local date = os.date("*t")
 if (date.month == 4 and date.day == 1) then
 	minetest.override_item("mcl_lectern:lectern", {waving = 2})
-else
-	minetest.override_item("mcl_lectern:lectern", {waving = 0})
 end
 
 minetest.register_craft({
@@ -136,5 +88,8 @@ minetest.register_craft({
 	}
 })
 
--- Base Aliases.
-minetest.register_alias("lectern", "mcl_lectern:lectern")
+minetest.register_craft({
+	type = "fuel",
+	recipe = "mcl_lectern:lectern",
+	burntime = 15,
+})

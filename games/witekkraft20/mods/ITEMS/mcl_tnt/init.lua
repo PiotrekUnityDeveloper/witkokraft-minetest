@@ -6,9 +6,6 @@ tnt = {}
 tnt.BOOMTIMER = 4
 tnt.BLINKTIMER = 0.25
 
----@param pos Vector
----@param entname string
----@return ObjectRef?
 local function spawn_tnt(pos, entname)
 	minetest.sound_play("tnt_ignite", { pos = pos, gain = 1.0, max_hear_distance = 15 }, true)
 	local ent = minetest.add_entity(pos, entname)
@@ -18,8 +15,6 @@ local function spawn_tnt(pos, entname)
 	return ent
 end
 
----@param pos Vector
----@return ObjectRef?
 function tnt.ignite(pos)
 	minetest.remove_node(pos)
 	local e = spawn_tnt(pos, "mcl_tnt:tnt")
@@ -30,7 +25,6 @@ end
 ---Add smoke particle of entity at pos.
 ---
 ---Intended to be called every step.
----@param pos Vector
 function tnt.smoke_step(pos)
 	minetest.add_particle({
 		pos                = vector.offset(pos, 0, 0.5, 0),
@@ -79,7 +73,6 @@ minetest.register_node("mcl_tnt:tnt", {
 		"default_tnt_side.png",
 	},
 	is_ground_content = false,
-	stack_max = 64,
 	description = S("TNT"),
 	paramtype = "light",
 	sunlight_propagates = true,
@@ -110,29 +103,78 @@ minetest.register_node("mcl_tnt:tnt", {
 			tnt.ignite(droppos)
 		end
 	end,
+	_on_arrow_hit = function(pos, arrowent)
+		if mcl_burning.is_burning(arrowent.object) then
+			tnt.ignite(arrowent._stuckin)
+		end
+	end,
 	sounds = sounds,
 })
 
 local TNT = {
-	-- Static definition
-	physical = true, -- Collides with things
-	--weight = -100,
-	collisionbox = { -0.5, -0.5, -0.5, 0.5, 0.5, 0.5 },
-	visual = "cube",
-	textures = {
-		"default_tnt_top.png",
-		"default_tnt_bottom.png",
-		"default_tnt_side.png",
-		"default_tnt_side.png",
-		"default_tnt_side.png",
-		"default_tnt_side.png",
+	initial_properties = {
+		physical = true, -- Collides with things
+		--weight = -100,
+		collisionbox = { -0.5, -0.5, -0.5, 0.5, 0.5, 0.5 },
+		visual = "cube",
+		textures = {
+			"default_tnt_top.png",
+			"default_tnt_bottom.png",
+			"default_tnt_side.png",
+			"default_tnt_side.png",
+			"default_tnt_side.png",
+			"default_tnt_side.png",
+		},
 	},
+	description = S("TNT"),
 	-- Initial value for our timer
 	timer = 0,
 	blinktimer = 0,
 	tnt_knockback = true,
 	blinkstatus = true,
+	_mcl_fishing_hookable = true,
+	_mcl_fishing_reelable = true,
 }
+
+function TNT:check_water_flow(p)
+	-- Add water flowing for TNT
+	local node, nn, def
+	node = minetest.get_node_or_nil(p)
+	if node then
+		nn = node.name
+		def = minetest.registered_nodes[nn]
+	end
+
+	-- Move item around on flowing liquids
+	if def and def.liquidtype == "flowing" then
+
+		--[[ Get flowing direction (function call from flowlib), if there's a liquid.
+		NOTE: According to Qwertymine, flowlib.quickflow is only reliable for liquids with a flowing distance of 7.
+		Luckily, this is exactly what we need if we only care about water, which has this flowing distance. ]]
+		local vec = flowlib.quick_flow(p, node)
+		-- Just to make sure we don't manipulate the speed for no reason
+		if vec.x ~= 0 or vec.y ~= 0 or vec.z ~= 0 then
+			-- Minecraft Wiki: Flowing speed is "about 1.39 meters per second"
+			local f = 1.39
+			-- Set new item moving speed into the direciton of the liquid, keeping vertical acceleration untouched
+			local newv = vector.multiply(vec, f)
+			local yaccel = self.object:get_acceleration().y
+			self.object:set_acceleration({x = 0, y = yaccel, z = 0})
+			self.object:set_velocity({x = newv.x, y = -0.22, z = newv.z})
+
+			self.physical_state = true
+			self._flowing = true
+			self.object:set_properties({
+				physical = true
+			})
+			return
+		end
+	elseif self._flowing == true then
+		-- Disable flowing physics if not on/in flowing liquid
+		self._flowing = false
+		return
+	end
+end
 
 function TNT:on_activate(_, _)
 	local phi = math.random(0, 65535) / 65535 * 2 * math.pi
@@ -194,6 +236,7 @@ end]]
 
 function TNT:on_step(dtime, _)
 	local pos = self.object:get_pos()
+	self:check_water_flow(pos)
 	tnt.smoke_step(pos)
 	self.timer = self.timer + dtime
 	self.blinktimer = self.blinktimer + dtime

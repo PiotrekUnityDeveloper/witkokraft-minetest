@@ -12,13 +12,13 @@ mcl_mobs.register_mob("mobs_mc:chicken", {
 	description = S("Chicken"),
 	type = "animal",
 	spawn_class = "passive",
-	passive = true,
-	runaway = true,
+
 	hp_min = 4,
 	hp_max = 4,
 	xp_min = 1,
 	xp_max = 3,
 	collisionbox = {-0.2, -0.01, -0.2, 0.2, 0.69, 0.2},
+	runaway = true,
 	floats = 1,
 	head_swivel = "head.control",
 	bone_eye_height = 4,
@@ -84,22 +84,17 @@ mcl_mobs.register_mob("mobs_mc:chicken", {
 
 	on_rightclick = function(self, clicker)
 		if self:feed_tame(clicker, 1, true, false) then return end
-		if mcl_mobs:protect(self, clicker) then return end
-		if mcl_mobs:capture_mob(self, clicker, 0, 60, 5, false, nil) then return end
+		if mcl_mobs.protect(self, clicker) then return end
+		if mcl_mobs.capture_mob(self, clicker, 0, 60, 5, false, nil) then return end
 	end,
 
 	do_custom = function(self, dtime)
 
-		self.egg_timer = (self.egg_timer or 0) + dtime
-		if self.egg_timer < 10 then
+		self.egg_timer = (self.egg_timer or math.random(300, 600)) - dtime
+		if self.egg_timer > 0 then
 			return
 		end
-		self.egg_timer = 0
-
-		if self.child
-		or math.random(1, 100) > 1 then
-			return
-		end
+		self.egg_timer = nil
 
 		local pos = self.object:get_pos()
 
@@ -114,53 +109,51 @@ mcl_mobs.register_mob("mobs_mc:chicken", {
 
 })
 
---spawn
-mcl_mobs:spawn_specific(
-"mobs_mc:chicken",
-"overworld",
-"ground",
-{
-	"flat",
-	"IcePlainsSpikes",
-	"ColdTaiga",
-	"ColdTaiga_beach",
-	"ColdTaiga_beach_water",
-	"MegaTaiga",
-	"MegaSpruceTaiga",
-	"ExtremeHills",
-	"ExtremeHills_beach",
-	"ExtremeHillsM",
-	"ExtremeHills+",
-	"Plains",
-	"Plains_beach",
-	"SunflowerPlains",
-	"Taiga",
-	"Taiga_beach",
-	"Forest",
-	"Forest_beach",
-	"FlowerForest",
-	"FlowerForest_beach",
-	"BirchForest",
-	"BirchForestM",
-	"RoofedForest",
-	"Savanna",
-	"Savanna_beach",
-	"SavannaM",
-	"Jungle",
-	"Jungle_shore",
-	"JungleM",
-	"JungleM_shore",
-	"JungleEdge",
-	"JungleEdgeM",
-	"Swampland",
-	"Swampland_shore"
-},
-9,
-minetest.LIGHT_MAX+1,
-30, 17000,
-3,
-mobs_mc.water_level,
-mcl_vars.mg_overworld_max)
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:chicken",
+	type_of_spawning = "ground",
+	dimension = "overworld",
+	aoc = 9,
+	min_height = mobs_mc.water_level + 3,
+	biomes = {
+		"flat",
+		"IcePlainsSpikes",
+		"ColdTaiga",
+		"ColdTaiga_beach",
+		"ColdTaiga_beach_water",
+		"MegaTaiga",
+		"MegaSpruceTaiga",
+		"ExtremeHills",
+		"ExtremeHills_beach",
+		"ExtremeHillsM",
+		"ExtremeHills+",
+		"Plains",
+		"Plains_beach",
+		"SunflowerPlains",
+		"Taiga",
+		"Taiga_beach",
+		"Forest",
+		"Forest_beach",
+		"FlowerForest",
+		"FlowerForest_beach",
+		"BirchForest",
+		"BirchForestM",
+		"RoofedForest",
+		"Savanna",
+		"Savanna_beach",
+		"SavannaM",
+		"Jungle",
+		"Jungle_shore",
+		"JungleM",
+		"JungleM_shore",
+		"JungleEdge",
+		"JungleEdgeM",
+		"BambooJungle",
+		"Swampland",
+		"Swampland_shore"
+	},
+	chance = 100,
+})
 
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:chicken", S("Chicken"), "#a1a1a1", "#ff0000", 0)

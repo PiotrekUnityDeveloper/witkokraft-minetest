@@ -34,7 +34,6 @@ local dropper_formspec = table.concat({
 })
 
 ---For after_place_node
----@param pos Vector
 local function setup_dropper(pos)
 	-- Set formspec and inventory
 	local meta = minetest.get_meta(pos)
@@ -66,19 +65,7 @@ end
 local dropperdef = {
 	is_ground_content = false,
 	sounds = mcl_sounds.node_sound_stone_defaults(),
-	after_dig_node = function(pos, oldnode, oldmetadata, digger)
-		local meta = minetest.get_meta(pos)
-		local meta2 = meta:to_table()
-		meta:from_table(oldmetadata)
-		local inv = meta:get_inventory()
-		for i = 1, inv:get_size("main") do
-			local stack = inv:get_stack("main", i)
-			if not stack:is_empty() then
-				minetest.add_item(vector.offset(pos, math.random(0, 10) / 10 - 0.5, 0, math.random(0, 10) / 10 - 0.5), stack)
-			end
-		end
-		meta:from_table(meta2)
-	end,
+	after_dig_node = mcl_util.drop_items_from_meta_container({"main"}),
 	allow_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
 		local name = player:get_player_name()
 		if minetest.is_protected(pos, name) then
@@ -111,7 +98,6 @@ local dropperdef = {
 	mesecons = { effector = {
 		-- Drop random item when triggered
 		action_on = function(pos, node)
-			if not pos then return end
 			local meta = minetest.get_meta(pos)
 			local inv = meta:get_inventory()
 			local droppos
@@ -125,11 +111,7 @@ local dropperdef = {
 			local dropnode = minetest.get_node(droppos)
 			-- Do not drop into solid nodes, unless they are containers
 			local dropnodedef = minetest.registered_nodes[dropnode.name]
-			if dropnodedef.groups.container == 2 then
-				-- If they are containers - double down as hopper
-				mcl_util.hopper_push(pos, droppos)
-			end
-			if dropnodedef.walkable then
+			if dropnodedef.walkable and not dropnodedef.groups.container then
 				return
 			end
 			local stacks = {}
@@ -145,18 +127,25 @@ local dropperdef = {
 				local dropitem = ItemStack(stack)
 				dropitem:set_count(1)
 				local stack_id = stacks[r].stackpos
-				local pos_variation = 100
-				droppos = vector.offset(droppos,
-					math.random(-pos_variation, pos_variation) / 1000,
-					math.random(-pos_variation, pos_variation) / 1000,
-					math.random(-pos_variation, pos_variation) / 1000
-				)
-				local item_entity = minetest.add_item(droppos, dropitem)
-				local drop_vel = vector.subtract(droppos, pos)
-				local speed = 3
-				item_entity:set_velocity(vector.multiply(drop_vel, speed))
-				stack:take_item()
-				inv:set_stack("main", stack_id, stack)
+
+				-- If it's a container, attempt to put it into the container
+				local dropped = mcl_util.move_item_container(pos, droppos, nil, stack_id)
+				-- No container?
+				if not dropped and not dropnodedef.groups.container then
+					-- Drop item normally
+					local pos_variation = 100
+					droppos = vector.offset(droppos,
+						math.random(-pos_variation, pos_variation) / 1000,
+						math.random(-pos_variation, pos_variation) / 1000,
+						math.random(-pos_variation, pos_variation) / 1000
+					)
+					local item_entity = minetest.add_item(droppos, dropitem)
+					local drop_vel = vector.subtract(droppos, pos)
+					local speed = 3
+					item_entity:set_velocity(vector.multiply(drop_vel, speed))
+					stack:take_item()
+					inv:set_stack("main", stack_id, stack)
+				end
 			end
 		end,
 		rules = mesecon.rules.alldirs,

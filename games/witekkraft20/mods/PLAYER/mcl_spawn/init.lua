@@ -75,8 +75,7 @@ local node_search_list =
 -- Initial variables
 
 local success = storage:get_int("mcl_spawn_success")==1
-local searched = (storage:get_int("mcl_spawn_searched")==1) or mg_name == "v6" or mg_name == "singlenode" or minetest.settings:get("static_spawnpoint")
-local return_spawn = minetest.settings:get_bool("mcl_return_spawn", true)
+local searched = (storage:get_int("mcl_spawn_searched")==1) or mg_name == "singlenode" or minetest.settings:get("static_spawnpoint")
 local wsp = minetest.string_to_pos(storage:get_string("mcl_spawn_world_spawn_point")) or {} -- world spawn position
 local check = storage:get_int("mcl_spawn_check") or 0
 local cp = minetest.string_to_pos(storage:get_string("mcl_spawn_cp")) or {x=start_pos.x, y=start_pos.y, z=start_pos.z}
@@ -146,6 +145,7 @@ local function good_for_respawn(pos, player)
 	local def0 = minetest.registered_nodes[nn0]
 	local def1 = minetest.registered_nodes[nn1]
 	local def2 = minetest.registered_nodes[nn2]
+	if not def0 or not def1 or not def2 then return false end
 	return def0.walkable and (not def1.walkable) and (not def2.walkable) and
 		(def1.damage_per_second == nil or def2.damage_per_second <= 0) and
 		(def1.damage_per_second == nil or def2.damage_per_second <= 0)
@@ -453,7 +453,8 @@ function mcl_spawn.set_spawn_pos(player, pos, message)
 			-- Pass in villager as arg. Shouldn't know about villagers
 			if bed_bottom_meta then
 				mcl_log("Removing villager from bed bottom meta")
-				bed_bottom_meta:set_string("villager", nil)
+				bed_bottom_meta:set_string("villager", "")
+				bed_bottom_meta:set_string("infotext", "")
 			else
 				mcl_log("Cannot remove villager from bed bottom meta")
 			end
@@ -499,7 +500,7 @@ function mcl_spawn.get_player_spawn_pos(player)
 
 				if(string.match(checknode.name, "mcl_beds:respawn_anchor_charged_")) then
 					local charge_level = tonumber(string.sub(checknode.name, -1))
-					if not charge_level and return_spawn then
+					if not charge_level then
 						minetest.log("warning","could not get level of players respawn anchor, sending him back to spawn!")
 						player:get_meta():set_string("mcl_beds:spawn", "")
 						minetest.chat_send_player(player:get_player_name(), S("Couldn't get level of your respawn anchor!"))
@@ -511,12 +512,10 @@ function mcl_spawn.get_player_spawn_pos(player)
 						minetest.set_node(checkpos, {name="mcl_beds:respawn_anchor"})
 						return checkpos, false
 					end
-				elseif return_spawn then
+				else
 					player:get_meta():set_string("mcl_beds:spawn", "")
 					minetest.chat_send_player(player:get_player_name(), S("Your spawn bed was missing or blocked, and you had no charged respawn anchor!"))
 					return mcl_spawn.get_world_spawn_pos(), false
-				else
-					return checkpos, false
 				end
 			end
 		end

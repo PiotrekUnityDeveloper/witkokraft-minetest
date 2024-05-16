@@ -13,6 +13,18 @@ mcl_armor.register_set({
 	--name of the armor material (used for generating itemstrings)
 	name = "dummy_armor",
 
+	--localized description of each armor piece
+	descriptions = {
+		head = S("Dummy Cap"),
+		torso = S("Dummy Tunic"),
+		legs = S("Dummy Pants"),
+		feet = S("Dummy Shoes"),
+	},
+
+	--The following MCL2 compatible legacy behavior is still supported, but
+	--deprecated, because it interferes with proper localization
+	--it is triggered when description is non nil
+	--[[
 	--description of the armor material
 	--do NOT translate this string, it will be concatenated will each piece of armor's description and result will be automatically fetched from your mod's translation files
 	description = "Dummy Armor",
@@ -25,6 +37,7 @@ mcl_armor.register_set({
 		legs = "Pants",  --default: "Leggings"
 		feet = "Shoes",  --default: "Boots"
 	},
+	]]
 
 	--this is used to calculate each armor piece durability with the minecraft algorithm
 	--head durability = durability * 0.6857 + 1

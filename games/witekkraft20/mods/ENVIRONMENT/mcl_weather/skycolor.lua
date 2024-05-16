@@ -1,8 +1,6 @@
 local mods_loaded = false
 local NIGHT_VISION_RATIO = 0.45
 
-local MINIMUM_LIGHT_LEVEL = 0.2
-
 local water_color = "#3F76E4"
 
 local mg_name = minetest.get_mapgen_setting("mg_name")
@@ -45,24 +43,6 @@ function mcl_weather.set_sky_color(player, def)
 		sky_color = def.sky_color,
 		clouds = def.clouds,
 	})
-end
-
--- Function to work out light modifier at different times
--- Noon is brightest, midnight is darkest, 0600 and 18000 is in the middle of this
-local function get_light_modifier(time)
-	-- 0.1 = 0.2
-	-- 0.4 = 0.8
-	-- 0.5 = 1
-	-- 0.6 = 0.8
-	-- 0.9 = 0.2
-
-	local light_multiplier =  time * 2
-	if time > 0.5 then
-		light_multiplier = 2 * (1 - time)
-	else
-		light_multiplier = time / 0.5
-	end
-	return light_multiplier
 end
 
 mcl_weather.skycolor = {
@@ -180,8 +160,6 @@ mcl_weather.skycolor = {
 						--minetest.log("action", string.format("Biome found for number: %s in biome: %s", tostring(biome_index), biome_name))
 						biomesky = biome._mcl_skycolor
 						biomefog = biome._mcl_fogcolor
-					else
-						--minetest.log("action", string.format("No biome for number: %s in biome: %s", tostring(biome_index), biome_name))
 					end
 				end
 				if (mcl_weather.state == "none") then
@@ -231,21 +209,25 @@ mcl_weather.skycolor = {
 					player:set_moon({visible = false})
 					player:set_stars({visible = false})
 
-					local light_factor = mcl_weather.get_current_light_factor()
+					local lf = mcl_weather.get_current_light_factor()
 					if mcl_weather.skycolor.current_layer_name() == "lightning" then
 						mcl_weather.skycolor.override_day_night_ratio(player, 1)
-					elseif light_factor then
-						local time = minetest.get_timeofday()
-						local light_multiplier = get_light_modifier(time)
-						local new_light = math.max(light_factor * light_multiplier, MINIMUM_LIGHT_LEVEL)
-						mcl_weather.skycolor.override_day_night_ratio(player, new_light)
+					elseif lf then
+						-- This used to be blatantly wrong and there appears to be another
+						-- fairly complex solution around so I will explain what it's doing (now):
+						-- The light is basically derived by the distance of the current time to
+						-- 0.5 which means midday/noon. i.e. the key here is 1 - math.abs(0.5 - w)
+						-- the rest is just modifications and a minimum light level of 0.2
+						local w = minetest.get_timeofday()
+						local light = math.max(0.2,((1 - math.abs(0.5 - w)) * lf) - 0.15)
+						mcl_weather.skycolor.override_day_night_ratio(player, light)
 					else
 						mcl_weather.skycolor.override_day_night_ratio(player, nil)
 					end
 				end
 			elseif dim == "end" then
 				local biomesky = "#000000"
-				local biomefog = "#A080A0"
+				--local biomefog = "#A080A0"
 				if mg_name ~= "v6" and mg_name ~= "singlenode" then
 					local biome_index = minetest.get_biome_data(player:get_pos()).biome
 					local biome_name = minetest.get_biome_name(biome_index)
@@ -253,9 +235,7 @@ mcl_weather.skycolor = {
 					if biome then
 						--minetest.log("action", string.format("Biome found for number: %s in biome: %s", tostring(biome_index), biome_name))
 						biomesky = biome._mcl_skycolor
-						biomefog = biome._mcl_fogcolor -- The End biomes seemingly don't use the fog colour, despite having this value according to the wiki. The sky colour is seemingly used for both sky and fog?
-					else
-						--minetest.log("action", string.format("No biome for number: %s in biome: %s", tostring(biome_index), biome_name))
+						--biomefog = biome._mcl_fogcolor -- The End biomes seemingly don't use the fog colour, despite having this value according to the wiki. The sky colour is seemingly used for both sky and fog?
 					end
 				end
 				local t = "mcl_playerplus_end_sky.png"
@@ -269,7 +249,7 @@ mcl_weather.skycolor = {
 				player:set_stars({visible = false})
 				mcl_weather.skycolor.override_day_night_ratio(player, 0.5)
 			elseif dim == "nether" then
-				local biomesky = "#6EB1FF"
+				--local biomesky = "#6EB1FF"
 				local biomefog = "#330808"
 				if mg_name ~= "v6" and mg_name ~= "singlenode" then
 					local biome_index = minetest.get_biome_data(player:get_pos()).biome
@@ -277,10 +257,8 @@ mcl_weather.skycolor = {
 					local biome = minetest.registered_biomes[biome_name]
 					if biome then
 						--minetest.log("action", string.format("Biome found for number: %s in biome: %s", tostring(biome_index), biome_name))
-						biomesky = biome._mcl_skycolor -- The Nether biomes seemingly don't use the sky colour, despite having this value according to the wiki. The fog colour is used for both sky and fog.
+						--biomesky = biome._mcl_skycolor -- The Nether biomes seemingly don't use the sky colour, despite having this value according to the wiki. The fog colour is used for both sky and fog.
 						biomefog = biome._mcl_fogcolor
-					else
-						--minetest.log("action", string.format("No biome for number: %s in biome: %s", tostring(biome_index), biome_name))
 					end
 				end
 				mcl_weather.set_sky_color(player, {
@@ -385,16 +363,15 @@ minetest.register_globalstep(function(dtime)
 end)
 
 local function initsky(player)
-
 	if player.set_lighting then
-		player:set_lighting({ shadows = { intensity = tonumber(minetest.settings:get("mcl_default_shadow_intensity") or 0.33) } })
+		player:set_lighting({ shadows = { intensity = 0.33 } })
 	end
 
 	if (mcl_weather.skycolor.active) then
 		mcl_weather.skycolor.force_update = true
 	end
 
-	player:set_clouds(mcl_worlds:get_cloud_parameters() or {height=mcl_worlds.layer_to_y(127), speed={x=-2, z=0}, thickness=4, color="#FFF0FEF"})
+	player:set_clouds(mcl_worlds.get_cloud_parameters() or {height=mcl_worlds.layer_to_y(127), speed={x=-2, z=0}, thickness=4, color="#FFF0FEF"})
 end
 
 minetest.register_on_joinplayer(initsky)

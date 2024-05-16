@@ -9,48 +9,6 @@ minetest.register_craft({
 })
 
 minetest.register_craft({
-	output = "mcl_sponges:sponge",
-	recipe = {
-		{ "mcl_farming:hay_block", "mcl_farming:hay_block", "mcl_farming:hay_block" },
-		{ "mcl_farming:hay_block", "mcl_core:goldblock", "mcl_farming:hay_block" },
-		{ "mcl_farming:hay_block", "mcl_farming:hay_block", "mcl_farming:hay_block" },
-	}
-})
-
-minetest.register_craft({
-	output = "mcl_ocean:prismarine_shard",
-	recipe = {
-		{ "mcl_core:glass_cyan", },
-	}
-})
-
-minetest.register_craft({
-	type = "shapeless",
-	output = "mcl_ocean:prismarine_crystals",
-	recipe = {
-		"mcl_ocean:prismarine_shard",
-		"mcl_ocean:prismarine_shard",
-		"mcl_ocean:prismarine_shard",
-		"mcl_core:gold_ingot",
-	},
-})
-
--- Make red sand, red sandstone and more craftable in v6
--- NOTE: When you change these, also update mcl_craftguide for the "v6" icon in
--- the craft guide!
-if minetest.get_mapgen_setting("mg_name") == "v6" then
-	minetest.register_craft({
-		output = "mcl_core:redsand 8",
-		recipe = {
-			{ "mcl_core:sand", "mcl_core:sand", "mcl_core:sand" },
-			{ "mcl_core:sand", "mcl_nether:nether_wart_item", "mcl_core:sand" },
-			{ "mcl_core:sand", "mcl_core:sand", "mcl_core:sand" },
-		}
-	})
-end
-
-
-minetest.register_craft({
 	output = "mcl_nether:quartz_smooth 4",
 	recipe = {
 		{ "mcl_nether:quartz_block", "mcl_nether:quartz_block" },
@@ -80,4 +38,23 @@ minetest.register_craft({
 		{"","mcl_end:chorus_flower",""},
 		{"mcl_potions:glass_bottle","mcl_potions:glass_bottle","mcl_potions:glass_bottle"},
 	}
+})
+
+-- Armor trims
+minetest.register_craft({
+	output = "mcl_armor:eye",
+	recipe = {
+		{"mcl_core:diamond","mcl_end:ender_eye","mcl_core:diamond"},
+		{"mcl_core:diamond","mcl_end:ender_eye","mcl_core:diamond"},
+		{"mcl_core:diamond","mcl_core:diamond","mcl_core:diamond"},
+	}
+})
+
+minetest.register_craft({
+    output = "mcl_armor:wayfinder",
+    recipe = {
+        {"mcl_core:diamond","mcl_core:diamond","mcl_core:diamond"},
+        {"mcl_core:diamond", "mcl_maps:empty_map","mcl_core:diamond"},
+        {"mcl_core:diamond","mcl_core:diamond","mcl_core:diamond"},
+    }
 })

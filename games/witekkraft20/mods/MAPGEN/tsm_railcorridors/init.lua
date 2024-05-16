@@ -1,6 +1,3 @@
-local pairs = pairs
-local tonumber = tonumber
-
 tsm_railcorridors = {}
 
 -- Load node names
@@ -13,17 +10,6 @@ local setting
 -- TODO: Check if this is correct
 local function P(float)
 	return math.floor(32767 * float)
-end
-
--- Probability for every newly generated mapchunk to get corridors
-local probability_railcaves_in_mapchunk = P(0.33333)
-setting = tonumber(minetest.settings:get("tsm_railcorridors_probability_railcaves_in_mapchunk"))
--- Extra check to prevent mod griefing in singlenode, mcimported worlds.
-local mg_name = minetest.get_mapgen_setting("mg_name")
-if mg_name == "singlenode" then
-	probability_railcaves_in_mapchunk = P(0)
-elseif setting then
-	probability_railcaves_in_mapchunk = P(setting)
 end
 
 -- Minimal and maximal value of path length (forks don't look up this value)
@@ -400,10 +386,6 @@ end
 -- This is a workaround thanks to the fact that minetest.add_entity is unreliable as fuck
 -- See: https://github.com/minetest/minetest/issues/4759
 -- FIXME: Kill this horrible hack with fire as soon you can.
-
--- Why did anyone activate it in the first place? It doesn't
--- have a function seeing as there are no chest minecarts yet.
---[[
 local function RecheckCartHack(params)
 	local pos = params[1]
 	local cart_id = params[2]
@@ -413,14 +395,12 @@ local function RecheckCartHack(params)
 			-- Cart found! We can now safely call the callback func.
 			-- (calling it earlier has the danger of failing)
 			minetest.log("info", "[tsm_railcorridors] Cart spawn succeeded: "..minetest.pos_to_string(pos))
-			tsm_railcorridors.on_construct_cart(pos, obj)
+			tsm_railcorridors.on_construct_cart(pos, obj, pr_carts)
 			return
 		end
 	end
 	minetest.log("info", "[tsm_railcorridors] Cart spawn FAILED: "..minetest.pos_to_string(pos))
 end
---]]
-
 
 -- Try to place a cobweb.
 -- pos: Position of cobweb
@@ -942,18 +922,17 @@ local function spawn_carts()
 		if node.name == tsm_railcorridors.nodes.rail then
 			-- FIXME: The cart sometimes fails to spawn
 			-- See <https://github.com/minetest/minetest/issues/4759>
+			-- The cart still does not reliably spawn as of 2023 when
+			-- I actually enabled chest minecarts and this logic
+			-- actually became necessary ^^
 			local cart_id = tsm_railcorridors.carts[cart_type]
 			minetest.log("info", "[tsm_railcorridors] Cart spawn attempt: "..minetest.pos_to_string(cpos))
 			minetest.add_entity(cpos, cart_id)
-
+			minetest.after(3, RecheckCartHack, {cpos, cart_id})
 			-- This checks if the cart is actually spawned, it's a giant hack!
 			-- Note that the callback function is also called there.
 			-- TODO: Move callback function to this position when the
 			-- minetest.add_entity bug has been fixed.
-
-			-- minetest.after(3, RecheckCartHack, {cpos, cart_id})
-			-- This whole recheck logic leads to a stub right now
-			-- it can be reenabled when chest carts are a thing.
 		end
 	end
 	carts_table = {}

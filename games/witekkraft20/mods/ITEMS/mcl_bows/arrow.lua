@@ -1,11 +1,6 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 
-local mod_target = minetest.get_modpath("mcl_target")
-local mod_campfire = minetest.get_modpath("mcl_campfires")
 local enable_pvp = minetest.settings:get_bool("enable_pvp")
-
-local math = math
-local vector = vector
 
 -- Time in seconds after which a stuck arrow is deleted
 local ARROW_TIMEOUT = 60
@@ -36,9 +31,6 @@ local function random_arrow_positions(positions, placement)
 	return 0
 end
 
-local mod_awards = minetest.get_modpath("awards") and minetest.get_modpath("mcl_achievements")
-local mod_button = minetest.get_modpath("mesecons_button")
-
 minetest.register_craftitem("mcl_bows:arrow", {
 	description = S("Arrow"),
 	_tt_help = S("Ammunition").."\n"..S("Damage from bow: 1-10").."\n"..S("Damage from dispenser: 3"),
@@ -57,22 +49,24 @@ S("Arrows might get stuck on solid blocks and can be retrieved again. They are a
 })
 
 local ARROW_ENTITY={
-	physical = true,
-	pointable = false,
-	visual = "mesh",
-	mesh = "mcl_bows_arrow.obj",
-	visual_size = {x=-1, y=1},
-	textures = {"mcl_bows_arrow.png"},
-	collisionbox = {-0.19, -0.125, -0.19, 0.19, 0.125, 0.19},
-	collide_with_objects = false,
-	_fire_damage_resistant = true,
+	initial_properties = {
+		physical = true,
+		pointable = false,
+		visual = "mesh",
+		mesh = "mcl_bows_arrow.obj",
+		visual_size = {x=-1, y=1},
+		textures = {"mcl_bows_arrow.png"},
+		collisionbox = {-0.19, -0.125, -0.19, 0.19, 0.125, 0.19},
+		collide_with_objects = false,
+	},
 
+	_fire_damage_resistant = true,
 	_lastpos={},
 	_startpos=nil,
 	_damage=1,	-- Damage on impact
 	_is_critical=false, -- Whether this arrow would deal critical damage
 	_stuck=false,   -- Whether arrow is stuck
-	_stucktimer=nil,-- Amount of time (in seconds) the arrow has been stuck so far
+	_lifetime=0,-- Amount of time (in seconds) the arrow has existed
 	_stuckrechecktimer=nil,-- An additional timer for periodically re-checking the stuck status of an arrow
 	_stuckin=nil,	--Position of node in which arow is stuck.
 	_shooter=nil,	-- ObjectRef of player or mob who shot it
@@ -86,7 +80,11 @@ local ARROW_ENTITY={
 -- Destroy arrow entity self at pos and drops it as an item
 local function spawn_item(self, pos)
 	if not minetest.is_creative_enabled("") then
-		local item = minetest.add_item(pos, "mcl_bows:arrow")
+		local itemstring = "mcl_bows:arrow"
+		if self._itemstring and minetest.registered_items[self._itemstring] then
+			itemstring = self._itemstring
+		end
+		local item = minetest.add_item(pos, itemstring)
 		item:set_velocity(vector.new(0, 0, 0))
 		item:set_yaw(self.object:get_yaw())
 	end
@@ -119,20 +117,20 @@ function ARROW_ENTITY.on_step(self, dtime)
 	-- mcl_burning.tick may remove object immediately
 	if not self.object:get_pos() then return end
 
-	self._time_in_air = self._time_in_air + .001
 
 	local pos = self.object:get_pos()
 	local dpos = vector.round(vector.new(pos)) -- digital pos
 	local node = minetest.get_node(dpos)
 
+	self._lifetime = self._lifetime + dtime
+	if self._lifetime > ARROW_TIMEOUT then
+		mcl_burning.extinguish(self.object)
+		self.object:remove()
+		return
+	end
+
 	if self._stuck then
-		self._stucktimer = self._stucktimer + dtime
 		self._stuckrechecktimer = self._stuckrechecktimer + dtime
-		if self._stucktimer > ARROW_TIMEOUT then
-			mcl_burning.extinguish(self.object)
-			self.object:remove()
-			return
-		end
 		-- Drop arrow as item when it is no longer stuck
 		-- FIXME: Arrows are a bit slow to react and continue to float in mid air for a few seconds.
 		if self._stuckrechecktimer > STUCK_RECHECK_TIME then
@@ -173,7 +171,7 @@ function ARROW_ENTITY.on_step(self, dtime)
 		if self._damage >= 9 and self._in_player == false then
 			minetest.add_particlespawner({
 				amount = 20,
-				time = .15,
+				time = .2,
 				minpos = vector.new(0,0,0),
 				maxpos = vector.new(0,0,0),
 				minvel = vector.new(-0.1,-0.1,-0.1),
@@ -228,7 +226,7 @@ function ARROW_ENTITY.on_step(self, dtime)
 			local obj = closest_object
 			local is_player = obj:is_player()
 			local lua = obj:get_luaentity()
-			if obj == self._shooter and self._time_in_air > 1.02 or obj ~= self._shooter and (is_player or (lua and (lua.is_mob or lua._hittable_by_projectile))) then
+			if obj == self._shooter and self._lifetime > 0.5 or obj ~= self._shooter and (is_player or (lua and (lua.is_mob or lua._hittable_by_projectile))) then
 				if obj:get_hp() > 0 then
 					-- Check if there is no solid node between arrow and object
 					local ray = minetest.raycast(self.object:get_pos(), obj:get_pos(), true)
@@ -257,10 +255,10 @@ function ARROW_ENTITY.on_step(self, dtime)
 							mcl_burning.set_on_fire(obj, 5)
 						end
 						if not self._in_player and not self._blocked then
-							obj:punch(self.object, 1.0, {
-								full_punch_interval=1.0,
-								damage_groups={fleshy=self._damage},
-							}, self.object:get_velocity())
+							mcl_util.deal_damage(obj, self._damage, {type = "arrow", source = self._shooter })
+							if self._extra_hit_func then
+								self._extra_hit_func(obj)
+							end
 							if obj:is_player() then
 								if not mcl_shields.is_blocking(obj) then
 									local placement
@@ -320,17 +318,6 @@ function ARROW_ENTITY.on_step(self, dtime)
 						end
 					end
 
-					if lua then
-						local entity_name = lua.name
-						-- Achievement for hitting skeleton, wither skeleton or stray (TODO) with an arrow at least 50 meters away
-						-- NOTE: Range has been reduced because mobs unload much earlier than that ... >_>
-						-- TODO: This achievement should be given for the kill, not just a hit
-						if self._shooter and self._shooter:is_player() and vector.distance(pos, self._startpos) >= 20 then
-							if mod_awards and (entity_name == "mobs_mc:skeleton" or entity_name == "mobs_mc:stray" or entity_name == "mobs_mc:witherskeleton") then
-								awards.unlock(self._shooter:get_player_name(), "mcl:snipeSkeleton")
-							end
-						end
-					end
 					if not self._in_player and not self._blocked then
 						minetest.sound_play({name="mcl_bows_hit_other", gain=0.3}, {pos=self.object:get_pos(), max_hear_distance=16}, true)
 					end
@@ -384,7 +371,7 @@ function ARROW_ENTITY.on_step(self, dtime)
 
 				-- Node was walkable, make arrow stuck
 				self._stuck = true
-				self._stucktimer = 0
+				self._lifetime = 0
 				self._stuckrechecktimer = 0
 
 				self.object:set_velocity(vector.new(0, 0, 0))
@@ -392,27 +379,11 @@ function ARROW_ENTITY.on_step(self, dtime)
 
 				minetest.sound_play({name="mcl_bows_hit_other", gain=0.3}, {pos=self.object:get_pos(), max_hear_distance=16}, true)
 
-				if mcl_burning.is_burning(self.object) and snode.name == "mcl_tnt:tnt" then
-					tnt.ignite(self._stuckin)
-				end
-
-				-- Ignite Campfires
-				if mod_campfire and mcl_burning.is_burning(self.object) and minetest.get_item_group(snode.name, "campfire") ~= 0 then
-					mcl_campfires.light_campfire(self._stuckin)
-				end
-
-				-- Activate target
-				if mod_target and snode.name == "mcl_target:target_off" then
-					mcl_target.hit(self._stuckin, 1) --10 redstone ticks
-				end
-
-				-- Push the button! Push, push, push the button!
-				if mod_button and minetest.get_item_group(node.name, "button") > 0 and minetest.get_item_group(node.name, "button_push_by_arrow") == 1 then
-					local bdir = minetest.wallmounted_to_dir(node.param2)
-					-- Check the button orientation
-					if vector.equals(vector.add(dpos, bdir), self._stuckin) then
-						mesecon.push_button(dpos, node)
-					end
+				local bdef = minetest.registered_nodes[node.name]
+				if (bdef and bdef._on_arrow_hit) then
+					bdef._on_arrow_hit(dpos, self)
+				elseif (sdef and sdef._on_arrow_hit) then
+					sdef._on_arrow_hit(self._stuckin, self)
 				end
 			end
 		elseif (def and def.liquidtype ~= "none") then
@@ -463,14 +434,13 @@ function ARROW_ENTITY.get_staticdata(self)
 		stuck = self._stuck,
 		stuckin = self._stuckin,
 		stuckin_player = self._in_player,
+		itemstring = self._itemstring,
 	}
-	if self._stuck then
-		-- If _stucktimer is missing for some reason, assume the maximum
-		if not self._stucktimer then
-			self._stucktimer = ARROW_TIMEOUT
-		end
-		out.stuckstarttime = minetest.get_gametime() - self._stucktimer
+	-- If _lifetime is missing for some reason, assume the maximum
+	if not self._lifetime then
+		self._lifetime = ARROW_TIMEOUT
 	end
+	out.starttime = minetest.get_gametime() - self._lifetime
 	if self._shooter and self._shooter:is_player() then
 		out.shootername = self._shooter:get_player_name()
 	end
@@ -478,22 +448,18 @@ function ARROW_ENTITY.get_staticdata(self)
 end
 
 function ARROW_ENTITY.on_activate(self, staticdata, dtime_s)
-	self._time_in_air = 1.0
 	local data = minetest.deserialize(staticdata)
 	if data then
+		-- First, check if the arrow is already past its life timer. If
+		-- yes, delete it. If starttime is nil always delete it.
+		self._lifetime = minetest.get_gametime() - (data.starttime or 0)
+		if self._lifetime > ARROW_TIMEOUT then
+			mcl_burning.extinguish(self.object)
+			self.object:remove()
+			return
+		end
 		self._stuck = data.stuck
 		if data.stuck then
-			if data.stuckstarttime then
-				-- First, check if the stuck arrow is aleady past its life timer.
-				-- If yes, delete it.
-				self._stucktimer = minetest.get_gametime() - data.stuckstarttime
-				if self._stucktimer > ARROW_TIMEOUT then
-					mcl_burning.extinguish(self.object)
-					self.object:remove()
-					return
-				end
-			end
-
 			-- Perform a stuck recheck on the next step.
 			self._stuckrechecktimer = STUCK_RECHECK_TIME
 
@@ -505,6 +471,8 @@ function ARROW_ENTITY.on_activate(self, staticdata, dtime_s)
 		self._startpos = data.startpos
 		self._damage = data.damage
 		self._is_critical = data.is_critical
+		self._itemstring = data.itemstring
+		self._is_arrow = true
 		if data.shootername then
 			local shooter = minetest.get_player_by_name(data.shootername)
 			if shooter and shooter:is_player() then

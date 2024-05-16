@@ -2,8 +2,6 @@ local S = minetest.get_translator(minetest.get_current_modname())
 
 local peaceful = minetest.settings:get_bool("only_peaceful_mobs", false)
 
-local vector = vector
-
 local explosion_strength = 6
 
 local directions = {
@@ -41,7 +39,7 @@ local function crystal_explode(self, puncher)
 		source = reason.source
 	end
 	minetest.after(0, self.object.remove, self.object)
-	mcl_explosions.explode(vector.add(self.object:get_pos(), {x = 0, y = 1.5, z = 0}), strength, {drop_chance = 1}, self.object, source)
+	mcl_explosions.explode(vector.add(self.object:get_pos(), {x = 0, y = 1.5, z = 0}), strength, {}, self.object, source)
 end
 
 local function set_crystal_animation(self)
@@ -114,6 +112,8 @@ minetest.register_entity("mcl_end:crystal_beam", {
 		},
 		static_save = false,
 	},
+	_mcl_fishing_hookable = true,
+	_mcl_fishing_reelable = false,
 	spin = 0,
 	init = function(self, dragon, crystal)
 		self.dragon, self.crystal = dragon, crystal
@@ -150,17 +150,15 @@ minetest.register_entity("mcl_end:crystal_beam", {
 minetest.register_craftitem("mcl_end:crystal", {
 	inventory_image = "mcl_end_crystal_item.png",
 	description = S("End Crystal"),
-	stack_max = 64,
 	on_place = function(itemstack, placer, pointed_thing)
 		if pointed_thing.type == "node" then
 			local pos = minetest.get_pointed_thing_position(pointed_thing)
 			local node = minetest.get_node(pos)
 			local node_name = node.name
-			if placer and not placer:get_player_control().sneak then
-				if minetest.registered_nodes[node_name] and minetest.registered_nodes[node_name].on_rightclick then
-					return minetest.registered_nodes[node_name].on_rightclick(pointed_thing.under, node, placer, itemstack) or itemstack
-				end
-			end
+
+			local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+			if rc then return rc end
+
 			if find_crystal(pos) then return itemstack end
 			if node_name == "mcl_core:obsidian" or node_name == "mcl_core:bedrock" then
 				if not minetest.is_creative_enabled(placer:get_player_name()) then

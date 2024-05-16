@@ -1,7 +1,6 @@
 --Bow
 dofile(minetest.get_modpath("mcl_bows") .. "/arrow.lua")
 dofile(minetest.get_modpath("mcl_bows") .. "/bow.lua")
-dofile(minetest.get_modpath("mcl_bows") .. "/rocket.lua")
 
 --Crossbow
 dofile(minetest.get_modpath("mcl_bows") .. "/crossbow.lua")

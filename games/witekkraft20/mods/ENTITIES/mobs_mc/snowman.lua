@@ -43,13 +43,13 @@ mcl_mobs.register_mob("mobs_mc:snowman", {
 		distance = 16,
 	},
 	textures = {
-                "mobs_mc_snowman.png", --snowman texture
-                "farming_pumpkin_side.png", --top
-                "farming_pumpkin_top.png", --down
-                "farming_pumpkin_face.png", --front
-                "farming_pumpkin_side.png", --left
-                "farming_pumpkin_side.png", --right
-                "farming_pumpkin_top.png", --left
+		"mobs_mc_snowman.png", --snowman texture
+		"farming_pumpkin_side.png", --top
+		"farming_pumpkin_top.png", --down
+		"farming_pumpkin_face.png", --front
+		"farming_pumpkin_side.png", --left
+		"farming_pumpkin_side.png", --right
+		"farming_pumpkin_top.png", --left
 	},
 	gotten_texture = gotten_texture,
 	drops = {{ name = "mcl_throwing:snowball", chance = 1, min = 0, max = 15 }},
@@ -135,12 +135,26 @@ mcl_mobs.register_mob("mobs_mc:snowman", {
 			end
 		end
 	end,
+	_on_dispense = function(self, dropitem, pos, droppos, dropnode, dropdir)
+		if minetest.get_item_group(dropitem:get_name(), "shears") > 0 then
+			if self.object:get_properties().textures[2] ~= "blank.png" then
+				dropitem = self:use_shears({
+					"mobs_mc_snowman.png",
+					"blank.png", "blank.png",
+					"blank.png", "blank.png",
+					"blank.png", "blank.png",
+				}, dropitem)
+				return dropitem
+			end
+		end
+		return mcl_mobs.mob_class._on_dispense(self, dropitem, pos, droppos, dropnode, dropdir)
+	end,
 })
 
 local summon_particles = function(obj)
-	local lua = obj:get_luaentity()
-	local min = {x=lua.collisionbox[1], y=lua.collisionbox[2], z=lua.collisionbox[3]}
-	local max = {x=lua.collisionbox[4], y=lua.collisionbox[5], z=lua.collisionbox[6]}
+	local cb = obj:get_properties().collisionbox
+	local min = {x=cb[1], y=cb[2], z=cb[3]}
+	local max = {x=cb[4], y=cb[5], z=cb[6]}
 	local pos = obj:get_pos()
 	minetest.add_particlespawner({
 		amount = 60,
@@ -197,4 +211,3 @@ end
 
 -- Spawn egg
 mcl_mobs.register_egg("mobs_mc:snowman", S("Snow Golem"), "#f2f2f2", "#fd8f47", 0)
-mcl_mobs:non_spawn_specific("mobs_mc:snowman","overworld",0,minetest.LIGHT_MAX+1)

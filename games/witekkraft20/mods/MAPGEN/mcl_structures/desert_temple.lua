@@ -1,5 +1,4 @@
 local modname = minetest.get_current_modname()
-local S = minetest.get_translator(modname)
 local modpath = minetest.get_modpath(modname)
 
 local function temple_placement_callback(pos,def, pr)
@@ -28,6 +27,17 @@ local function temple_placement_callback(pos,def, pr)
 		else
 			-- Initialize plate
 			minetest.registered_nodes["mesecons_pressureplates:pressure_plate_stone_off"].on_construct(pplates[p])
+		end
+	end
+	if minetest.registered_nodes["mcl_sus_nodes:sand"] then
+		local sus_poss = minetest.find_nodes_in_area(vector.offset(p1,0,-5,0), vector.offset(p2,0,-hl+5,0), {"mcl_core:sand","mcl_core:sandstone","mcl_core:redsand","mcl_core:redsandstone"})
+		if #sus_poss > 0 then
+			table.shuffle(sus_poss)
+			for i = 1,pr:next(1,math.min(250,#sus_poss)) do
+				minetest.set_node(sus_poss[i],{name="mcl_sus_nodes:sand"})
+				local meta = minetest.get_meta(sus_poss[i])
+				meta:set_string("structure","desert_temple")
+			end
 		end
 	end
 end
@@ -82,6 +92,21 @@ mcl_structures.register_structure("desert_temple",{
 				{ itemstring = "mcl_core:sand", weight = 10, amount_min = 1, amount_max = 8 },
 				{ itemstring = "mcl_mobitems:string", weight = 10, amount_min = 1, amount_max = 8 },
 			}
-		}}
-	}
+		}},
+		["SUS"] = {
+		{
+			stacks_min = 1,
+			stacks_max = 1,
+			items = {
+				{ itemstring = "mcl_pottery_sherds:archer", weight = 21, },
+				{ itemstring = "mcl_core:emerald", weight = 1 },
+				{ itemstring = "mcl_mobitems:gunpowder", weight = 1 },
+				{ itemstring = "mcl_pottery_sherds:miner", weight = 1, },
+				{ itemstring = "mcl_pottery_sherds:prize", weight = 1, },
+				{ itemstring = "mcl_pottery_sherds:skull", weight = 1, },
+				{ itemstring = "mcl_tnt:tnt", weight = 1 },
+				{ itemstring = "mcl_core:diamond", weight = 1 },
+			}
+		}},
+	},
 })

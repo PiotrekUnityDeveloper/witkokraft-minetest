@@ -2,9 +2,6 @@ local modname = minetest.get_current_modname()
 local modpath = minetest.get_modpath(modname)
 local S = minetest.get_translator(modname)
 
-local math = math
-local vector = vector
-
 mcl_enchanting = {
 	book_offset = vector.new(0, 0.75, 0),
 	book_animations = {["close"] = 1, ["opening"] = 2, ["open"] = 3, ["closing"] = 4},

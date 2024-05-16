@@ -1,6 +1,6 @@
 local GRAVITY = tonumber(minetest.settings:get("movement_gravity"))
-local table = table
 
+local inv_nodes_movable = minetest.settings:get_bool("mcl_inv_nodes_movable", true)
 --register stoppers for movestones/pistons
 
 mesecon.mvps_stoppers = {}
@@ -148,7 +148,7 @@ function mesecon.mvps_get_stack(pos, dir, maximum, piston_pos)
 			if not node_replaceable(nn.name) then
 				table.insert(nodes, {node = nn, pos = {x=np.x, y=np.y, z=np.z}})
 				if #nodes > maximum then return nil, nil, false, true end
-				
+
 				-- add connected nodes to frontiers, connected is a vector list
 				-- the vectors must be absolute positions
 				local connected = {}
@@ -160,7 +160,7 @@ function mesecon.mvps_get_stack(pos, dir, maximum, piston_pos)
 					end
 				end
 				table.insert(connected, vector.add(np, dir))
-				
+
 				-- Make sure there are no duplicates in frontiers / nodes before
 				-- adding nodes in "connected" to frontiers
 				for _, cp in ipairs(connected) do
@@ -279,20 +279,9 @@ function mesecon.mvps_push_or_pull(pos, stackdir, movedir, maximum, player_name,
 		if is_dropper then
 			-- if current node has already been destroyed (e.g. chain reaction of sugar cane breaking), skip it
 			if minetest.get_node(n.pos).name == n.node.name then
-				-- simulate dig_node using handle_node_drops
-				local drops = minetest.get_node_drops(n.node.name, "")
-				local counted_drops = {}
+				local def = minetest.registered_nodes[n.node.name]
+				def.on_dig(n.pos, n.node) --no need to check if it exists since all nodes have this via metatable (defaulting to minetest.node_dig which will handle drops)
 				minetest.remove_node(n.pos)
-				for _, callback in pairs(minetest.registered_on_dignodes) do
-					callback(n.pos, n.node)
-				end
-				for _, item in ipairs(drops) do
-					if type(item) ~= "string" then
-						item = item:get_name() .. item:get_count()
-					end
-					table.insert(counted_drops, item)
-				end
-				minetest.handle_node_drops(n.pos, counted_drops)
 			end
 		else
 			minetest.remove_node(n.pos)
@@ -394,8 +383,6 @@ function mesecon.mvps_move_objects(pos, dir, nodestack)
 					local adjpos = vector.add(np, r)
 					local adjnode = minetest.get_node(adjpos)
 					if minetest.registered_nodes[adjnode.name] and minetest.registered_nodes[adjnode.name].mvps_sticky and adjnode.name == "mcl_core:slimeblock" then
-						local np = vector.add(obj:get_pos(), dir)
-
 						-- Reset acceleration of all objects before launching.
 						-- Fixes eggs, & snowballs thrown by dispensers
 						obj:set_acceleration({x=dir.x, y=-GRAVITY, z=dir.z})
@@ -444,6 +431,8 @@ mesecon.register_mvps_stopper("mcl_banners:standing_banner")
 mesecon.register_mvps_stopper("mcl_beehives:bee_nest")
 mesecon.register_mvps_stopper("mcl_beehives:beehive")
 mesecon.register_mvps_stopper("mcl_compass:lodestone")
+mesecon.register_mvps_stopper("mcl_sculk:sculk")
+mesecon.register_mvps_stopper("mcl_sculk:catalyst")
 
 -- Unmovable by technical restrictions.
 -- Open formspec would screw up if node is destroyed (minor problem)
@@ -455,17 +444,25 @@ mesecon.register_mvps_stopper("mcl_blast_furnace:blast_furnace")
 mesecon.register_mvps_stopper("mcl_blast_furnace:blast_furnace_active")
 mesecon.register_mvps_stopper("mcl_smoker:smoker")
 mesecon.register_mvps_stopper("mcl_smoker:smoker_active")
-mesecon.register_mvps_stopper("mcl_hoppers:hopper")
-mesecon.register_mvps_stopper("mcl_hoppers:hopper_side")
-mesecon.register_mvps_stopper("mcl_droppers:dropper")
-mesecon.register_mvps_stopper("mcl_droppers:dropper_up")
-mesecon.register_mvps_stopper("mcl_droppers:dropper_down")
-mesecon.register_mvps_stopper("mcl_dispensers:dispenser")
-mesecon.register_mvps_stopper("mcl_dispensers:dispenser_up")
-mesecon.register_mvps_stopper("mcl_dispensers:dispenser_down")
-mesecon.register_mvps_stopper("mcl_anvils:anvil")
-mesecon.register_mvps_stopper("mcl_anvils:anvil_damage_1")
-mesecon.register_mvps_stopper("mcl_anvils:anvil_damage_2")
+
+-- These are unmovable in java edition due to technical restrictions
+-- disable the setting mcl_nodes_movable
+if not inv_nodes_movable then
+	mesecon.register_mvps_stopper("mcl_hoppers:hopper")
+	mesecon.register_mvps_stopper("mcl_hoppers:hopper_side")
+	mesecon.register_mvps_stopper("mcl_droppers:dropper")
+	mesecon.register_mvps_stopper("mcl_droppers:dropper_up")
+	mesecon.register_mvps_stopper("mcl_droppers:dropper_down")
+	mesecon.register_mvps_stopper("mcl_dispensers:dispenser")
+	mesecon.register_mvps_stopper("mcl_dispensers:dispenser_up")
+	mesecon.register_mvps_stopper("mcl_dispensers:dispenser_down")
+	mesecon.register_mvps_stopper("mcl_barrels:barrel_open")
+	mesecon.register_mvps_stopper("mcl_barrels:barrel_closed")
+	mesecon.register_mvps_stopper("mcl_anvils:anvil")
+	mesecon.register_mvps_stopper("mcl_anvils:anvil_damage_1")
+	mesecon.register_mvps_stopper("mcl_anvils:anvil_damage_2")
+end
+
 mesecon.register_mvps_stopper("mcl_chests:chest")
 mesecon.register_mvps_stopper("mcl_chests:chest_small")
 mesecon.register_mvps_stopper("mcl_chests:chest_left")
@@ -474,14 +471,18 @@ mesecon.register_mvps_stopper("mcl_chests:trapped_chest")
 mesecon.register_mvps_stopper("mcl_chests:trapped_chest_small")
 mesecon.register_mvps_stopper("mcl_chests:trapped_chest_left")
 mesecon.register_mvps_stopper("mcl_chests:trapped_chest_right")
-mesecon.register_mvps_stopper("mcl_barrels:barrel_open")
-mesecon.register_mvps_stopper("mcl_barrels:barrel_closed")
+
+mesecon.register_mvps_stopper("mcl_signs:wall_sign")
+mesecon.register_mvps_stopper("mcl_signs:standing_sign")
+mesecon.register_mvps_stopper("mcl_signs:standing_sign22_5")
+mesecon.register_mvps_stopper("mcl_signs:standing_sign45")
+mesecon.register_mvps_stopper("mcl_signs:standing_sign67_5")
+
+-- Campfires
 mesecon.register_mvps_stopper("mcl_campfires:campfire")
 mesecon.register_mvps_stopper("mcl_campfires:campfire_lit")
 mesecon.register_mvps_stopper("mcl_campfires:soul_campfire")
 mesecon.register_mvps_stopper("mcl_campfires:soul_campfire_lit")
-mesecon.register_mvps_stopper("mcl_lectern:lectern")
-mesecon.register_mvps_stopper("mcl_grindstone:grindstone")
 
 
 -- Unmovable by design: objects
@@ -516,6 +517,7 @@ mesecon.register_mvps_unsticky("mcl_colorblocks:glazed_terracotta_black")
 mesecon.register_mvps_unsticky("mcl_colorblocks:glazed_terracotta_brown")
 mesecon.register_mvps_unsticky("mcl_colorblocks:glazed_terracotta_light_blue")
 mesecon.register_mvps_unsticky("mcl_colorblocks:glazed_terracotta_pink")
+
 -- Bamboo
 mesecon.register_mvps_unsticky("mcl_bamboo:bamboo")
 mesecon.register_mvps_unsticky("mcl_bamboo:bamboo_endcap")
@@ -935,11 +937,6 @@ mesecon.register_mvps_unsticky("mcl_farming:wheat_4")
 mesecon.register_mvps_unsticky("mcl_farming:wheat_5")
 mesecon.register_mvps_unsticky("mcl_farming:wheat_6")
 mesecon.register_mvps_unsticky("mcl_farming:wheat_7")
--- Campfires
-mesecon.register_mvps_unsticky("mcl_campfires:campfire")
-mesecon.register_mvps_unsticky("mcl_campfires:campfire_lit")
-mesecon.register_mvps_unsticky("mcl_campfires:soul_campfire")
-mesecon.register_mvps_unsticky("mcl_campfires:soul_campfire_lit")
 
 -- Includes node heat when moving them
 mesecon.register_on_mvps_move(mesecon.move_hot_nodes)

@@ -1,5 +1,11 @@
 local enable_damage = minetest.settings:get_bool("enable_damage")
 
+-- TODO: when < minetest 5.9 isn't supported anymore, remove this variable check and replace all occurences of [hud_elem_type_field] with type
+local hud_elem_type_field = "type"
+if not minetest.features.hud_def_type_field then
+	hud_elem_type_field = "hud_elem_type"
+end
+
 function mcl_burning.get_storage(obj)
 	return obj:is_player() and mcl_burning.storage[obj] or obj:get_luaentity()
 end
@@ -33,12 +39,10 @@ function mcl_burning.get_collisionbox(obj, smaller, storage)
 	end
 end
 
-local find_nodes_in_area = minetest.find_nodes_in_area
-
 function mcl_burning.get_touching_nodes(obj, nodenames, storage)
 	local pos = obj:get_pos()
 	local minp, maxp = mcl_burning.get_collisionbox(obj, true, storage)
-	local nodes = find_nodes_in_area(vector.add(pos, minp), vector.add(pos, maxp), nodenames)
+	local nodes = minetest.find_nodes_in_area(vector.add(pos, minp), vector.add(pos, maxp), nodenames)
 	return nodes
 end
 
@@ -58,7 +62,7 @@ function mcl_burning.update_hud(player)
 	if not storage.fire_hud_id then
 		storage.animation_frame = 1
 		storage.fire_hud_id = player:hud_add({
-			hud_elem_type = "image",
+			[hud_elem_type_field] = "image",
 			position = {x = 0.5, y = 0.5},
 			scale = {x = -100, y = -100},
 			text = hud_flame_animated .. storage.animation_frame,
@@ -97,7 +101,6 @@ function mcl_burning.set_on_fire(obj, burn_time)
 	end
 
 	if obj:is_player() and not enable_damage then
-		burn_time = 0
 		return
 	else
 		local max_fire_prot_lvl = 0
@@ -133,8 +136,10 @@ function mcl_burning.set_on_fire(obj, burn_time)
 	size = vector.divide(size, obj:get_properties().visual_size)
 
 	local fire_entity = minetest.add_entity(obj:get_pos(), "mcl_burning:fire")
-	fire_entity:set_properties({visual_size = size})
-	fire_entity:set_attach(obj, "", vector.new(0, size.y * 5, 0), vector.new(0, 0, 0))
+	if fire_entity and fire_entity:get_pos() then
+		fire_entity:set_properties({visual_size = size})
+		fire_entity:set_attach(obj, "", vector.new(0, size.y * 5, 0), vector.new(0, 0, 0))
+	end
 
 	if obj:is_player() then
 		mcl_burning.update_hud(obj)
@@ -158,11 +163,6 @@ function mcl_burning.extinguish(obj)
 end
 
 function mcl_burning.tick(obj, dtime, storage)
-	if not storage then
-		minetest.log("warning", "No storage for burning tick. Should not happen: " .. dump(obj))
-		return
-	end
-
 	if storage.burn_time then
 		storage.burn_time = storage.burn_time - dtime
 

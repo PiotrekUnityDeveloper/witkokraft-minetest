@@ -10,19 +10,6 @@ local adjacents = {
 	vector.new(0,-1,0)
 }
 
-local plane_adjacents = {
-	vector.new(1,0,0),
-	vector.new(-1,0,0),
-	vector.new(0,0,1),
-	vector.new(0,0,-1),
-}
-
-local function set_node_no_bedrock(pos,node)
-	local n = minetest.get_node(pos)
-	if n.name == "mcl_core:bedrock" then return end
-	return minetest.set_node(pos,node)
-end
-
 local function airtower(pos,tbl,h)
 	for i=1,h do
 		table.insert(tbl,vector.offset(pos,0,i,0))
@@ -30,7 +17,6 @@ local function airtower(pos,tbl,h)
 end
 
 local function makelake(pos,size,liquid,placein,border,pr,noair)
-	local node_under = minetest.get_node(vector.offset(pos,0,-1,0))
 	local p1 = vector.offset(pos,-size,-1,-size)
 	local p2 = vector.offset(pos,size,-1,size)
 	minetest.emerge_area(p1, p2, function(blockpos, action, calls_remaining, param)
@@ -229,14 +215,6 @@ mcl_structures.register_structure("water_lake_mangrove_swamp",{
 		return makelake(pos,3,"mcl_core:water_source",{"group:material_stone", "group:sand", "group:dirt","group:grass_block","mcl_mud:mud"},"mcl_mud:mud",pr,true)
 	end
 })
-
-local pool_adjacents = {
-	vector.new(1,0,0),
-	vector.new(-1,0,0),
-	vector.new(0,-1,0),
-	vector.new(0,0,1),
-	vector.new(0,0,-1),
-}
 
 mcl_structures.register_structure("basalt_column",{
 	place_on = {"mcl_blackstone:blackstone","mcl_blackstone:basalt"},

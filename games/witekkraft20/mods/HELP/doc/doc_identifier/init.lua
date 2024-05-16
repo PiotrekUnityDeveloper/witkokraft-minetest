@@ -115,7 +115,7 @@ function doc_identifier.identify(itemstack, user, pointed_thing)
 					doc.show_entry(username, "nodes", itemstring, true)
 				end
 			-- A known registered object
-			elseif ro then
+			elseif ro and doc.entry_exists (ro.category, ro.entry) then
 				doc.show_entry(username, ro.category, ro.entry, true)
 			-- Undefined object (error)
 			elseif minetest.registered_entities[le.name] == nil then
@@ -137,12 +137,8 @@ end
 function doc_identifier.solid_mode(itemstack, user, pointed_thing)
 	-- Use pointed node's on_rightclick function first, if present
 	if pointed_thing.type == "node" then
-		local node = minetest.get_node(pointed_thing.under)
-		if user and not user:get_player_control().sneak then
-			if minetest.registered_nodes[node.name] and minetest.registered_nodes[node.name].on_rightclick then
-				return minetest.registered_nodes[node.name].on_rightclick(pointed_thing.under, node, user, itemstack) or itemstack
-			end
-		end
+		local rc = mcl_util.call_on_rightclick(itemstack, user, pointed_thing)
+		if rc then return rc end
 	end
 
 	return ItemStack("doc_identifier:identifier_solid")
@@ -151,12 +147,8 @@ end
 function doc_identifier.liquid_mode(itemstack, user, pointed_thing)
 	-- Use pointed node's on_rightclick function first, if present
 	if pointed_thing.type == "node" then
-		local node = minetest.get_node(pointed_thing.under)
-		if user and not user:get_player_control().sneak then
-			if minetest.registered_nodes[node.name] and minetest.registered_nodes[node.name].on_rightclick then
-				return minetest.registered_nodes[node.name].on_rightclick(pointed_thing.under, node, user, itemstack) or itemstack
-			end
-		end
+		local rc = mcl_util.call_on_rightclick(itemstack, user, pointed_thing)
+		if rc then return rc end
 	end
 
 	return ItemStack("doc_identifier:identifier_liquid")

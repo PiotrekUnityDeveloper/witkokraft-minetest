@@ -33,7 +33,6 @@ local dispenser_formspec = table.concat({
 })
 
 ---For after_place_node
----@param pos Vector
 local function setup_dispenser(pos)
 	-- Set formspec and inventory
 	local meta = minetest.get_meta(pos)
@@ -93,19 +92,8 @@ local dispenserdef = {
 			return stack:get_count()
 		end
 	end,
-	after_dig_node = function(pos, oldnode, oldmetadata, digger)
-		local meta = minetest.get_meta(pos)
-		local meta2 = meta:to_table()
-		meta:from_table(oldmetadata)
-		local inv = meta:get_inventory()
-		for i = 1, inv:get_size("main") do
-			local stack = inv:get_stack("main", i)
-			if not stack:is_empty() then
-				minetest.add_item(vector.offset(pos, math.random(0, 10) / 10 - 0.5, 0, math.random(0, 10) / 10 - 0.5), stack)
-			end
-		end
-		meta:from_table(meta2)
-	end,
+	after_dig_node = mcl_util.drop_items_from_meta_container({"main"}),
+
 	_mcl_blast_resistance = 3.5,
 	_mcl_hardness = 3.5,
 	mesecons = {
@@ -149,7 +137,19 @@ local dispenserdef = {
 					local iname = stack:get_name()
 					local igroups = stackdef.groups
 
-					--[===[ Dispense item ]===]
+					--[___[ Dispense item ]___]
+					--dispense item on luaentity
+					for _, obj in pairs(minetest.get_objects_inside_radius(droppos, 1)) do
+						local ent = obj:get_luaentity()
+						if ent and ent._on_dispense then
+							local pos = obj:get_pos()
+							local od_ret = ent:_on_dispense(stack, pos, droppos, dropnode, dropdir)
+							if od_ret then
+								inv:set_stack("main", stack_id, od_ret)
+								return
+							end
+						end
+					end
 
 					-- Hardcoded dispensions --
 
@@ -182,57 +182,6 @@ local dispenserdef = {
 
 						inv:set_stack("main", stack_id, stack)
 
-						-- Use shears on sheeps
-					elseif igroups.shears then
-						for _, obj in pairs(minetest.get_objects_inside_radius(droppos, 1)) do
-							local entity = obj:get_luaentity()
-							if entity and not entity.child and not entity.gotten then
-								local entname = entity.name
-								local pos = obj:get_pos()
-								local used, texture = false
-								if entname == "mobs_mc:sheep" then
-									if entity.drops[2] then
-										minetest.add_item(pos, entity.drops[2].name .. " " .. math.random(1, 3))
-									end
-									if not entity.color then
-										entity.color = "unicolor_white"
-									end
-									entity.base_texture = { "blank.png", "mobs_mc_sheep.png" }
-									texture = entity.base_texture
-									entity.drops = {
-										{ name = "mcl_mobitems:mutton", chance = 1, min = 1, max = 2 },
-									}
-									used = true
-								elseif entname == "mobs_mc:snowman" then
-									texture = {
-										"mobs_mc_snowman.png",
-										"blank.png", "blank.png",
-										"blank.png", "blank.png",
-										"blank.png", "blank.png",
-									}
-									used = true
-								elseif entname == "mobs_mc:mooshroom" then
-									local droppos = vector.offset(pos, 0, 1.4, 0)
-									if entity.base_texture[1] == "mobs_mc_mooshroom_brown.png" then
-										minetest.add_item(droppos, "mcl_mushrooms:mushroom_brown 5")
-									else
-										minetest.add_item(droppos, "mcl_mushrooms:mushroom_red 5")
-									end
-									obj = mcl_util.replace_mob(obj, "mobs_mc:cow")
-									entity = obj:get_luaentity()
-									used = true
-								end
-								if used then
-									obj:set_properties({ textures = texture })
-									entity.gotten = true
-									minetest.sound_play("mcl_tools_shears_cut", { pos = pos }, true)
-									stack:add_wear(65535 / stackdef._mcl_diggroups.shearsy.uses)
-									inv:set_stack("main", stack_id, stack)
-									break
-								end
-							end
-						end
-
 						-- Spawn Egg
 					elseif igroups.spawn_egg then
 						-- Spawn mob
@@ -245,7 +194,7 @@ local dispenserdef = {
 						end
 
 						-- Generalized dispension
-					elseif (not dropnodedef.walkable or stackdef._dispense_into_walkable) then
+					elseif dropnodedef and (not dropnodedef.walkable or stackdef._dispense_into_walkable) then
 						--[[ _on_dispense(stack, pos, droppos, dropnode, dropdir)
 							* stack: Itemstack which is dispense
 							* pos: Position of dispenser
@@ -282,7 +231,7 @@ local dispenserdef = {
 								stack:take_item()
 								inv:set_stack("main", stack_id, stack)
 							end
-						else
+						elseif minetest.get_item_group(dropitem:get_name(), "shears") == 0 then
 							-- Drop item otherwise
 							local pos_variation = 100
 							droppos = {

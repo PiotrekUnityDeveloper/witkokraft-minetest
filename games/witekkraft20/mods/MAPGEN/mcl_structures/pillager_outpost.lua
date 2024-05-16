@@ -1,7 +1,5 @@
 local modname = minetest.get_current_modname()
-local S = minetest.get_translator(modname)
 local modpath = minetest.get_modpath(modname)
-local peaceful = minetest.settings:get_bool("only_peaceful_mobs", false)
 
 local spawnon = {"mcl_core:stripped_oak","mcl_stairs:slab_birchwood_top"}
 
@@ -51,7 +49,7 @@ mcl_structures.register_structure("pillager_outpost",{
 			stacks_min = 1,
 			stacks_max = 3,
 			items = {
-				{ itemstring = "mcl_core:darktree", amount_min = 2, amount_max=3 },
+				{ itemstring = "mcl_trees:tree_dark_oak", amount_min = 2, amount_max=3 },
 			}
 		},
 		{
@@ -69,10 +67,7 @@ mcl_structures.register_structure("pillager_outpost",{
 		mcl_structures.spawn_mobs("mobs_mc:parrot",{"mesecons_pressureplates:pressure_plate_stone_off"},p1,p2,pr,3)
 		mcl_structures.spawn_mobs("mobs_mc:iron_golem",{"mesecons_button:button_stone_off"},p1,p2,pr,1)
 		for _,n in pairs(minetest.find_nodes_in_area(p1,p2,{"group:wall"})) do
-			local def = minetest.registered_nodes[minetest.get_node(n).name:gsub("_%d+$","")]
-			if def and def.on_construct then
-				def.on_construct(n)
-			end
+			mcl_walls.update_wall(n)
 		end
 	end
 })

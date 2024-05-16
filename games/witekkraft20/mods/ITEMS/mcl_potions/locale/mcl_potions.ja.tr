@@ -1,8 +1,6 @@
 # textdomain: mcl_potions
 <effect> <duration> [<factor>]=<エフェクト> <デュレーション> [<ファクター>]
-
 Add a status effect to yourself. Arguments: <effect>: name of status effect, e.g. poison. <duration>: duration in seconds. <factor>: effect strength multiplier (1 @= 100%)=自分自身にステータス効果を付加する。引数は以下の通り。<エフェクト>: ステータス効果の名前。 <デュレーション>：継続時間(秒)。 <ファクター>: 効果の強さの倍率 (1 @= 100%)。
-
 Missing effect parameter!=エフェクト のパラメータがありません！
 Missing or invalid duration parameter!=デュレーション パラメータがないか、無効です！
 Invalid factor parameter!=ファクター のパラメーターが無効です！
@@ -10,36 +8,24 @@ Invalid factor parameter!=ファクター のパラメーターが無効です�
 Fermented Spider Eye=発酵したクモの目
 Glass Bottle=ガラス瓶
 Liquid container=液体用容器
-
 A glass bottle is used as a container for liquids and can be used to collect water directly.=ガラス瓶は液体用の容器として使われ、直接 水を採取することができます。
-
 To collect water, use it on a cauldron with water (which removes a level of water) or any water source (which removes no water).=水を集めるには、水の入った釜（水を1レベル取り除く）か、水源（水を全く取り除かない）に使用します。
-
 Water Bottle=水入り瓶
 Water bottles can be used to fill cauldrons. Drinking water has no effect.=水入り瓶は大釜を満たすのに使えます。水を飲んでも効果はありません。
-
 Use the “Place” key to drink. Place this item on a cauldron to pour the water into the cauldron.=飲むときは「置く」キーを使用します。このアイテムを大釜の上に置くと水を注げます。
-
 River Water Bottle=河川水入り瓶
 River water bottles can be used to fill cauldrons. Drinking it has no effect.=河川水入り瓶は大釜を満たすのに使えます。飲んでも効果はありません。
-
 Use the “Place” key to drink. Place this item on a cauldron to pour the river water into the cauldron.=「置く」キーで飲むことができます。このアイテムを大釜の上に置くと河川水を注げます。
-
 Splash Water Bottle=水入り飛散瓶
 Extinguishes fire and hurts some mobs=火を消し、一部のモブにダメージを与える
-
 A throwable water bottle that will shatter on impact, where it extinguishes nearby fire and hurts mobs that are vulnerable to water.=投げられる水入り瓶で、衝撃で粉々になり、そこで近くの火を消したり、水に弱いモブにダメージを与えます。
-
 Lingering Water Bottle=水入り滞留瓶
-
 A throwable water bottle that will shatter on impact, where it creates a cloud of water vapor that lingers on the ground for a while. This cloud extinguishes fire and hurts mobs that are vulnerable to water.=投げられる水入り瓶で、衝撃で粉々になり、そこで水蒸気の雲を作り、しばらく地面に留まります。この雲は火を消し、水に弱いモブにダメージを与えます。
-
 Glistering Melon=きらめくメロン
-
 This shiny melon is full of tiny gold nuggets and would be nice in an item frame. It isn't edible and not useful for anything else.=このピカピカのメロンには小さな金塊がたくさん入っていて、アイテムフレームに入れるといい感じです。食用ではないので、他の用途には使えません。
-
+Try different combinations to create potions.=いろいろな組み合わせを試して、ポーションを作ってみましょう。 
+No effect=効果なし
 A throwable potion that will shatter on impact, where it creates a magic cloud that lingers around for a while. Any player or mob inside the cloud will receive the potion's effect, possibly repeatedly.=投げられるポーションで、衝撃を与えると粉々になり、魔法の雲を作り出し、しばらく周囲に留まります。雲の中にいるプレイヤーやモブはポーションの効果を繰り返し受けることができます。
-
 Use the “Punch” key to throw it.=「パンチ」キーで投げます。 
 Use the “Place” key to drink it.=「置く」キーで飲めます。
 Drinking a potion gives you a particular effect.=ポーションを飲むと、特定の効果が得られます。
@@ -72,9 +58,7 @@ Thick Splash Potion=濃厚な飛散ポーション
 Thick Lingering Potion=濃厚な滞留ポーション
 Has a bitter taste and is not useful for brewing potions.=苦味があり、ポーションの醸造には使えません。
 Dragon's Breath=ドラゴンブレス
-
 This item is used in brewing and can be combined with splash potions to create lingering potions.=醸造に使用するアイテムで、飛散ポーションと組み合わせて滞留ポーションが作れます。
-
 Healing=治癒
 +4 HP=+4 HP
 +8 HP=+8 HP
@@ -91,6 +75,8 @@ Slowness=減速
 Decreases walking speed.=歩行速度が下がります。 
 Leaping=跳躍
 Increases jump strength.=ジャンプ力を高めます。
+Withering=
+Applies the withering effect which deals damage at a regular interval and can kill.=
 Poison=毒薬
 Applies the poison effect which deals damage at a regular interval.=一定間隔でダメージを与える毒効果を及ぼします。
 Regeneration=再生
@@ -106,10 +92,5 @@ Weakness +=弱化 +
 Strength=剛力
 Strength II=剛力 II
 Strength +=剛力 +
-Try different combinations to create potions.=いろいろな組み合わせを試して、ポーションを作ってみましょう。 
-No effect=効果なし
-
 A throwable potion that will shatter on impact, where it gives all nearby players and mobs a status effect.=投げられるポーションで、衝撃で粉々になり、近くのプレイヤーやモブにステータス効果を与えます。
-
 This particular arrow is tipped and will give an effect when it hits a player or mob.=この矢は先端が尖っており、プレイヤーやモブに当たると効果を発揮します。
-

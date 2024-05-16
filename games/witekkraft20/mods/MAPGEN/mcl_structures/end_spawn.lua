@@ -1,5 +1,4 @@
 local modname = minetest.get_current_modname()
-local S = minetest.get_translator(modname)
 local modpath = minetest.get_modpath(modname)
 
 
@@ -79,18 +78,15 @@ end
 
 function make_cage(pos,width)
 	local nodes = {}
-	local nodes2 = {}
 	local r = math.max(1,math.floor(width/2) - 2)
 	for x=-r,r do for y = 0,width do for z = -r,r do
 		if x == r or x == -r or z==r or z == -r then
 			table.insert(nodes,vector.add(pos,vector.new(x,y,z)))
 		end
 	end end end
-	if xpanes then
-		minetest.bulk_set_node(nodes,{ name="xpanes:bar_flat"} )
-		for _,p in pairs(nodes) do
-			xpanes.update_pane(p)
-		end
+	minetest.bulk_set_node(nodes,{ name="mcl_panes:bar_flat"} )
+	for _,p in pairs(nodes) do
+		mcl_panes.update_pane(p)
 	end
 end
 

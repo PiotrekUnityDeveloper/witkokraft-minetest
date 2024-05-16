@@ -1,5 +1,4 @@
 local modname = minetest.get_current_modname()
-local S = minetest.get_translator(modname)
 local modpath = minetest.get_modpath(modname)
 
 local spawnon = {"mcl_end:purpur_block"}
@@ -9,7 +8,7 @@ local function spawn_shulkers(pos,def,pr)
 	local p2 = vector.offset(pos,def.sidelen/2,def.sidelen,def.sidelen/2)
 	mcl_structures.spawn_mobs("mobs_mc:shulker",spawnon,p1,p2,pr,1)
 
-	local guard = minetest.find_node_near(pos,def.sidelen,{"mcl_itemframes:item_frame"})
+	local guard = minetest.find_node_near(pos,def.sidelen,{"mcl_itemframes:frame"})
 	if guard then
 		minetest.add_entity(vector.offset(guard,0,-1.5,0),"mobs_mc:shulker")
 	end
@@ -30,16 +29,16 @@ mcl_structures.register_structure("end_shipwreck",{
 	},
 	construct_nodes = {"mcl_chests:ender_chest_small","mcl_chests:ender_chest","mcl_brewing:stand_000","mcl_chests:violet_shulker_box_small"},
 	after_place = function(pos,def,pr)
-		local fr = minetest.find_node_near(pos,def.sidelen,{"mcl_itemframes:item_frame"})
+		local fr = minetest.find_node_near(pos,def.sidelen,{"mcl_itemframes:frame"})
 		if fr then
 			if mcl_itemframes then
-				mcl_itemframes.update_item_entity(fr,minetest.get_node(fr))
+				mcl_itemframes.update_entity(fr)
 			end
 		end
 		return spawn_shulkers(pos,def,pr)
 	end,
 	loot = {
-		[ "mcl_itemframes:item_frame" ] ={{
+		[ "mcl_itemframes:frame" ] ={{
 			stacks_min = 1,
 			stacks_max = 1,
 			items = {
@@ -53,7 +52,7 @@ mcl_structures.register_structure("end_shipwreck",{
 				{ itemstring = "mcl_mobitems:bone", weight = 20, amount_min = 4, amount_max=6 },
 				{ itemstring = "mcl_farming:beetroot_seeds", weight = 16, amount_min = 1, amount_max=10 },
 				{ itemstring = "mcl_core:gold_ingot", weight = 15, amount_min = 2, amount_max = 7 },
-				--{ itemstring = "mcl_bamboo:bamboo", weight = 15, amount_min = 1, amount_max=3 }, --FIXME BAMBOO
+				{ itemstring = "mcl_bamboo:bamboo", weight = 15, amount_min = 1, amount_max=3 },
 				{ itemstring = "mcl_core:iron_ingot", weight = 15, amount_min = 4, amount_max = 8 },
 				{ itemstring = "mcl_core:diamond", weight = 3, amount_min = 2, amount_max = 7 },
 				{ itemstring = "mcl_mobitems:saddle", weight = 3, },

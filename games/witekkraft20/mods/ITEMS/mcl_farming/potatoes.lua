@@ -1,18 +1,22 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 
+local function on_bone_meal(itemstack,placer,pointed_thing,pos,node)
+	return mcl_farming.on_bone_meal(itemstack,placer,pointed_thing,pos,node,"plant_potato")
+end
+
 -- Premature potato plants
 
 for i=1, 7 do
 	local texture, selbox
 	if i < 3 then
 		texture = "mcl_farming_potatoes_stage_0.png"
-		selbox = { -0.5, -0.5, -0.5, 0.5, -5/16, 0.5 }
+		selbox = { -5/16, -0.5 ,-5/16, 5/16, -0.5+(3/16) ,5/16 }
 	elseif i < 5 then
 		texture = "mcl_farming_potatoes_stage_1.png"
-		selbox = { -0.5, -0.5, -0.5, 0.5, -4/16, 0.5 }
+		selbox = { -6/16, -0.5 ,-6/16, 6/16, -0.5+(4/16) ,6/16 }
 	else
 		texture = "mcl_farming_potatoes_stage_2.png"
-		selbox = { -0.5, -0.5, -0.5, 0.5, -3/16, 0.5 }
+		selbox = { -6/16, -0.5 ,-6/16, 6/16, -0.5+(6/16) ,6/16 }
 	end
 
 	local create, name, longdesc
@@ -49,6 +53,7 @@ for i=1, 7 do
 		groups = {dig_immediate=3, not_in_creative_inventory=1,plant=1,attached_node=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1},
 		sounds = mcl_sounds.node_sound_leaves_defaults(),
 		_mcl_blast_resistance = 0,
+		_on_bone_meal = on_bone_meal,
 	})
 end
 
@@ -77,12 +82,19 @@ minetest.register_node("mcl_farming:potato", {
 	selection_box = {
 		type = "fixed",
 		fixed = {
-			{ -0.5, -0.5, -0.5, 0.5, -1/16, 0.5 }
+			{ -6/16, -0.5 ,-6/16, 6/16, -0.5+(8/16) ,6/16 }
 		}
 	},
 	groups = {dig_immediate=3, not_in_creative_inventory=1,plant=1,attached_node=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1},
 	sounds = mcl_sounds.node_sound_leaves_defaults(),
 	_mcl_blast_resistance = 0,
+	_mcl_fortune_drop = {
+		discrete_uniform_distribution = true,
+		items = {"mcl_farming:potato_item"},
+		min_count = 2,
+		max_count = 4,
+		cap = 5
+	}
 })
 
 minetest.register_craftitem("mcl_farming:potato_item", {
@@ -91,17 +103,22 @@ minetest.register_craftitem("mcl_farming:potato_item", {
 	_doc_items_longdesc = S("Potatoes are food items which can be eaten, cooked in the furnace and planted. Pigs like potatoes."),
 	_doc_items_usagehelp = S("Hold it in your hand and rightclick to eat it. Place it on top of farmland to plant it. It grows in sunlight and grows faster on hydrated farmland. Rightclick an animal to feed it."),
 	inventory_image = "farming_potato.png",
-	groups = {food = 2, eatable = 1, compostability = 65, smoker_cookable = 1},
+	groups = {food = 2, eatable = 1, compostability = 65, smoker_cookable = 1, campfire_cookable = 1},
 	_mcl_saturation = 0.6,
-	stack_max = 64,
 	on_secondary_use = minetest.item_eat(1),
-	on_place = mcl_farming:get_seed_or_eat_callback("mcl_farming:potato_1", 1),
+	on_place = function(itemstack, placer, pointed_thing)
+		local new = mcl_farming:place_seed(itemstack, placer, pointed_thing, "mcl_farming:potato_1")
+		if new then
+			return new
+		else
+			return minetest.do_item_eat(1, nil, itemstack, placer, pointed_thing)
+		end
+	end,
 })
 
 minetest.register_craftitem("mcl_farming:potato_item_baked", {
 	description = S("Baked Potato"),
 	_doc_items_longdesc = S("Baked potatoes are food items which are more filling than the unbaked ones."),
-	stack_max = 64,
 	inventory_image = "farming_potato_baked.png",
 	on_place = minetest.item_eat(5),
 	on_secondary_use = minetest.item_eat(5),
@@ -113,7 +130,6 @@ minetest.register_craftitem("mcl_farming:potato_item_poison", {
 	description = S("Poisonous Potato"),
 	_tt_help = minetest.colorize(mcl_colors.YELLOW, S("60% chance of poisoning")),
 	_doc_items_longdesc = S("This potato doesn't look too healthy. You can eat it to restore hunger points, but there's a 60% chance it will poison you briefly."),
-	stack_max = 64,
 	inventory_image = "farming_potato_poison.png",
 	on_place = minetest.item_eat(2),
 	on_secondary_use = minetest.item_eat(2),

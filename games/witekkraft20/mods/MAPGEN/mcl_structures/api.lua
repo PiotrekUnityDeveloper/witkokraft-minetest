@@ -1,6 +1,8 @@
 mcl_structures.registered_structures = {}
+local modname = minetest.get_current_modname()
+local modpath = minetest.get_modpath(modname)
 
-local place_queue = {}
+--local place_queue = {}
 local disabled_structures = minetest.settings:get("mcl_disabled_structures")
 if disabled_structures then	disabled_structures = disabled_structures:split(",")
 else disabled_structures = {} end
@@ -88,13 +90,15 @@ mcl_structures.init_node_construct = init_node_construct
 
 function mcl_structures.fill_chests(p1,p2,loot,pr)
 	for it,lt in pairs(loot) do
-		local nodes = minetest.find_nodes_in_area(p1, p2, it)
-		for _,p in pairs(nodes) do
-			local lootitems = mcl_loot.get_multi_loot(lt, pr)
-			mcl_structures.init_node_construct(p)
-			local meta = minetest.get_meta(p)
-			local inv = meta:get_inventory()
-			mcl_loot.fill_inventory(inv, "main", lootitems, pr)
+		if it ~= "SUS" then --don't try to generate loot for "sus nodes" here, this happens when a player brushes a suspicious node
+			local nodes = minetest.find_nodes_in_area(p1, p2, it)
+			for _,p in pairs(nodes) do
+				local lootitems = mcl_loot.get_multi_loot(lt, pr)
+				mcl_structures.init_node_construct(p)
+				local meta = minetest.get_meta(p)
+				local inv = meta:get_inventory()
+				mcl_loot.fill_inventory(inv, "main", lootitems, pr)
+			end
 		end
 	end
 end
@@ -133,6 +137,7 @@ function mcl_structures.find_highest_y(pp)
 	end
 	return y
 end
+--[[
 
 local function smooth_cube(nn,pos,plane,amnt)
 	local r = {}
@@ -195,15 +200,13 @@ local function foundation(ground_p1,ground_p2,pos,sidelen)
 	local node_top = "mcl_core:dirt_with_grass" or minetest.get_node(ground_p1).name
 	local node_dust = nil
 
-	if mg_name ~= "v6" then
-		local b = minetest.registered_biomes[minetest.get_biome_name(minetest.get_biome_data(pos).biome)]
-		--minetest.log(dump(b.node_top))
-		if b then
-			if b.node_top then node_top = b.node_top end
-			if b.node_filler then node_filler = b.node_filler end
-			if b.node_stone then node_stone = b.node_stone end
-			if b.node_dust then node_dust = b.node_dust end
-		end
+	local b = minetest.registered_biomes[minetest.get_biome_name(minetest.get_biome_data(pos).biome)]
+	--minetest.log(dump(b.node_top))
+	if b then
+		if b.node_top then node_top = b.node_top end
+		if b.node_filler then node_filler = b.node_filler end
+		if b.node_stone then node_stone = b.node_stone end
+		if b.node_dust then node_dust = b.node_dust end
 	end
 
 	local stone,filler,top,dust = get_foundation_nodes(ground_p1,ground_p2,pos,sidelen,node_stone)
@@ -215,7 +218,9 @@ local function foundation(ground_p1,ground_p2,pos,sidelen)
 	minetest.bulk_set_node(filler,{name=node_filler})
 	minetest.bulk_set_node(stone,{name=node_stone})
 end
+]]
 
+--[[
 local function process_queue()
 	if #place_queue < 1 then return end
 	local s = table.remove(place_queue)
@@ -226,6 +231,7 @@ local function process_queue()
 	end,s.pr)
 	minetest.after(0.5,process_queue)
 end
+--]]
 
 function mcl_structures.spawn_mobs(mob,spawnon,p1,p2,pr,n,water)
 	n = n or 1
@@ -254,7 +260,6 @@ end
 
 function mcl_structures.place_structure(pos, def, pr, blockseed, rot)
 	if not def then	return end
-	if not rot then rot = "random" end
 	local log_enabled = logging and not def.terrain_feature
 	local y_offset = 0
 	if type(def.y_offset) == "function" then
@@ -270,7 +275,7 @@ function mcl_structures.place_structure(pos, def, pr, blockseed, rot)
 		local solid = minetest.find_nodes_in_area(ground_p1,ground_p2,{"group:solid"})
 		if #solid < ( def.sidelen * def.sidelen ) then
 			if def.make_foundation then
-				foundation(vector.offset(pos,-def.sidelen/2 - 3,-1,-def.sidelen/2 - 3),vector.offset(pos,def.sidelen/2 + 3,-1,def.sidelen/2 + 3),pos,def.sidelen)
+				mcl_util.create_ground_turnip(vector.offset(pos, 0, -1, 0), def.sidelen, def.sidelen)
 			else
 				if log_enabled then
 					minetest.log("warning","[mcl_structures] "..def.name.." at "..minetest.pos_to_string(pp).." not placed. No solid ground.")
@@ -341,7 +346,6 @@ function mcl_structures.register_structure(name,def,nospawn) --nospawn means it 
 	if mcl_structures.is_disabled(name) then return end
 	local structblock = "mcl_structures:structblock_"..name
 	local flags = "place_center_x, place_center_z, force_placement"
-	local y_offset = 0
 	local sbgroups = { structblock = 1, not_in_creative_inventory=1 }
 	if def.flags then flags = def.flags end
 	def.name = name
@@ -378,7 +382,6 @@ function mcl_structures.register_structure(name,def,nospawn) --nospawn means it 
 	mcl_structures.registered_structures[name] = def
 end
 
-local structure_spawns = {}
 function mcl_structures.register_structure_spawn(def)
 	--name,y_min,y_max,spawnon,biomes,chance,interval,limit
 	minetest.register_abm({
@@ -395,7 +398,7 @@ function mcl_structures.register_structure_spawn(def)
 			local p = vector.offset(pos,0,1,0)
 			if minetest.get_node(p).name ~= "air" then return end
 			if minetest.get_meta(pos):get_string("spawnblock") == "" then return end
-			if mg_name ~= "v6" and mg_name ~= "singlenode" and def.biomes then
+			if mg_name ~= "singlenode" and def.biomes then
 				if table.indexof(def.biomes,minetest.get_biome_name(minetest.get_biome_data(p).biome)) == -1 then
 					return
 				end

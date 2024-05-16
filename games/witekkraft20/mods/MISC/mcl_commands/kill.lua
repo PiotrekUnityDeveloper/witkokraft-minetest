@@ -17,7 +17,7 @@ local function handle_kill_command(suspect, victim)
 	-- DIE!
 	victimref:set_hp(0, {_mcl_type = "out_of_world"})
 	-- Log
-	if not suspect == victim then
+	if suspect ~= victim then
 		minetest.log("action", string.format("%s killed %s using /kill", suspect, victim))
 	else
 		minetest.log("action", string.format("%s committed suicide using /kill", victim))

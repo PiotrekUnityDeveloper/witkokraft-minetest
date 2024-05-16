@@ -1,6 +1,4 @@
 local S = minetest.get_translator(minetest.get_current_modname())
-local get_node = minetest.get_node
-local add_node = minetest.add_node
 
 -- Flint and Steel
 minetest.register_tool("mcl_fire:flint_and_steel", {
@@ -11,7 +9,7 @@ minetest.register_tool("mcl_fire:flint_and_steel", {
 	inventory_image = "mcl_fire_flint_and_steel.png",
 	liquids_pointable = false,
 	stack_max = 1,
-	groups = { tool = 1, },
+	groups = { tool = 1, flint_and_steel = 1, enchantability = -1 },
 	on_place = function(itemstack, user, pointed_thing)
 		-- Use pointed node's on_rightclick function first, if present
         local new_stack = mcl_util.call_on_rightclick(itemstack, user, pointed_thing)
@@ -33,7 +31,7 @@ minetest.register_tool("mcl_fire:flint_and_steel", {
 		)
 		local used = false
 		if pointed_thing.type == "node" then
-			local nodedef = minetest.registered_nodes[get_node(pointed_thing.under).name]
+			local nodedef = minetest.registered_nodes[minetest.get_node(pointed_thing.under).name]
 			if nodedef and nodedef._on_ignite then
 				local overwrite = nodedef._on_ignite(user, pointed_thing)
 				if not overwrite then
@@ -56,7 +54,7 @@ minetest.register_tool("mcl_fire:flint_and_steel", {
 	_on_dispense = function(stack, pos, droppos, dropnode, dropdir)
 		-- Ignite air
 		if dropnode.name == "air" then
-			add_node(droppos, {name="mcl_fire:fire"})
+			minetest.set_node(droppos, {name="mcl_fire:fire"})
 			if not minetest.is_creative_enabled("") then
 				stack:add_wear(65535/65) -- 65 uses
 			end
@@ -68,7 +66,7 @@ minetest.register_tool("mcl_fire:flint_and_steel", {
 			end
 		-- Ignite Campfire
 		elseif minetest.get_item_group(dropnode.name, "campfire") ~= 0 then
-			add_node(droppos, {name=dropnode.name.."_lit"})
+			minetest.set_node(droppos, {name=dropnode.name.."_lit"})
 			if not minetest.is_creative_enabled("") then
 				stack:add_wear(65535/65) -- 65 uses
 			end

@@ -12,16 +12,6 @@ local pp_box_on = {
 	fixed = { -7/16, -8/16, -7/16, 7/16, -7.5/16, 7/16 },
 }
 
-local function pp_on_rightclick(pos, node)
-	local basename = minetest.registered_nodes[node.name].pressureplate_basename
-	if node.name == basename .. "_off" then
-		minetest.set_node(pos, { name = basename .. "_on" })
-		mesecon.receptor_on(pos, mesecon.rules.pplate)
-	else
-		minetest.get_meta(pos):set_string("deact_time", "")
-	end
-end
-
 local function pp_on_timer(pos, elapsed)
 	local node = minetest.get_node(pos)
 	local basename = minetest.registered_nodes[node.name].pressureplate_basename
@@ -72,10 +62,10 @@ local function pp_on_timer(pos, elapsed)
 
 				if
 					obj_y_min <= plate_y_max and
-					not (obj_x_min >= plate_x_max) and
-					not (obj_x_max <= plate_x_min) and
-					not (obj_z_min >= plate_z_max) and
-					not (obj_z_max <= plate_z_min)
+					(obj_x_min < plate_x_max) and
+					(obj_x_max > plate_x_min) and
+					(obj_z_min < plate_z_max) and
+					(obj_z_max > plate_z_min)
 				then
 					return true
 				end
@@ -153,11 +143,7 @@ function mesecon.register_pressure_plate(basename, description, textures_off, te
 	groups_on.not_in_creative_inventory = 1
 	groups_on.pressure_plate = 2
 	if not longdesc then
-		if groups_off.material_wood ~= 0 then
-			longdesc = S("A wooden pressure plate is a redstone component which supplies its surrounding blocks with redstone power while any movable object (including dropped items, players and mobs) rests on top of it.")
-		else
-			longdesc = S("A pressure plate is a redstone component which supplies its surrounding blocks with redstone power while someone or something rests on top of it.")
-		end
+		longdesc = S("A pressure plate is a redstone component which supplies its surrounding blocks with redstone power while someone or something rests on top of it.")
 	end
 	local tt = S("Provides redstone power when pushed")
 	if not activated_by then
@@ -170,15 +156,15 @@ function mesecon.register_pressure_plate(basename, description, textures_off, te
 		tt = tt .. "\n" .. S("Pushable by players")
 	end
 
-	mesecon.register_node(basename, {
+	mesecon.register_node(":"..basename, {
 		drawtype = "nodebox",
 		inventory_image = image_i,
 		wield_image = image_w,
 		paramtype = "light",
 		walkable = false,
 		description = description,
+		drop = basename .. "_off",
 		on_timer = pp_on_timer,
-		on_rightclick = pp_on_rightclick,
 		on_construct = function(pos)
 			minetest.get_node_timer(pos):start(PRESSURE_PLATE_INTERVAL)
 		end,
@@ -216,40 +202,6 @@ function mesecon.register_pressure_plate(basename, description, textures_off, te
 	if minetest.get_modpath("doc") then
 		doc.add_entry_alias("nodes", basename .. "_off", "nodes", basename .. "_on")
 	end
-end
-
-local woods = {
-	{ "wood", "mcl_core:wood", "default_wood.png", S("Oak Pressure Plate") },
-	{ "acaciawood", "mcl_core:acaciawood", "default_acacia_wood.png", S("Acacia Pressure Plate") },
-	{ "birchwood", "mcl_core:birchwood", "mcl_core_planks_birch.png", S("Birch Pressure Plate") },
-	{ "darkwood", "mcl_core:darkwood", "mcl_core_planks_big_oak.png", S("Dark Oak Pressure Plate" )},
-	{ "sprucewood", "mcl_core:sprucewood", "mcl_core_planks_spruce.png", S("Spruce Pressure Plate") },
-	{ "junglewood", "mcl_core:junglewood", "default_junglewood.png", S("Jungle Pressure Plate") },
-
-	{ "mangrove_wood", "mcl_mangrove:mangrove_wood", "mcl_mangrove_planks.png", S("Mangrove Pressure Plate") },
-	{ "crimson_hyphae_wood", "mcl_crimson:crimson_hyphae_wood", "mcl_crimson_crimson_hyphae_wood.png", S("Crimson Pressure Plate") },
-	{ "warped_hyphae_wood", "mcl_crimson:warped_hyphae_wood", "mcl_crimson_warped_hyphae_wood.png", S("Warped Pressure Plate") },
-}
-
-for w=1, #woods do
-	mesecon.register_pressure_plate(
-		"mesecons_pressureplates:pressure_plate_"..woods[w][1],
-		woods[w][4],
-		{woods[w][3]},
-		{woods[w][3]},
-		woods[w][3],
-		nil,
-		{{woods[w][2], woods[w][2]}},
-		mcl_sounds.node_sound_wood_defaults(),
-		{axey=1, material_wood=1},
-		nil)
-
-	minetest.register_craft({
-		type = "fuel",
-		recipe = "mesecons_pressureplates:pressure_plate_"..woods[w][1].."_off",
-		burntime = 15
-	})
-
 end
 
 mesecon.register_pressure_plate(

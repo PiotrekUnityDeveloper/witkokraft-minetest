@@ -1,27 +1,20 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 
-local minetest_get_node = minetest.get_node
-local minetest_get_node_or_nil = minetest.get_node_or_nil
-local minetest_remove_node = minetest.remove_node
-local minetest_facedir_to_dir = minetest.facedir_to_dir
-local vector_add = vector.add
-local vector_subtract = vector.subtract
-
 local function get_bed_next_node(pos, node)
-	local node = node or minetest_get_node_or_nil(pos)
+	local node = node or minetest.get_node_or_nil(pos)
 	if not node then return end
 
-	local dir = minetest_facedir_to_dir(node.param2)
+	local dir = minetest.facedir_to_dir(node.param2)
 
 	local pos2, bottom
 	if string.sub(node.name, -4) == "_top" then
-		pos2 = vector_subtract(pos, dir)
+		pos2 = vector.subtract(pos, dir)
 	else
-		pos2 = vector_add(pos, dir)
+		pos2 = vector.add(pos, dir)
 		bottom = true
 	end
 
-	local node2 = minetest_get_node(pos2)
+	local node2 = minetest.get_node(pos2)
 	return pos2, node2, bottom, dir
 end
 
@@ -34,7 +27,7 @@ local function rotate(pos, node, user, mode, new_param2)
 	if not node2 then return end
 
 	local name = node2.name
-	if not minetest.get_item_group(name, "bed") == 2 or not node.param2 == node2.param2 then return false end
+	if minetest.get_item_group(name, "bed") ~= 2 or node.param2 ~= node2.param2 then return false end
 
 	if bottom then
 		name = string.sub(name, 1, -5)
@@ -48,15 +41,15 @@ local function rotate(pos, node, user, mode, new_param2)
 	end
 
 	local newp
-	local new_dir = minetest_facedir_to_dir(new_param2)
+	local new_dir = minetest.facedir_to_dir(new_param2)
 
 	if bottom then
-		 newp = vector_add(pos, new_dir)
+		 newp = vector.add(pos, new_dir)
 	else
-		 newp = vector_subtract(pos, new_dir)
+		 newp = vector.subtract(pos, new_dir)
 	end
 
-	local node3 = minetest_get_node_or_nil(newp)
+	local node3 = minetest.get_node_or_nil(newp)
 	if not node3 then return false end
 
 	local node_def = minetest.registered_nodes[node3.name]
@@ -78,18 +71,18 @@ end
 
 
 local function destruct_bed(pos, oldnode)
-	local node = oldnode or minetest_get_node_or_nil(pos)
+	local node = oldnode or minetest.get_node_or_nil(pos)
 	if not node then return end
 
 	local pos2, node2, bottom = get_bed_next_node(pos, oldnode)
 
 	if bottom then
 		if node2 and string.sub(node2.name, -4) == "_top" then
-			minetest_remove_node(pos2)
+			minetest.remove_node(pos2)
 		end
 	else
 		if node2 and string.sub(node2.name, -7) == "_bottom" then
-			minetest_remove_node(pos2)
+			minetest.remove_node(pos2)
 		end
 	end
 end
@@ -131,11 +124,11 @@ function mcl_beds.register_bed(name, def)
 			type = "fixed",
 			fixed = {-0.5, -0.5, -0.5, 0.5, 0.06, 0.5},
 		}
-		
+
 	minetest.register_node(name .. "_bottom", {
 		description = def.description,
 		_tt_help = S("Allows you to sleep"),
-		
+
 		_doc_items_longdesc = def._doc_items_longdesc or beddesc,
 		_doc_items_usagehelp = def._doc_items_usagehelp or beduse,
 		_doc_items_create_entry = def._doc_items_create_entry,
@@ -158,47 +151,44 @@ function mcl_beds.register_bed(name, def)
 		collision_box = common_box,
 		drop = def.recipe and name or "",
 		node_placement_prediction = "",
-		
+
 		on_place = function(itemstack, placer, pointed_thing)
 			local under = pointed_thing.under
+			local player_name = placer and placer:get_player_name() or ""
 
-			-- Use pointed node's on_rightclick function first, if present
-			local node = minetest_get_node(under)
-			if placer and not placer:get_player_control().sneak then
-				if minetest.registered_nodes[node.name] and minetest.registered_nodes[node.name].on_rightclick then
-					return minetest.registered_nodes[node.name].on_rightclick(pointed_thing.under, node, placer, itemstack) or itemstack
-				end
-			end
+			local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+			if rc then return rc end
 
 			local pos
-			local undername = minetest_get_node(under).name
+			local undername = minetest.get_node(under).name
 			if minetest.registered_items[undername] and minetest.registered_items[undername].buildable_to then
 				pos = under
 			else
 				pos = pointed_thing.above
 			end
 
-			if minetest.is_protected(pos, placer:get_player_name()) and
-					not minetest.check_player_privs(placer, "protection_bypass") then
-				minetest.record_protection_violation(pos, placer:get_player_name())
+			if minetest.is_protected(pos, player_name) and
+					not minetest.check_player_privs(player_name, "protection_bypass") then
+				minetest.record_protection_violation(pos, player_name)
 				return itemstack
 			end
 
-			local node_def = minetest.registered_nodes[minetest_get_node(pos).name]
+			local node_def = minetest.registered_nodes[minetest.get_node(pos).name]
 			if not node_def or not node_def.buildable_to then
 				return itemstack
 			end
 
-			local dir = minetest.dir_to_facedir(placer:get_look_dir())
-			local botpos = vector_add(pos, minetest_facedir_to_dir(dir))
+			local dir = placer and placer:is_player() and placer:get_look_dir() and
+				minetest.dir_to_facedir(placer:get_look_dir()) or 0
+			local botpos = vector.add(pos, minetest.facedir_to_dir(dir))
 
-			if minetest.is_protected(botpos, placer:get_player_name()) and
-					not minetest.check_player_privs(placer, "protection_bypass") then
-				minetest.record_protection_violation(botpos, placer:get_player_name())
+			if minetest.is_protected(botpos, player_name) and
+					not minetest.check_player_privs(player_name, "protection_bypass") then
+				minetest.record_protection_violation(botpos, player_name)
 				return itemstack
 			end
 
-			local botdef = minetest.registered_nodes[minetest_get_node(botpos).name]
+			local botdef = minetest.registered_nodes[minetest.get_node(botpos).name]
 			if not botdef or not botdef.buildable_to then
 				return itemstack
 			end
@@ -206,7 +196,7 @@ function mcl_beds.register_bed(name, def)
 			minetest.set_node(pos, {name = name .. "_bottom", param2 = dir})
 			minetest.set_node(botpos, {name = name .. "_top", param2 = dir})
 
-			if not minetest.is_creative_enabled(placer:get_player_name()) then
+			if not minetest.is_creative_enabled(player_name) then
 				itemstack:take_item()
 			end
 			return itemstack
@@ -224,7 +214,7 @@ function mcl_beds.register_bed(name, def)
 		on_rotate = rotate,
 	})
 
-	
+
 
 	minetest.register_node(name .. "_top", {
 		drawtype = "mesh",
@@ -242,7 +232,7 @@ function mcl_beds.register_bed(name, def)
 		drop = def.recipe and name or "",
 		selection_box = common_box,
 		collision_box = common_box,
-		
+
 		on_rightclick = function(pos, node, clicker, itemstack, pointed_thing)
 			mcl_beds.on_rightclick(pos, clicker, true)
 			return itemstack

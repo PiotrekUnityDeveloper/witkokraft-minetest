@@ -15,7 +15,7 @@ mcl_mobs.register_mob("mobs_mc:guardian_elder", {
 	xp_min = 10,
 	xp_max = 10,
 	breath_max = -1,
-    	passive = false,
+	passive = false,
 	attack_type = "dogfight",
 	pathfinding = 1,
 	view_range = 16,
@@ -24,6 +24,7 @@ mcl_mobs.register_mob("mobs_mc:guardian_elder", {
 	damage = 8,
 	reach = 3,
 	collisionbox = {-0.99875, 0.5, -0.99875, 0.99875, 2.4975, 0.99875},
+	doll_size_override = { x = 0.72, y = 0.72 },
 	visual = "mesh",
 	mesh = "mobs_mc_guardian.b3d",
 	textures = {
@@ -46,13 +47,10 @@ mcl_mobs.register_mob("mobs_mc:guardian_elder", {
 		run_start = 0,		run_end = 20,
 	},
 	drops = {
-		-- TODO: Reduce # of drops when ocean monument is ready.
-
-		-- Greatly increased amounts of prismarine
 		{name = "mcl_ocean:prismarine_shard",
 		chance = 1,
-		min = 1,
-		max = 64,
+		min = 0,
+		max = 2,
 		looting = "common",},
 
 		-- TODO: Only drop if killed by player
@@ -104,13 +102,9 @@ mcl_mobs.register_mob("mobs_mc:guardian_elder", {
 	makes_footstep_sound = false,
 	fly_in = { "mcl_core:water_source", "mclx_core:river_water_source" },
 	jump = false,
-	view_range = 16,
 })
-
--- Spawning disabled due to size issues <- what do you mean? -j4i
--- TODO: Re-enable spawning
--- mcl_mobs:spawn_specific("mobs_mc:guardian_elder", { "mcl_core:water_source", "mclx_core:river_water_source" }, { "mcl_core:water_source", "mclx_core:river_water_source" }, 0, minetest.LIGHT_MAX+1, 30, 40000, 2, mcl_vars.mg_overworld_min, mobs_mc.water_level-18)
 
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:guardian_elder", S("Elder Guardian"), "#ceccba", "#747693", 0)
-mcl_mobs:non_spawn_specific("mobs_mc:guardian_elder","overworld",0,minetest.LIGHT_MAX+1)
+
+

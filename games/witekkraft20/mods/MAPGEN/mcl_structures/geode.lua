@@ -31,7 +31,6 @@ local function makegeode(pos,def,pr)
 		table.sort(nn,function(a, b)
 			   return vector.distance(pos, a) < vector.distance(pos, b)
 		end)
-		--if not nn[1] then return end
 
 		for i=1,pr:next(1, math.max(2, #nn - math.ceil(#nn/5) )) do
 			set_node_no_bedrock(nn[i],{name="mcl_amethyst:amethyst_block"})

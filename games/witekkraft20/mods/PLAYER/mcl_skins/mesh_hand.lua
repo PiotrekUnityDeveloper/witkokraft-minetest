@@ -14,9 +14,7 @@ function mcl_skins.get_skin_list()
 	for _, game_mode in pairs({"_crea", "_surv"}) do
 		for _, base in pairs(mcl_skins.base) do
 			for _, base_color in pairs(mcl_skins.base_color) do
-				local id = base:gsub(".png$", "")
-					.. minetest.colorspec_to_colorstring(base_color):gsub("#", "")
-
+				local id = base:gsub(".png$", "") .. minetest.colorspec_to_colorstring(base_color):gsub("#", "")
 				local female = {
 					texture = make_texture(base, base_color),
 					slim_arms = true,
@@ -24,7 +22,7 @@ function mcl_skins.get_skin_list()
 					creative = game_mode == "_crea"
 				}
 				table.insert(list, female)
-				
+
 				local male = {
 					texture = make_texture(base, base_color),
 					slim_arms = false,
@@ -38,8 +36,7 @@ function mcl_skins.get_skin_list()
 			table.insert(list, {
 				texture = skin.texture,
 				slim_arms = skin.slim_arms,
-				id = skin.texture:gsub(".png$", "")
-					.. (skin.slim_arms and "_female" or "_male") .. game_mode,
+				id = skin.texture:gsub(".png$", "") .. (skin.slim_arms and "_female" or "_male") .. game_mode,
 				creative = game_mode == "_crea"
 			})
 		end

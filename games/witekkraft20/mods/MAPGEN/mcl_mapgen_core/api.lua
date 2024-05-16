@@ -3,49 +3,14 @@ local registered_generators = {}
 local lvm, nodes, param2 = 0, 0, 0
 local lvm_buffer = {}
 
+local seed = minetest.get_mapgen_setting("seed")
+
 local logging = minetest.settings:get_bool("mcl_logging_mapgen",false)
 
 local function roundN(n, d)
 	if type(n) ~= "number" then return n end
     local m = 10^d
     return math.floor(n * m + 0.5) / m
-end
-
-local function run_generators (p1, p2, blockseed)
-	if nodes > 0 then
-		for _, rec in ipairs(registered_generators) do
-			if rec.nf then
-				rec.nf(p1, p2, blockseed)
-			end
-		end
-	end
-end
-
-local function update_data (vm, data, data2)
-	-- Write stuff
-	vm:set_data(data)
-	if param2 > 0 then
-		vm:set_param2_data(data2)
-	end
-end
-
-local function post_generator_processing(vm, minp, maxp, deco_used, deco_table, ore_used, ore_table)
-	if deco_table then
-		minetest.generate_decorations(vm,vector.new(minp.x,deco_table.min,minp.z),vector.new(maxp.x,deco_table.max,maxp.z))
-	elseif deco_used then
-		minetest.generate_decorations(vm)
-	end
-	if ore_table then
-		minetest.generate_ores(vm,vector.new(minp.x,ore_table.min,minp.z),vector.new(maxp.x,ore_table.max,maxp.z))
-	elseif ore_used then
-		minetest.generate_ores(vm)
-	end
-end
-
-local function post_generator_processing_2(vm, p1, p2, shadow)
-	vm:calc_lighting(p1, p2, shadow)
-	vm:write_to_map()
-	vm:update_liquids()
 end
 
 minetest.register_on_generated(function(minp, maxp, blockseed)
@@ -86,21 +51,40 @@ minetest.register_on_generated(function(minp, maxp, blockseed)
 		end
 
 		if lvm_used then
-			update_data (vm, data, data2)
-			post_generator_processing(vm, minp, maxp, deco_used, deco_table, ore_used, ore_table)
-			post_generator_processing_2(vm, p1, p2, shadow)
+			-- Write stuff
+			vm:set_data(data)
+			if param2 > 0 then
+				vm:set_param2_data(data2)
+			end
+			if deco_table then
+				minetest.generate_decorations(vm,vector.new(minp.x,deco_table.min,minp.z),vector.new(maxp.x,deco_table.max,maxp.z))
+			elseif deco_used then
+				minetest.generate_decorations(vm)
+			end
+			if ore_table then
+				minetest.generate_ores(vm,vector.new(minp.x,ore_table.min,minp.z),vector.new(maxp.x,ore_table.max,maxp.z))
+			elseif ore_used then
+				minetest.generate_ores(vm)
+			end
+			vm:calc_lighting(p1, p2, shadow)
+			vm:write_to_map()
+			vm:update_liquids()
 		end
 	end
 
-	run_generators (p1, p2, blockseed)
+	if nodes > 0 then
+		for _, rec in ipairs(registered_generators) do
+			if rec.nf then
+				rec.nf(p1, p2, blockseed)
+			end
+		end
+	end
 
 	mcl_vars.add_chunk(minp)
 	if logging then
 		minetest.log("action", "[mcl_mapgen_core] Generating chunk " .. minetest.pos_to_string(minp) .. " ... " .. minetest.pos_to_string(maxp).."..."..tostring(roundN(((os.clock() - t1)*1000),2)).."ms")
 	end
 end)
-
-
 
 function minetest.register_on_generated(node_function)
 	mcl_mapgen_core.register_generator("mod_"..minetest.get_current_modname().."_"..tostring(#registered_generators+1), nil, node_function)
@@ -144,4 +128,8 @@ function mcl_mapgen_core.unregister_generator(id)
 	if rec.nf then nodes = nodes - 1 end
 	if rec.needs_param2 then param2 = param2 - 1 end
 	--if rec.needs_level0 then level0 = level0 - 1 end
+end
+
+function mcl_mapgen_core.get_block_seed(pos)
+	return ((seed + minetest.hash_node_position(pos)) * 0x9e3779b1) % 0x100000000
 end

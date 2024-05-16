@@ -25,3 +25,11 @@ Optionally, you can explicitly set the return value to a custom leftover itemsta
 
 By default, items will only be dispensed into non-walkable nodes.
 But if this value is set If `true`, the item can be dispensed into walkable nodes.
+
+### `entity._on_dispense(self, dropitem, pos, droppos, dropnode, dropdir)`
+
+This is a function which is called when an item is dropped out of the dispenser
+on an entity. Should return leftover itemstack.
+
+Call mcl_mobs.mob_class._on_dispense to call the original _on_dispense function
+for mobs e.g. to feed them.

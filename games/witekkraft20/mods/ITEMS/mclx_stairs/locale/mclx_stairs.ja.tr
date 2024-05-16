@@ -1,4 +1,23 @@
 # textdomain: mclx_stairs
+Lapis Lazuli Slab=ラピスラズリのスラブ
+Double Lapis Lazuli Slab=ラピスラズリの２重スラブ
+Lapis Lazuli Stairs=ラピスラズリの階段
+Slab of Gold=金のスラブ
+Double Slab of Gold=金の２重スラブ
+Stairs of Gold=金の階段
+Slab of Iron=鉄のスラブ
+Double Slab of Iron=鉄の２重スラブ
+Stairs of Iron=鉄の階段
+Cracked Stone Brick Stairs=ひび割れた石レンガの階段
+Cracked Stone Brick Slab=ひび割れた石レンガのスラブ
+Double Cracked Stone Brick Slab=ひび割れた石レンガの２重スラブ
+Concrete Slab=コンクリートのスラブ
+Double Concrete Slab=コンクリートの２重スラブ
+Concrete Stairs=コンクリートの階段
+
+
+##### not used anymore #####
+
 Oak Bark Stairs=オーク樹皮の階段
 Oak Bark Slab=オーク樹皮のスラブ
 Double Oak Bark Slab=オーク樹皮の２重スラブ
@@ -17,18 +36,6 @@ Double Jungle Bark Slab=ジャングル樹皮の２重スラブ
 Dark Oak Bark Stairs=ダークオーク樹皮の階段
 Dark Oak Bark Slab=ダークオーク樹皮のスラブ
 Double Dark Oak Bark Slab=ダークオーク樹皮の２重スラブ
-Lapis Lazuli Slab=ラピスラズリのスラブ
-Double Lapis Lazuli Slab=ラピスラズリの２重スラブ
-Lapis Lazuli Stairs=ラピスラズリの階段
-Slab of Gold=金のスラブ
-Double Slab of Gold=金の２重スラブ
-Stairs of Gold=金の階段
-Slab of Iron=鉄のスラブ
-Double Slab of Iron=鉄の２重スラブ
-Stairs of Iron=鉄の階段
-Cracked Stone Brick Stairs=ひび割れた石レンガの階段
-Cracked Stone Brick Slab=ひび割れた石レンガのスラブ
-Double Cracked Stone Brick Slab=ひび割れた石レンガの２重スラブ
 White Concrete Stairs=白色コンクリートの階段
 White Concrete Slab=白色コンクリートのスラブ
 Double White Concrete Slab=白色コンクリートの２重スラブ
@@ -77,6 +84,3 @@ Double Lime Concrete Slab=黄緑色コンクリートの２重スラブ
 Light Blue Concrete Stairs=空色コンクリートの階段
 Light Blue Concrete Slab=空色コンクリートのスラブ
 Double Light Blue Concrete Slab=空色コンクリートの２重スラブ
-Concrete Slab=コンクリートのスラブ
-Double Concrete Slab=コンクリートの２重スラブ
-Concrete Stairs=コンクリートの階段

@@ -62,6 +62,8 @@ minetest.register_entity(":__builtin:falling_node", {
 	},
 	node = {},
 	meta = {},
+	_mcl_fishing_hookable = true,
+	_mcl_fishing_reelable = true,
 	set_node = function(self, node, meta)
 		local def = minetest.registered_nodes[node.name]
 		-- Change falling node if definition tells us to

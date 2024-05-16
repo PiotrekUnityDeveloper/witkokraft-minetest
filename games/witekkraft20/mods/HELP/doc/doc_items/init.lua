@@ -1,11 +1,5 @@
 local S = minetest.get_translator(minetest.get_current_modname())
-local N = function(s) return s end
-
-local math = math
-local string = string
-
-local tostring = tostring
-local pairs = pairs
+local NS = function(s) return s end
 
 doc.sub.items = {}
 
@@ -843,15 +837,15 @@ doc.add_category("nodes", {
 					local dropstring = ""
 					local dropstring_base
 					if max == nil then
-						dropstring_base = N("This block will drop the following items when mined: @1.")
+						dropstring_base = NS("This block will drop the following items when mined: @1.")
 					elseif max == 1 then
 						if #data.def.drop.items == 1 then
-							dropstring_base = N("This block will drop the following when mined: @1.")
+							dropstring_base = NS("This block will drop the following when mined: @1.")
 						else
-							dropstring_base = N("This block will randomly drop one of the following when mined: @1.")
+							dropstring_base = NS("This block will randomly drop one of the following when mined: @1.")
 						end
 					else
-						dropstring_base = N("This block will randomly drop up to @1 drops of the following possible drops when mined: @2.")
+						dropstring_base = NS("This block will randomly drop up to @1 drops of the following possible drops when mined: @2.")
 					end
 					-- Save calculated probabilities into a table for later output
 					local probtables = {}

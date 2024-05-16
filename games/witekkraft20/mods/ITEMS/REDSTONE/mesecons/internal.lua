@@ -47,34 +47,28 @@
 -- mesecon.rotate_rules_down(rules)
 -- These functions return rules that have been rotated in the specific direction
 
-local equals = vector.equals
-local get_node_force = mesecon.get_node_force
-local invertRule = mesecon.invertRule
-local copy, insert = table.copy, table.insert
-local registered_nodes = minetest.registered_nodes
-
 -- General
 function mesecon.get_effector(nodename)
-	if  registered_nodes[nodename]
-	and registered_nodes[nodename].mesecons
-	and registered_nodes[nodename].mesecons.effector then
-		return registered_nodes[nodename].mesecons.effector
+	if  minetest.registered_nodes[nodename]
+	and minetest.registered_nodes[nodename].mesecons
+	and minetest.registered_nodes[nodename].mesecons.effector then
+		return minetest.registered_nodes[nodename].mesecons.effector
 	end
 end
 
 function mesecon.get_receptor(nodename)
-	if  registered_nodes[nodename]
-	and registered_nodes[nodename].mesecons
-	and registered_nodes[nodename].mesecons.receptor then
-		return registered_nodes[nodename].mesecons.receptor
+	if  minetest.registered_nodes[nodename]
+	and minetest.registered_nodes[nodename].mesecons
+	and minetest.registered_nodes[nodename].mesecons.receptor then
+		return minetest.registered_nodes[nodename].mesecons.receptor
 	end
 end
 
 function mesecon.get_conductor(nodename)
-	if  registered_nodes[nodename]
-	and registered_nodes[nodename].mesecons
-	and registered_nodes[nodename].mesecons.conductor then
-		return registered_nodes[nodename].mesecons.conductor
+	if  minetest.registered_nodes[nodename]
+	and minetest.registered_nodes[nodename].mesecons
+	and minetest.registered_nodes[nodename].mesecons.conductor then
+		return minetest.registered_nodes[nodename].mesecons.conductor
 	end
 end
 
@@ -194,7 +188,7 @@ end
 
 -- Activation:
 mesecon.queue:add_function("activate", function (pos, rulename)
-	local node = get_node_force(pos)
+	local node = mesecon.get_node_force(pos)
 	if not node then return end
 
 	local effector = mesecon.get_effector(node.name)
@@ -217,7 +211,7 @@ end
 
 -- Deactivation
 mesecon.queue:add_function("deactivate", function (pos, rulename)
-	local node = get_node_force(pos)
+	local node = mesecon.get_node_force(pos)
 	if not node then return end
 
 	local effector = mesecon.get_effector(node.name)
@@ -240,7 +234,7 @@ end
 
 -- Change
 mesecon.queue:add_function("change", function (pos, rulename, changetype)
-	local node = get_node_force(pos)
+	local node = mesecon.get_node_force(pos)
 	if not node then return end
 
 	local effector = mesecon.get_effector(node.name)
@@ -364,7 +358,7 @@ end
 -- some more general high-level stuff
 
 function mesecon.is_power_on(pos, rulename)
-	local node = get_node_force(pos)
+	local node = mesecon.get_node_force(pos)
 	if node and (mesecon.is_conductor_on(node, rulename) or is_receptor_on(node.name)) then
 		return true
 	end
@@ -372,7 +366,7 @@ function mesecon.is_power_on(pos, rulename)
 end
 
 function mesecon.is_power_off(pos, rulename)
-	local node = get_node_force(pos)
+	local node = mesecon.get_node_force(pos)
 	if node and (mesecon.is_conductor_off(node, rulename) or mesecon.is_receptor_off(node.name)) then
 		return true
 	end
@@ -389,7 +383,7 @@ function mesecon.turnon(pos, link)
 	local depth = 1
 	while frontiers[1] do
 		local f = table.remove(frontiers, 1)
-		local node = get_node_force(f.pos)
+		local node = mesecon.get_node_force(f.pos)
 
 		if node and mesecon.is_conductor_off(node, f.link) then
 			local rules = mesecon.conductor_get_rules(node)
@@ -398,7 +392,7 @@ function mesecon.turnon(pos, link)
 			for _, r in pairs(mesecon.rule2meta(f.link, rules)) do
 				local np = vector.add(f.pos, r)
 				for _, l in pairs(mesecon.rules_link_rule_all(f.pos, r)) do
-					insert(frontiers, {pos = np, link = l})
+					table.insert(frontiers, {pos = np, link = l})
 				end
 			end
 
@@ -415,9 +409,9 @@ function mesecon.turnon(pos, link)
 			for _, r in pairs(mesecon.rule2meta(f.link, mesecon.rules.mcl_alldirs_spread)) do
 				local np = vector.add(f.pos, r)
 				for _, l in pairs(mesecon.rules_link_rule_all(f.pos, r)) do
-					local nlink = copy(l)
+					local nlink = table.copy(l)
 					nlink.spread = false
-					insert(frontiers, {pos = np, link = nlink})
+					table.insert(frontiers, {pos = np, link = nlink})
 				end
 			end
 		end
@@ -449,7 +443,7 @@ function mesecon.turnoff(pos, link)
 	local depth = 1
 	while frontiers[1] do
 		local f = table.remove(frontiers, 1)
-		local node = get_node_force(f.pos)
+		local node = mesecon.get_node_force(f.pos)
 
 		if node and mesecon.is_conductor_on(node, f.link) then
 			local rules = mesecon.conductor_get_rules(node)
@@ -460,20 +454,20 @@ function mesecon.turnoff(pos, link)
 				-- abort this turnoff process by returning false. `receptor_off` will
 				-- discard all the changes that we made in the voxelmanip:
 				for _, l in pairs(mesecon.rules_link_rule_all_inverted(f.pos, r)) do
-					if is_receptor_on(get_node_force(np).name) then
+					if is_receptor_on(mesecon.get_node_force(np).name) then
 						return false
 					end
 				end
 
 				-- Call turnoff on neighbors
 				for _, l in pairs(mesecon.rules_link_rule_all(f.pos, r)) do
-					insert(frontiers, {pos = np, link = l})
+					table.insert(frontiers, {pos = np, link = l})
 				end
 			end
 
 			mesecon.swap_node_force(f.pos, mesecon.get_conductor_off(node, f.link))
 		elseif mesecon.is_effector(node.name) then
-			insert(signals, {
+			table.insert(signals, {
 				pos = f.pos,
 				node = node,
 				link = f.link,
@@ -487,19 +481,19 @@ function mesecon.turnoff(pos, link)
 			local fpos = f.pos
 			for _, r in pairs(mesecon.rule2meta(f.link, mesecon.rules.mcl_alldirs_spread)) do
 				local np = {x=fpos.x+r.x, y=fpos.y+r.y, z=fpos.z+r.z}
-				local n = get_node_force(np)
+				local n = mesecon.get_node_force(np)
 				if n and is_receptor_on(n.name) then
 					local receptorrules = receptor_get_rules(n)
 					for _, rr in pairs(receptorrules) do
-						if rr.spread and equals(invertRule(rr), r) then
+						if rr.spread and vector.equals(mesecon.invertRule(rr), r) then
 							return false
 						end
 					end
 				end
 				for _, l in pairs(mesecon.rules_link_rule_all(fpos, r)) do
-					local nlink = copy(l)
+					local nlink = table.copy(l)
 					nlink.spread = false
-					insert(frontiers, {pos = np, link = nlink})
+					table.insert(frontiers, {pos = np, link = nlink})
 				end
 			end
 		end
@@ -521,8 +515,7 @@ end
 -- outputnode (receptor or conductor) at position `output` and has an output in direction `rule`
 function mesecon.rules_link_rule_all(output, rule)
 	local input = vector.add(output, rule)
-	if not input then return {} end
-	local inputnode = get_node_force(input)
+	local inputnode = mesecon.get_node_force(input)
 	local inputrules = mesecon.get_any_inputrules(inputnode)
 	if not inputrules then
 		return {}
@@ -531,10 +524,10 @@ function mesecon.rules_link_rule_all(output, rule)
 
 	for _, inputrule in pairs(mesecon.flattenrules(inputrules)) do
 		-- Check if input accepts from output
-		if equals(vector.add(input, inputrule), output) then
-			local newrule = copy(inputrule)
+		if vector.equals(vector.add(input, inputrule), output) then
+			local newrule = table.copy(inputrule)
 			newrule.spread = rule.spread
-			insert(rules, newrule)
+			table.insert(rules, newrule)
 		end
 	end
 
@@ -545,7 +538,7 @@ end
 -- inputnode (effector or conductor) at position `input` and has an input in direction `rule`
 function mesecon.rules_link_rule_all_inverted(input, rule)
 	local output = vector.add(input, rule)
-	local outputnode = get_node_force(output)
+	local outputnode = mesecon.get_node_force(output)
 	local outputrules = mesecon.get_any_outputrules(outputnode)
 	if not outputrules then
 		return {}
@@ -553,11 +546,11 @@ function mesecon.rules_link_rule_all_inverted(input, rule)
 	local rules = {}
 
 	for _, outputrule in pairs(mesecon.flattenrules(outputrules)) do
-		if equals(vector.add(output, outputrule), input) then
-			local newrule = copy(outputrule)
-			newrule = invertRule(newrule)
+		if vector.equals(vector.add(output, outputrule), input) then
+			local newrule = table.copy(outputrule)
+			newrule = mesecon.invertRule(newrule)
 			newrule.spread = rule.spread
-			insert(rules, newrule)
+			table.insert(rules, newrule)
 		end
 	end
 	return rules
@@ -568,7 +561,7 @@ function mesecon.is_powered(pos, rule, depth, sourcepos, home_pos)
 	if depth > 1 then
 		return false, false
 	end
-	local node = get_node_force(pos)
+	local node = mesecon.get_node_force(pos)
 	local rules = mesecon.get_any_inputrules(node)
 	if not rules then
 		return false, false
@@ -586,21 +579,21 @@ function mesecon.is_powered(pos, rule, depth, sourcepos, home_pos)
 		local spread = false
 		for _, rname in pairs(rulenames) do
 			local np = vector.add(pos, rname)
-			local nn = get_node_force(np)
-			if (mesecon.is_conductor_on (nn, invertRule(rname))
+			local nn = mesecon.get_node_force(np)
+			if (mesecon.is_conductor_on (nn, mesecon.invertRule(rname))
 			or is_receptor_on (nn.name)) then
-				if not equals(home_pos, np) then
+				if not vector.equals(home_pos, np) then
 					local rulez = mesecon.get_any_outputrules(nn)
 					local spread_tmp = false
 					for r=1, #rulez do
-						if equals(invertRule(rname), rulez[r]) then
+						if vector.equals(mesecon.invertRule(rname), rulez[r]) then
 							if rulez[r].spread then
 								spread_tmp = true
 							end
 						end
 					end
 					if depth == 0 or spread_tmp then
-						insert(sourcepos, np)
+						table.insert(sourcepos, np)
 						if spread_tmp then
 							spread = true
 						end

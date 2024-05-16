@@ -2,19 +2,11 @@
 
 -- wrapper for minetest.item_eat (this way we make sure other mods can't break this one)
 function minetest.do_item_eat(hp_change, replace_with_item, itemstack, user, pointed_thing)
-	if not user or user:is_player() == false then
-		return itemstack
-	end
+	if not user or not user.is_player or not user:is_player() or user.is_fake_player then return itemstack end
 
-	-- Call on_rightclick if the pointed node defines it
-	if pointed_thing.type == "node" then
-		local node = minetest.get_node(pointed_thing.under)
-		if user and not user:get_player_control().sneak then
-			if minetest.registered_nodes[node.name] and minetest.registered_nodes[node.name].on_rightclick then
-				return minetest.registered_nodes[node.name].on_rightclick(pointed_thing.under, node, user, itemstack) or itemstack
-			end
-		end
-	end
+	local rc = mcl_util.call_on_rightclick(itemstack, user, pointed_thing)
+	if rc then return rc end
+
 	-- Also don't eat when pointing object (it could be an animal)
 	if pointed_thing.type == "object" then
 		return itemstack
@@ -119,6 +111,7 @@ local poisonrandomizer = PseudoRandom(os.time())
 
 function mcl_hunger.item_eat(hunger_change, replace_with_item, poisontime, poison, exhaust, poisonchance, sound)
 	return function(itemstack, user, pointed_thing)
+		if not user or not user.is_player or not user:is_player() or user.is_fake_player then return itemstack end
 		local itemname = itemstack:get_name()
 		local creative = minetest.is_creative_enabled(user:get_player_name())
 		if itemstack:peek_item() and user then
@@ -194,6 +187,8 @@ function mcl_hunger.item_eat(hunger_change, replace_with_item, poisontime, poiso
 
 				hb.change_hudbar(user, "hunger", h)
 				mcl_hunger.update_saturation_hud(user, mcl_hunger.get_saturation(user), h)
+			elseif not mcl_hunger.active and hunger_change then
+				user:set_hp(math.min(user:get_properties().hp_max or 20, user:get_hp() + hunger_change))
 			end
 			-- Poison
 			if mcl_hunger.active and poisontime then
@@ -219,7 +214,15 @@ function mcl_hunger.item_eat(hunger_change, replace_with_item, poisontime, poiso
 			end
 
 			if not creative then
-				itemstack:add_item(replace_with_item)
+				local nstack = ItemStack(replace_with_item)
+				local inv = user:get_inventory()
+				if itemstack:get_count() == 1 then
+					itemstack:add_item(replace_with_item)
+				elseif inv:room_for_item("main",nstack) then
+					inv:add_item("main", nstack)
+				else
+					minetest.add_item(user:get_pos(), nstack)
+				end
 			end
 		end
 		return itemstack

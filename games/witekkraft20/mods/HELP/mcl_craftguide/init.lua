@@ -1,6 +1,5 @@
 mcl_craftguide = {}
 
-local M = minetest
 local player_data = {}
 
 -- Caches
@@ -10,33 +9,15 @@ local recipes_cache = {}
 local usages_cache  = {}
 local fuel_cache    = {}
 
-local progressive_mode = M.settings:get_bool("mcl_craftguide_progressive_mode", true)
-local sfinv_only = false
+local progressive_mode = minetest.settings:get_bool("mcl_craftguide_progressive_mode", true)
 
-local colorize = M.colorize
-local reg_items = M.registered_items
-local get_result = M.get_craft_result
-local show_formspec = M.show_formspec
-local get_player_by_name = M.get_player_by_name
-local serialize, deserialize = M.serialize, M.deserialize
-
-local ESC = M.formspec_escape
-local S = M.get_translator("mcl_craftguide")
-
-local maxn, sort, concat, insert, copy =
-	table.maxn, table.sort, table.concat, table.insert,
-	table.copy
-
-local fmt, find, gmatch, match, sub, split, lower =
-	string.format, string.find, string.gmatch, string.match,
-	string.sub, string.split, string.lower
-
-local min, max, floor, ceil = math.min, math.max, math.floor, math.ceil
-local pairs, next, unpack = pairs, next, unpack
+local C = minetest.colorize
+local F = minetest.formspec_escape
+local S = minetest.get_translator("mcl_craftguide")
 
 local DEFAULT_SIZE = 10
 local MIN_LIMIT, MAX_LIMIT = 10, 12
-DEFAULT_SIZE = min(MAX_LIMIT, max(MIN_LIMIT, DEFAULT_SIZE))
+DEFAULT_SIZE = math.min(MAX_LIMIT, math.max(MIN_LIMIT, DEFAULT_SIZE))
 
 local GRID_LIMIT = 5
 local POLL_FREQ  = 0.25
@@ -53,12 +34,12 @@ local FMT = {
 }
 
 local group_stereotypes = {
-	wood         = "mcl_core:wood",
+	wood         = "mcl_trees:wood_oak",
 	stone        = "mcl_core:stone",
 	sand         = "mcl_core:sand",
-	wool	     = "mcl_wool:white",
+	wool         = "mcl_wool:white",
 	carpet       = "mcl_wool:white_carpet",
-	dye	     = "mcl_dye:red",
+	dye          = "mcl_dyes:red",
 	water_bucket = "mcl_buckets:bucket_water",
 	flower	     = "mcl_flowers:dandelion",
 	mushroom     = "mcl_mushrooms:mushroom_brown",
@@ -260,7 +241,7 @@ local function item_has_groups(item_groups, groups)
 end
 
 local function extract_groups(str)
-	return split(sub(str, 7), ",")
+	return string.split(string.sub(str, 7), ",")
 end
 
 local function item_in_recipe(item, recipe)
@@ -272,12 +253,12 @@ local function item_in_recipe(item, recipe)
 end
 
 local function groups_item_in_recipe(item, recipe)
-	local item_groups = reg_items[item].groups
+	local item_groups = minetest.registered_items[item].groups
 	for _, recipe_item in pairs(recipe.items) do
-		if sub(recipe_item, 1, 6) == "group:" then
+		if string.sub(recipe_item, 1, 6) == "group:" then
 			local groups = extract_groups(recipe_item)
 			if item_has_groups(item_groups, groups) then
-				local usage = copy(recipe)
+				local usage = table.copy(recipe)
 				table_replace(usage.items, recipe_item, item)
 				return usage
 			end
@@ -330,12 +311,12 @@ local function get_filtered_items(player)
 end
 
 local function cache_recipes(output)
-	local recipes = M.get_all_craft_recipes(output) or {}
+	local recipes = minetest.get_all_craft_recipes(output) or {}
 	local c = 0
 
 	for i = 1, #custom_crafts do
 		local custom_craft = custom_crafts[i]
-		if match(custom_craft.output, "%S*") == output then
+		if string.match(custom_craft.output, "%S*") == output then
 			c = c + 1
 			recipes[c] = custom_craft
 		end
@@ -373,7 +354,7 @@ local function get_recipes(item, data, player)
 end
 
 local function get_burntime(item)
-	return get_result({method = "fuel", width = 1, items = {item}}).time
+	return minetest.get_craft_result({method = "fuel", width = 1, items = {item}}).time
 end
 
 local function cache_fuel(item)
@@ -391,12 +372,12 @@ local function groups_to_item(groups)
 
 		if group_stereotypes[group] then
 			return group_stereotypes[group]
-		elseif reg_items[def_gr] then
+		elseif minetest.registered_items[def_gr] then
 			return def_gr
 		end
 	end
 
-	for name, def in pairs(reg_items) do
+	for name, def in pairs(minetest.registered_items) do
 		if item_has_groups(def.groups, groups) then
 			return name
 		end
@@ -416,15 +397,15 @@ local function get_tooltip(item, groups, cooktime, burntime)
 			-- Treat the groups “compass” and “clock” as fake groups
 			-- and just print the normal item name without special formatting
 			if groups[1] == "compass" or groups[1] == "clock" then
-				groupstr = reg_items[item].description
+				groupstr = minetest.registered_items[item].description
 			elseif g then
 				-- Use the special group name string
-				groupstr = minetest.colorize(gcol, g)
+				groupstr = C(gcol, g)
 			else
 				--[[ Fallback: Generic group explanation: This always
 				works, but the internally used group name (which
 				looks ugly) is exposed to the user. ]]
-				groupstr = minetest.colorize(gcol, groups[1])
+				groupstr = C(gcol, groups[1])
 				groupstr = S("Any item belonging to the @1 group", groupstr)
 			end
 			tooltip = groupstr
@@ -433,30 +414,31 @@ local function get_tooltip(item, groups, cooktime, burntime)
 			local groupstr, c = {}, 0
 			for i = 1, #groups do
 				c = c + 1
-				groupstr[c] = colorize(gcol, groups[i])
+				groupstr[c] = C(gcol, groups[i])
 			end
 
-			groupstr = concat(groupstr, ", ")
+			groupstr = table.concat(groupstr, ", ")
 			tooltip = S("Any item belonging to the groups: @1", groupstr)
 		end
 	else
-		tooltip = reg_items[item].description
+		tooltip = minetest.registered_items[item].description
 	end
 
 	if not groups and cooktime then
 		tooltip = tooltip .. "\n" ..
-			S("Cooking time: @1", colorize(mcl_colors.YELLOW, cooktime))
+			S("Cooking time: @1", C(mcl_colors.YELLOW, cooktime))
 	end
 
 	if not groups and burntime then
 		tooltip = tooltip .. "\n" ..
-			S("Burning time: @1", colorize(mcl_colors.YELLOW, burntime))
+			S("Burning time: @1", C(mcl_colors.YELLOW, burntime))
 	end
 
-	return fmt(FMT.tooltip, item, ESC(tooltip))
+	return string.format(FMT.tooltip, item, F(tooltip))
 end
 
-local function get_recipe_fs(data, iY)
+local function get_recipe_fs(data, iY, player)
+	mcl_inventory.reset_craft_grid(player)
 	local fs = {}
 	local recipe = data.recipes[data.rnum]
 	local width = recipe.width
@@ -470,44 +452,43 @@ local function get_recipe_fs(data, iY)
 		if #recipe.items <= 4 then
 			width = 2
 		else
-			width = min(3, #recipe.items)
+			width = math.min(3, #recipe.items)
 		end
 	end
 
-	local rows = ceil(maxn(recipe.items) / width)
+	local rows = math.ceil(table.maxn(recipe.items) / width)
 	local rightest, btn_size, s_btn_size = 0, 1.1
 
 	local btn_lab = data.show_usages and
-		ESC(S("Usage @1 of @2", data.rnum, #data.recipes)) or
-		ESC(S("Recipe @1 of @2", data.rnum, #data.recipes))
+		F(S("Usage @1 of @2", data.rnum, #data.recipes)) or
+		F(S("Recipe @1 of @2", data.rnum, #data.recipes))
 
-	fs[#fs + 1] = fmt(FMT.button,
-		sfinv_only and 5.8 or data.iX - 2.6,
-		sfinv_only and 7.9 or iY + 3.3,
+	fs[#fs + 1] = string.format(FMT.button,
+		data.iX - 2.6,
+		iY + 3.3,
 		2.2,
 		1,
 		"alternate",
 		btn_lab)
 
 	if width > GRID_LIMIT or rows > GRID_LIMIT then
-		fs[#fs + 1] = fmt(FMT.label,
+		fs[#fs + 1] = string.format(FMT.label,
 			(data.iX / 2) - 2,
 			iY + 2.2,
-			ESC(S("Recipe is too big to be displayed (@1×@2)", width, rows)))
+			F(S("Recipe is too big to be displayed (@1×@2)", width, rows)))
 
-		return concat(fs)
+		return table.concat(fs)
 	end
 
 	for i, item in pairs(recipe.items) do
-		local X = ceil((i - 1) % width + xoffset - width) -
-			(sfinv_only and 0 or 0.2)
-		local Y = ceil(i / width + (iY + 2) - min(2, rows))
+		local X = math.ceil((i - 1) % width + xoffset - width) - (0.2)
+		local Y = math.ceil(i / width + (iY + 2) - math.min(2, rows))
 
 		if width > 3 or rows > 3 then
 			btn_size = width > 3 and 3 / width or 3 / rows
 			s_btn_size = btn_size
 			X = btn_size * (i % width) + xoffset - 2.65
-			Y = btn_size * floor((i - 1) / width) + (iY + 3) - min(2, rows)
+			Y = btn_size * math.floor((i - 1) / width) + (iY + 3) - math.min(2, rows)
 		end
 
 		if X > rightest then
@@ -515,7 +496,7 @@ local function get_recipe_fs(data, iY)
 		end
 
 		local groups
-		if sub(item, 1, 6) == "group:" then
+		if string.sub(item, 1, 6) == "group:" then
 			groups = extract_groups(item)
 			item = groups_to_item(groups)
 		end
@@ -525,14 +506,14 @@ local function get_recipe_fs(data, iY)
 			label = "\nG"
 		end
 
-		fs[#fs + 1] = fmt(FMT.item_image_button,
+		fs[#fs + 1] = string.format(FMT.item_image_button,
 			X,
-			Y + (sfinv_only and 0.7 or 0.2),
+			Y + (0.2),
 			btn_size,
 			btn_size,
 			item,
-			match(item, "%S*"),
-			ESC(label))
+			string.match(item, "%S*"),
+			F(label))
 
 		local burntime = fuel_cache[item]
 
@@ -550,12 +531,12 @@ local function get_recipe_fs(data, iY)
 		if recipe.type == "cooking" then
 			icon = "craftguide_furnace.png"
 		elseif not custom_recipe then
-			icon = fmt("craftguide_%s.png", icon)
+			icon = string.format("craftguide_%s.png", icon)
 		end
 
-		fs[#fs + 1] = fmt(FMT.image,
+		fs[#fs + 1] = string.format(FMT.image,
 			rightest + 1.2,
-			sfinv_only and 6.2 or iY + 1.7,
+			iY + 1.7,
 			0.5,
 			0.5,
 			icon)
@@ -563,91 +544,104 @@ local function get_recipe_fs(data, iY)
 		local tooltip = custom_recipe and custom_recipe.description or
 				shapeless and S("Shapeless") or S("Cooking")
 
-		fs[#fs + 1] = fmt("tooltip[%f,%f;%f,%f;%s]",
+		fs[#fs + 1] = string.format("tooltip[%f,%f;%f,%f;%s]",
 			rightest + 1.2,
-			sfinv_only and 6.2 or iY + 1.7,
+			iY + 1.7,
 			0.5,
 			0.5,
-			ESC(tooltip))
+			F(tooltip))
 	end
 
 	local arrow_X  = rightest + (s_btn_size or 1.1)
 	local output_X = arrow_X + 0.9
 
-	fs[#fs + 1] = fmt(FMT.image,
+	fs[#fs + 1] = string.format(FMT.image,
 		arrow_X,
-		sfinv_only and 6.85 or iY + 2.35,
+		iY + 2.35,
 		0.9,
 		0.7,
 		"craftguide_arrow.png")
 
 	if recipe.type == "fuel" then
-		fs[#fs + 1] = fmt(FMT.image,
+		fs[#fs + 1] = string.format(FMT.image,
 			output_X,
-			sfinv_only and 6.68 or iY + 2.18,
+			iY + 2.18,
 			1.1,
 			1.1,
 			"mcl_craftguide_fuel.png")
 	else
-		local output_name = match(recipe.output, "%S+")
+		local output_name = string.match(recipe.output, "%S+")
 		local burntime = fuel_cache[output_name]
 
-		fs[#fs + 1] = fmt(FMT.item_image_button,
+		fs[#fs + 1] = string.format(FMT.item_image_button,
 			output_X,
-			sfinv_only and 6.7 or iY + 2.2,
+			iY + 2.2,
 			1.1,
 			1.1,
 			recipe.output,
-			ESC(output_name),
+			F(output_name),
 			"")
 
 		if burntime then
 			fs[#fs + 1] = get_tooltip(output_name, nil, nil, burntime)
 
-			fs[#fs + 1] = fmt(FMT.image,
+			fs[#fs + 1] = string.format(FMT.image,
 				output_X + 1,
-				sfinv_only and 6.83 or iY + 2.33,
+				iY + 2.33,
 				0.6,
 				0.4,
 				"craftguide_arrow.png")
 
-			fs[#fs + 1] = fmt(FMT.image,
+			fs[#fs + 1] = string.format(FMT.image,
 				output_X + 1.6,
-				sfinv_only and 6.68 or iY + 2.18,
+				iY + 2.18,
 				0.6,
 				0.6,
 				"mcl_craftguide_fuel.png")
 		end
+		--show the button crafting button if recipe items are in inventory and the recipe fits the available crafting grid
+		local pinv = player:get_inventory()
+		if mcl_inventory.get_recipe_groups(pinv, recipe) and
+			( mcl_crafting_table.has_crafting_table(player) or
+			( recipe.width <= pinv:get_width("craft") and table.count(recipe.items, function(_,v) return not ItemStack(v):is_empty() end) <= pinv:get_size("craft"))) then
+			fs[#fs + 1] = string.format("image_button[%f,%f;%f,%f;%s;%s_inv;%s]",
+				8.5,
+				7.2,
+				1.1,
+				1.1,
+				"mcl_crafting_guide_craft.png",
+				"craft","craft")
+			fs[#fs + 1] = "tooltip[craft;To crafting table]"
+		end
 	end
 
-	return concat(fs)
+	return table.concat(fs)
 end
 
 local function make_formspec(name)
+	mcl_inventory.reset_craft_grid(minetest.get_player_by_name(name))
 	local data = player_data[name]
-	local iY = sfinv_only and 4 or data.iX - 5
+	local iY = data.iX - 5
 	local ipp = data.iX * iY
 
-	data.pagemax = max(1, ceil(#data.items / ipp))
+	data.pagemax = math.max(1, math.ceil(#data.items / ipp))
 
 	local fs = {}
 
-	if not sfinv_only then
-		fs[#fs + 1] = fmt("size[%f,%f;]", data.iX - 0.35, iY + 4)
+	fs[#fs + 1] = string.format("size[%f,%f;]", data.iX - 0.35, iY + 4)
 
-		fs[#fs + 1] = "background9[1,1;1,1;mcl_base_textures_background9.png;true;7]"
+	fs[#fs + 1] = "background9[1,1;1,1;mcl_base_textures_background9.png;true;7]"
 
-		fs[#fs + 1] = fmt([[ tooltip[size_inc;%s]
-					 tooltip[size_dec;%s] ]],
-			ESC(S("Increase window size")),
-			ESC(S("Decrease window size")))
+	fs[#fs + 1] = string.format([[ tooltip[size_inc;%s]
+					tooltip[size_dec;%s] ]],
+		F(S("Increase window size")),
+		F(S("Decrease window size")))
 
-		fs[#fs + 1] = fmt([[
-			image_button[%f,0.12;0.8,0.8;craftguide_zoomin_icon.png;size_inc;]
-			image_button[%f,0.12;0.8,0.8;craftguide_zoomout_icon.png;size_dec;] ]],
-			data.iX * 0.47,
-			data.iX * 0.47 + 0.6)
-	end
+	fs[#fs + 1] = string.format([[
+		image_button[%f,0.12;0.8,0.8;craftguide_zoomin_icon.png;size_inc;]
+		image_button[%f,0.12;0.8,0.8;craftguide_zoomout_icon.png;size_dec;] ]],
+		data.iX * 0.47,
+		data.iX * 0.47 + 0.6)
 
 	fs[#fs + 1] = [[
 		image_button[2.4,0.12;0.8,0.8;craftguide_search_icon.png;search;]
@@ -655,27 +649,27 @@ local function make_formspec(name)
 		field_close_on_enter[filter;false]
 	]]
 
-	fs[#fs + 1] = fmt([[ tooltip[search;%s]
+	fs[#fs + 1] = string.format([[ tooltip[search;%s]
 				 tooltip[clear;%s]
 				 tooltip[prev;%s]
 				 tooltip[next;%s] ]],
-		ESC(S("Search")),
-		ESC(S("Reset")),
-		ESC(S("Previous page")),
-		ESC(S("Next page")))
+		F(S("Search")),
+		F(S("Reset")),
+		F(S("Previous page")),
+		F(S("Next page")))
 
-	fs[#fs + 1] = fmt("label[%f,%f;%s]",
-		sfinv_only and 6.3 or data.iX - 2.2,
+	fs[#fs + 1] = string.format("label[%f,%f;%s]",
+		data.iX - 2.2,
 		0.22,
-		ESC(colorize("#383838", fmt("%s / %u", data.pagenum, data.pagemax))))
+		F(C("#383838", string.format("%s / %u", data.pagenum, data.pagemax))))
 
-	fs[#fs + 1] = fmt([[
+	fs[#fs + 1] = string.format([[
 		image_button[%f,0.12;0.8,0.8;craftguide_prev_icon.png;prev;]
 		image_button[%f,0.12;0.8,0.8;craftguide_next_icon.png;next;] ]],
-		sfinv_only and 5.5 or data.iX - 3.1,
-		sfinv_only and 7.3 or (data.iX - 1.2) - (data.iX >= 11 and 0.08 or 0))
+		data.iX - 3.1,
+		(data.iX - 1.2) - (data.iX >= 11 and 0.08 or 0))
 
-	fs[#fs + 1] = fmt("field[0.3,0.32;2.5,1;filter;;%s]", ESC(data.filter))
+	fs[#fs + 1] = string.format("field[0.3,0.32;2.5,1;filter;;%s]", F(data.filter))
 
 	if #data.items == 0 then
 		local no_item = S("No item to show")
@@ -686,7 +680,7 @@ local function make_formspec(name)
 			pos = pos - 1
 		end
 
-		fs[#fs + 1] = fmt(FMT.label, pos, 2, ESC(no_item))
+		fs[#fs + 1] = string.format(FMT.label, pos, 2, F(no_item))
 	end
 
 	local first_item = (data.pagenum - 1) * ipp
@@ -699,8 +693,8 @@ local function make_formspec(name)
 		local X = i % data.iX
 		local Y = (i % ipp - X) / data.iX + 1
 
-		fs[#fs + 1] = fmt("item_image_button[%f,%f;%f,%f;%s;%s_inv;]",
-			X - (sfinv_only and 0 or (X * 0.05)),
+		fs[#fs + 1] = string.format("item_image_button[%f,%f;%f,%f;%s;%s_inv;]",
+			X - ((X * 0.05)),
 			Y,
 			1.1,
 			1.1,
@@ -709,33 +703,29 @@ local function make_formspec(name)
 	end
 
 	if data.recipes and #data.recipes > 0 then
-		fs[#fs + 1] = get_recipe_fs(data, iY)
+		fs[#fs + 1] = get_recipe_fs(data, iY, minetest.get_player_by_name(name))
 	end
 
 	for elem_name, def in pairs(formspec_elements) do
 		local element = def.element(data)
 		if element then
-			if find(def.type, "button") then
-				insert(element, #element, elem_name)
+			if string.find(def.type, "button") then
+				table.insert(element, #element, elem_name)
 			end
 
-			fs[#fs + 1] = fmt(FMT[def.type], unpack(element))
+			fs[#fs + 1] = string.format(FMT[def.type], unpack(element))
 		end
 	end
-
-	return concat(fs)
+	return table.concat(fs)
 end
+mcl_craftguide.make_formspec = make_formspec
 
 local function show_fs(player, name)
-	if sfinv_only then
-		sfinv.set_player_inventory_formspec(player)
-	else
-		show_formspec(name, "mcl_craftguide", make_formspec(name))
-	end
+	minetest.show_formspec(name, "mcl_craftguide", make_formspec(name))
 end
 
 mcl_craftguide.add_search_filter("groups", function(item, groups)
-	local itemdef = reg_items[item]
+	local itemdef = minetest.registered_items[item]
 	local has_groups = true
 
 	for i = 1, #groups do
@@ -759,13 +749,13 @@ local function search(data)
 
 	local filtered_list, c = {}, 0
 	local extras = "^(.-)%+([%w_]+)=([%w_,]+)"
-	local search_filter = next(search_filters) and match(filter, extras)
+	local search_filter = next(search_filters) and string.match(filter, extras)
 	local filters = {}
 
 	if search_filter then
-		for filter_name, values in gmatch(filter, sub(extras, 6, -1)) do
+		for filter_name, values in string.gmatch(filter, string.sub(extras, 6, -1)) do
 			if search_filters[filter_name] then
-				values = split(values, ",")
+				values = string.split(values, ",")
 				filters[filter_name] = values
 			end
 		end
@@ -773,8 +763,8 @@ local function search(data)
 
 	for i = 1, #data.items_raw do
 		local item = data.items_raw[i]
-		local def  = reg_items[item]
-		local desc = string.lower(M.get_translated_string(data.lang_code, def.description))
+		local def  = minetest.registered_items[item]
+		local desc = string.lower(minetest.get_translated_string(data.lang_code, def.description))
 		local search_in = item .. desc
 		local to_add
 
@@ -782,10 +772,10 @@ local function search(data)
 			for filter_name, values in pairs(filters) do
 				local func = search_filters[filter_name]
 				to_add = func(item, values) and (search_filter == "" or
-					find(search_in, search_filter, 1, true))
+					string.find(search_in, search_filter, 1, true))
 			end
 		else
-			to_add = find(search_in, filter, 1, true)
+			to_add = string.find(search_in, filter, 1, true)
 		end
 
 		if to_add then
@@ -821,7 +811,7 @@ local function get_inv_items(player)
 		local stack = stacks[i]
 		if not stack:is_empty() then
 			local name = stack:get_name()
-			if reg_items[name] then
+			if minetest.registered_items[name] then
 				c = c + 1
 				inv_items[c] = name
 			end
@@ -835,10 +825,10 @@ local function init_data(name)
 	player_data[name] = {
 		filter  = "",
 		pagenum = 1,
-		iX      = sfinv_only and 8 or DEFAULT_SIZE,
+		iX      = DEFAULT_SIZE,
 		items   = init_items,
 		items_raw = init_items,
-		lang_code = M.get_player_information(name).lang_code or 'en',
+		lang_code = minetest.get_player_information(name).lang_code or 'en',
 	}
 end
 
@@ -861,9 +851,9 @@ end
 
 local function get_init_items()
 	local c = 0
-	for name, def in pairs(reg_items) do
+	for name, def in pairs(minetest.registered_items) do
 		local is_fuel = cache_fuel(name)
-		if not (def.groups.not_in_craft_guide == 1) and
+		if def.groups.not_in_craft_guide ~= 1 and
 				def.description and def.description ~= "" and
 				(cache_recipes(name) or is_fuel) then
 			c = c + 1
@@ -871,7 +861,7 @@ local function get_init_items()
 		end
 	end
 
-	sort(init_items)
+	table.sort(init_items)
 	cache_usages()
 end
 
@@ -900,7 +890,7 @@ local function on_receive_fields(player, fields)
 
 	elseif (fields.key_enter_field == "filter" or fields.search) and
 			fields.filter ~= "" then
-		local fltr = lower(fields.filter)
+		local fltr = string.lower(fields.filter)
 		if data.filter == fltr then
 			return
 		end
@@ -930,10 +920,21 @@ local function on_receive_fields(player, fields)
 		data.pagenum = 1
 		data.iX = data.iX + (fields.size_inc and 1 or -1)
 		show_fs(player, name)
+	elseif fields.craft_inv and fields.craft_inv == "craft" then
+		local pinv = player:get_inventory()
+		if not mcl_inventory.get_recipe_groups(pinv, data.recipes[data.rnum]) then return end
+		if mcl_crafting_table.has_crafting_table(player) then
+			mcl_crafting_table.show_crafting_form(player)
+		elseif data.recipes[data.rnum].width <= pinv:get_width("craft") and table.count(data.recipes[data.rnum].items, function(_,v) return not ItemStack(v):is_empty()  end) <= pinv:get_size("craft") then
+			minetest.show_formspec(name, "", player:get_inventory_formspec())
+		else
+			return
+		end
+		mcl_inventory.to_craft_grid(player, data.recipes[data.rnum])
 	else
 		local item
 		for field in pairs(fields) do
-			if find(field, ":") then
+			if string.find(field, ":") then
 				item = field
 				break
 			end
@@ -941,8 +942,8 @@ local function on_receive_fields(player, fields)
 
 		if not item then
 			return
-		elseif sub(item, -4) == "_inv" then
-			item = sub(item, 1, -5)
+		elseif string.sub(item, -4) == "_inv" then
+			item = string.sub(item, 1, -5)
 		end
 
 		if item ~= data.query_item then
@@ -964,65 +965,37 @@ local function on_receive_fields(player, fields)
 	end
 end
 
-M.register_on_mods_loaded(get_init_items)
+minetest.register_on_mods_loaded(get_init_items)
 
--- TODO: Remove sfinv support
-if sfinv_only then
-	sfinv.register_page("craftguide:craftguide", {
-		title = "Craft Guide",
 
-		get = function(self, player, context)
-			local name = player:get_player_name()
-			local formspec = make_formspec(name)
+minetest.register_on_player_receive_fields(function(player, formname, fields)
+	if formname == "mcl_craftguide" then
+		on_receive_fields(player, fields)
+	elseif fields.__mcl_craftguide then
+		mcl_craftguide.show(player:get_player_name())
+	end
+end)
 
-			return sfinv.make_formspec(player, context, formspec)
-		end,
+--[[local function on_use(user)
+	local name = user:get_player_name()
 
-		on_enter = function(self, player, context)
-			if next(recipe_filters) then
-				local name = player:get_player_name()
-				local data = player_data[name]
+	if next(recipe_filters) then
+		local data = player_data[name]
+		data.items_raw = get_filtered_items(user)
+		search(data)
+	end
 
-				data.items_raw = get_filtered_items(player)
-				search(data)
-			end
-		end,
-
-		on_player_receive_fields = function(self, player, context, fields)
-			on_receive_fields(player, fields)
-		end,
-	})
-else
-	M.register_on_player_receive_fields(function(player, formname, fields)
-		if formname == "mcl_craftguide" then
-			on_receive_fields(player, fields)
-		elseif fields.__mcl_craftguide then
-			mcl_craftguide.show(player:get_player_name())
-		end
-	end)
-
-	--[[local function on_use(user)
-		local name = user:get_player_name()
-
-		if next(recipe_filters) then
-			local data = player_data[name]
-			data.items_raw = get_filtered_items(user)
-			search(data)
-		end
-
-		show_formspec(name, "mcl_craftguide", make_formspec(name))
-	end]]
-
-end
+	minetest.show_formspec(name, "mcl_craftguide", make_formspec(name))
+end]]
 
 if progressive_mode then
 	local function item_in_inv(item, inv_items)
 		local inv_items_size = #inv_items
 
-		if sub(item, 1, 6) == "group:" then
+		if string.sub(item, 1, 6) == "group:" then
 			local groups = extract_groups(item)
 			for i = 1, inv_items_size do
-				local inv_item = reg_items[inv_items[i]]
+				local inv_item = minetest.registered_items[inv_items[i]]
 				if inv_item then
 					local item_groups = inv_item.groups
 					if item_has_groups(item_groups, groups) then
@@ -1072,35 +1045,37 @@ if progressive_mode then
 	-- Workaround. Need an engine call to detect when the contents
 	-- of the player inventory changed, instead.
 	local function poll_new_items()
-		local players = M.get_connected_players()
+		local players = minetest.get_connected_players()
 		for i = 1, #players do
 			local player = players[i]
 			local name   = player:get_player_name()
 			local data   = player_data[name]
 			local inv_items = get_inv_items(player)
-			local diff      = table_diff(inv_items, data.inv_items)
+			if data and data.inv_items then
+				local diff      = table_diff(inv_items, data.inv_items)
 
-			if #diff > 0 then
-				data.inv_items = table_merge(diff, data.inv_items)
+				if #diff > 0 then
+					data.inv_items = table_merge(diff, data.inv_items)
+				end
 			end
 		end
 
-		M.after(POLL_FREQ, poll_new_items)
+		minetest.after(POLL_FREQ, poll_new_items)
 	end
 
-	M.register_on_mods_loaded(function()
-		M.after(1, poll_new_items)
+	minetest.register_on_mods_loaded(function()
+		minetest.after(1, poll_new_items)
 	end)
 
 	mcl_craftguide.add_recipe_filter("Default progressive filter", progressive_filter)
 
-	M.register_on_joinplayer(function(player)
+	minetest.register_on_joinplayer(function(player)
 		local name = player:get_player_name()
 		init_data(name)
 		local meta = player:get_meta()
 		local data = player_data[name]
 
-		data.inv_items = deserialize(meta:get_string("inv_items")) or {}
+		data.inv_items = minetest.deserialize(meta:get_string("inv_items")) or {}
 	end)
 
 	local function save_meta(player)
@@ -1114,47 +1089,62 @@ if progressive_mode then
 
 		local inv_items = data.inv_items or {}
 
-		meta:set_string("inv_items", serialize(inv_items))
+		meta:set_string("inv_items", minetest.serialize(inv_items))
 	end
 
-	M.register_on_leaveplayer(function(player)
+	minetest.register_on_leaveplayer(function(player)
 		save_meta(player)
 		local name = player:get_player_name()
 		player_data[name] = nil
 	end)
 
-	M.register_on_shutdown(function()
-		local players = M.get_connected_players()
+	minetest.register_on_shutdown(function()
+		local players = minetest.get_connected_players()
 		for i = 1, #players do
 			local player = players[i]
 			save_meta(player)
 		end
 	end)
 else
-	M.register_on_joinplayer(function(player)
+	minetest.register_on_joinplayer(function(player)
 		local name = player:get_player_name()
 		init_data(name)
 	end)
 
-	M.register_on_leaveplayer(function(player)
+	minetest.register_on_leaveplayer(function(player)
 		local name = player:get_player_name()
 		player_data[name] = nil
 	end)
 end
 
 function mcl_craftguide.show(name)
-	local player = get_player_by_name(name)
+	local player = minetest.get_player_by_name(name)
 	if next(recipe_filters) then
 		local data = player_data[name]
 		data.items_raw = get_filtered_items(player)
 		search(data)
 	end
-	show_formspec(name, "mcl_craftguide", make_formspec(name))
+	minetest.show_formspec(name, "mcl_craftguide", make_formspec(name))
 end
+
+doc.sub.items.register_factoid(nil, "groups", function(itemstring, def)
+	if def._repair_material then
+		local mdef = minetest.registered_items[def._repair_material]
+		if mdef and mdef.description and mdef.description ~= "" then
+			return S("This item can be repaired at an anvil with: @1.", mdef.description)
+		elseif def._repair_material == "group:wood" then
+			return S("This item can be repaired at an anvil with any wooden planks.")
+		elseif string.sub(def._repair_material, 1, 6) == "group:" then
+			local group = string.sub(def._repair_material, 7)
+			return S("This item can be repaired at an anvil with any item in the “@1” group.", group)
+		end
+	end
+	return ""
+end)
 
 --[[ Custom recipes (>3x3) test code
 
-M.register_craftitem(":secretstuff:custom_recipe_test", {
+minetest.register_craftitem(":secretstuff:custom_recipe_test", {
 	description = "Custom Recipe Test",
 })
 
@@ -1168,7 +1158,7 @@ for x = 1, 6 do
 		end
 	end
 
-	M.register_craft({
+	minetest.register_craft({
 		output = "secretstuff:custom_recipe_test",
 		recipe = cr[x]
 	})

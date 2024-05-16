@@ -2,8 +2,8 @@
 	{
 		"type": "footwear",
 		"texture": "mcl_skins_footwear_1.png",
-		"template1": true,
-		"template2": true,
+		"steve": true,
+		"alex": true,
 		"rank": 55
 	},
 	{
@@ -20,12 +20,12 @@
 	{
 		"type": "eye",
 		"texture": "mcl_skins_eye_1.png",
-		"template2": true
+		"alex": true
 	},
 	{
 		"type": "eye",
 		"texture": "mcl_skins_eye_2.png",
-		"template1": true
+		"steve": true
 	},
 	{
 		"type": "eye",
@@ -48,17 +48,9 @@
 		"texture": "mcl_skins_eye_7.png"
 	},
 	{
-		"type": "eye",
-		"texture": "mcl_skins_eye_8.png"
-	},
-	{
-		"type": "eye",
-		"texture": "mcl_skins_eye_9.png"
-	},
-	{
 		"type": "mouth",
 		"texture": "mcl_skins_mouth_1.png",
-		"template1": true
+		"steve": true
 	},
 	{
 		"type": "mouth",
@@ -86,19 +78,19 @@
 	},
 	{
 		"type": "mouth",
-		"template1": true
+		"alex": true
 	},
 	{
 		"type": "hair",
 		"texture": "mcl_skins_hair_1.png",
 		"mask": "mcl_skins_hair_1_mask.png",
-		"template2": true
+		"alex": true
 	},
 	{
 		"type": "hair",
 		"texture": "mcl_skins_hair_2.png",
 		"mask": "mcl_skins_hair_2_mask.png",
-		"template1": true
+		"steve": true
 	},
 	{
 		"type": "hair",
@@ -155,7 +147,7 @@
 	{
 		"type": "headwear",
 		"texture": "mcl_skins_headwear_2.png",
-		"template2": true
+		"alex": true
 	},
 	{
 		"type": "headwear",
@@ -183,14 +175,14 @@
 	},
 	{
 		"type": "headwear",
-		"template1": true
+		"steve": true
 	},
 	{
 		"type": "bottom",
 		"texture": "mcl_skins_bottom_1.png",
 		"mask": "mcl_skins_bottom_1_mask.png",
-		"template1": true,
-		"template2": true
+		"steve": true,
+		"alex": true
 	},
 	{
 		"type": "bottom",
@@ -217,8 +209,8 @@
 		"type": "top",
 		"texture": "mcl_skins_top_1.png",
 		"mask": "mcl_skins_top_1_mask.png",
-		"template1": true,
-		"template2": true
+		"steve": true,
+		"alex": true
 	},
 	{
 		"type": "top",
@@ -269,31 +261,7 @@
 		"type": "base",
 		"texture": "mcl_skins_base_1.png",
 		"mask": "mcl_skins_base_1_mask.png",
-		"template1": true,
-		"template2": true
-	},
-	{
-		"type": "cape",
-		"name": "mtcape",
-		"mask": "mtcape_body.png",
-		"selector_func" : null
-	},
-	{
-		"type": "cape",
-		"name": "slimecape",
-		"mask": "slimecape_body.png",
-		"selector_func" : null
-	},
-	{
-		"type": "cape",
-		"name": "ghastcape",
-		"mask": "ghastcape_body.png",
-		"selector_func" : null
-	},
-	{
-		"type": "cape",
-		"name": "mclcape",
-		"mask": "mclcape_body.png",
-		"selector_func" : null
+		"steve": true,
+		"alex": true
 	}
 ]

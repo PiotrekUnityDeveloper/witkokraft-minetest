@@ -15,10 +15,7 @@ local stronghold_rings = {
 	{ amount = 9, min = 22912, max = 24192 },
 }
 
-local strongholds = {}
-
 local mg_name = minetest.get_mapgen_setting("mg_name")
-local superflat = mg_name == "flat" and minetest.get_mapgen_setting("mcl_superflat_classic") == "true"
 local seed = tonumber(minetest.get_mapgen_setting("seed"))
 
 local function init_strongholds()
@@ -38,7 +35,7 @@ local function init_strongholds()
 		for a=1, ring.amount do
 			local dist = pr:next(ring.min, ring.max)
 			local y
-			if superflat then
+			if mcl_vars.superflat then
 				y = mcl_vars.mg_bedrock_overworld_max + 3
 			else
 				y = pr:next(mcl_vars.mg_bedrock_overworld_max+1, mcl_vars.mg_overworld_min+48)
@@ -53,41 +50,6 @@ local function init_strongholds()
 		end
 	end
 	return stronghold_positions
-end
-
--- Stronghold generation for register_on_generated.
-local function generate_strongholds(minp, maxp, blockseed)
-	local pr = PseudoRandom(blockseed)
-	for s=1, #strongholds do
-		if not strongholds[s].generated then
-			local pos = strongholds[s].pos
-			if minp.x <= pos.x and maxp.x >= pos.x and minp.z <= pos.z and maxp.z >= pos.z and minp.y <= pos.y and maxp.y >= pos.y then
-				-- Make sure the end portal room is completely within the current mapchunk
-				-- The original pos is changed intentionally.
-				if pos.x - 6 < minp.x then
-					pos.x = minp.x + 7
-				end
-				if pos.x + 6 > maxp.x then
-					pos.x = maxp.x - 7
-				end
-				if pos.y - 4 < minp.y then
-					pos.y = minp.y + 5
-				end
-				if pos.y + 4 > maxp.y then
-					pos.y = maxp.y - 5
-				end
-				if pos.z - 6 < minp.z then
-					pos.z = minp.z + 7
-				end
-				if pos.z + 6 > maxp.z then
-					pos.z = maxp.z - 7
-				end
-
-				--mcl_structures.call_struct(pos, "end_portal_shrine", nil, pr)
-				strongholds[s].generated = true
-			end
-		end
-	end
 end
 
 mcl_structures.register_structure("end_shrine",{

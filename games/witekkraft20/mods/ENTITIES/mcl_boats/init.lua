@@ -1,3 +1,4 @@
+mcl_boats = {}
 local S = minetest.get_translator(minetest.get_current_modname())
 
 local boat_visual_size = {x = 1, y = 1, z = 1}
@@ -12,7 +13,6 @@ local function is_group(pos, group)
 	return minetest.get_item_group(nn, group) ~= 0
 end
 
-local is_water = flowlib.is_water
 local function is_river_water(p)
 	local n = minetest.get_node(p).name
 	if n == "mclx_core:river_water_source" or n == "mclx_core:river_water_flowing" then
@@ -99,7 +99,7 @@ local function attach_object(self, obj)
 
 	if obj:is_player() then
 		local name = obj:get_player_name()
-		mcl_player.player_attached[name] = true
+		mcl_player.players[obj].attached = true
 		minetest.after(0.2, function(name)
 			local player = minetest.get_player_by_name(name)
 			if player then
@@ -118,7 +118,7 @@ local function detach_object(obj, change_pos)
 	obj:set_detach()
 	obj:set_properties({visual_size = get_visual_size(obj)})
 	if obj:is_player() then
-		mcl_player.player_attached[obj:get_player_name()] = false
+		mcl_player.players[obj].attached = nil
 		mcl_player.player_set_animation(obj, "stand" , 30)
 	else
 		obj:get_luaentity()._old_visual_size = nil
@@ -133,18 +133,20 @@ end
 --
 
 local boat = {
-	physical = true,
-	pointable = true,
-	-- Warning: Do not change the position of the collisionbox top surface,
-	-- lowering it causes the boat to fall through the world if underwater
-	collisionbox = {-0.5, -0.15, -0.5, 0.5, 0.55, 0.5},
-	selectionbox = {-0.7, -0.15, -0.7, 0.7, 0.55, 0.7},
-	visual = "mesh",
-	mesh = "mcl_boats_boat.b3d",
-	textures = { "mcl_boats_texture_oak_boat.png", "blank.png" },
-	visual_size = boat_visual_size,
-	hp_max = boat_max_hp,
-	damage_texture_modifier = "^[colorize:white:0",
+	initial_properties = {
+		physical = true,
+		pointable = true,
+		-- Warning: Do not change the position of the collisionbox top surface,
+		-- lowering it causes the boat to fall through the world if underwater
+		collisionbox = {-0.5, -0.15, -0.5, 0.5, 0.55, 0.5},
+		selectionbox = {-0.7, -0.15, -0.7, 0.7, 0.55, 0.7},
+		visual = "mesh",
+		mesh = "mcl_boats_boat.b3d",
+		textures = { "mcl_boats_texture_oak_boat.png", "blank.png" },
+		visual_size = boat_visual_size,
+		hp_max = boat_max_hp,
+		damage_texture_modifier = "^[colorize:white:0",
+	},
 
 	_driver = nil, -- Attached driver (player) or nil if none
 	_passenger = nil,
@@ -155,6 +157,13 @@ local boat = {
 	_animation = 0, -- 0: not animated; 1: paddling forwards; -1: paddling backwards
 	_regen_timer = 0,
 	_damage_anim = 0,
+	_mcl_fishing_hookable = true,
+	_mcl_fishing_reelable = true,
+	on_detach_child = function(self, child)
+		if self._driver and minetest.is_player(child) and minetest.is_player(self._driver) and self._driver == child then
+			self._driver = nil
+		end
+	end,
 }
 
 minetest.register_on_respawnplayer(detach_object)
@@ -168,7 +177,7 @@ end
 
 
 function boat.on_activate(self, staticdata, dtime_s)
-	self.object:set_armor_groups({fleshy = 100})
+	self.object:set_armor_groups({fleshy = 125})
 	local data = minetest.deserialize(staticdata)
 	if type(data) == "table" then
 		self._v = data.v
@@ -177,6 +186,9 @@ function boat.on_activate(self, staticdata, dtime_s)
 
 		-- Update the texutes for existing old boat entity instances.
 		-- Maybe remove this in the future.
+		if #data.textures >= 1 and data.textures[1] == "mcl_boats_texture_cherry_boat.png" then
+			data.textures[1] = "mcl_boats_texture_cherry_blossom_boat.png"
+		end
 		if #data.textures ~= 2 then
 			local has_chest = self._itemstring:find("chest")
 			data.textures = {
@@ -235,10 +247,10 @@ function boat.on_step(self, dtime, moveresult)
 	local p = self.object:get_pos()
 	local on_water = true
 	local on_ice = false
-	local in_water = is_water({x=p.x, y=p.y-boat_y_offset+1, z=p.z})
+	local in_water = flowlib.is_water({x=p.x, y=p.y-boat_y_offset+1, z=p.z})
 	local in_river_water = is_river_water({x=p.x, y=p.y-boat_y_offset+1, z=p.z})
 	local waterp = {x=p.x, y=p.y-boat_y_offset - 0.1, z=p.z}
-	if not is_water(waterp) then
+	if not flowlib.is_water(waterp) then
 		on_water = false
 		if not in_water and is_ice(waterp) then
 			on_ice = true
@@ -373,7 +385,7 @@ function boat.on_step(self, dtime, moveresult)
 	p.y = p.y - boat_y_offset
 	local new_velo
 	local new_acce
-	if not is_water(p) and not on_ice then
+	if not flowlib.is_water(p) and not on_ice then
 		-- Not on water or inside water: Free fall
 		--local nodedef = minetest.registered_nodes[minetest.get_node(p).name]
 		new_acce = {x = 0, y = -9.8, z = 0}
@@ -381,7 +393,6 @@ function boat.on_step(self, dtime, moveresult)
 			self.object:get_velocity().y)
 	else
 		p.y = p.y + 1
-		local is_obsidian_boat = self.object:get_luaentity()._itemstring == "mcl_boats:boat_obsidian"
 		if is_river_water(p) then
 			local y = self.object:get_velocity().y
 			if y >= 5 then
@@ -393,7 +404,7 @@ function boat.on_step(self, dtime, moveresult)
 			end
 			new_velo = get_velocity(self._v, self.object:get_yaw(), y)
 			self.object:set_pos(self.object:get_pos())
-		elseif is_water(p) and not is_river_water(p) or is_obsidian_boat then
+		elseif flowlib.is_water(p) and not is_river_water(p) then
 			-- Inside water: Slowly sink
 			local y = self.object:get_velocity().y
 			y = y - 0.01
@@ -434,49 +445,58 @@ end
 minetest.register_entity("mcl_boats:boat", boat)
 
 local cboat = table.copy(boat)
-cboat.textures = { "mcl_boats_texture_oak_chest_boat.png", "mcl_chests_normal.png" }
 cboat._itemstring = "mcl_boats:chest_boat"
-cboat.collisionbox = {-0.5, -0.15, -0.5, 0.5, 0.75, 0.5}
-cboat.selectionbox = {-0.7, -0.15, -0.7, 0.7, 0.75, 0.7}
+cboat.initial_properties.textures = { "mcl_boats_texture_oak_chest_boat.png", "mcl_chests_normal.png" }
+cboat.initial_properties.collisionbox = {-0.5, -0.15, -0.5, 0.5, 0.75, 0.5}
+cboat.initial_properties.selectionbox = {-0.7, -0.15, -0.7, 0.7, 0.75, 0.7}
 
 minetest.register_entity("mcl_boats:chest_boat", cboat)
 mcl_entity_invs.register_inv("mcl_boats:chest_boat","Boat",27)
 
-local boat_ids = { "boat", "boat_spruce", "boat_birch", "boat_jungle", "boat_acacia", "boat_dark_oak", "boat_obsidian", "boat_mangrove", "boat_cherry", "chest_boat", "chest_boat_spruce", "chest_boat_birch", "chest_boat_jungle", "chest_boat_acacia", "chest_boat_dark_oak", "chest_boat_mangrove", "chest_boat_cherry" }
-local names = { S("Oak Boat"), S("Spruce Boat"), S("Birch Boat"), S("Jungle Boat"), S("Acacia Boat"), S("Dark Oak Boat"), S("Obsidian Boat"), S("Mangrove Boat"), S("Cherry Boat"), S("Oak Chest Boat"), S("Spruce Chest Boat"), S("Birch Chest Boat"), S("Jungle Chest Boat"), S("Acacia Chest Boat"), S("Dark Oak Chest Boat"), S("Mangrove Chest Boat"), S("Cherry Chest Boat") }
-local craftstuffs = { "mcl_core:wood", "mcl_core:sprucewood", "mcl_core:birchwood", "mcl_core:junglewood", "mcl_core:acaciawood", "mcl_core:darkwood", "mcl_core:obsidian", "mcl_mangrove:mangrove_wood", "mcl_cherry_blossom:cherrywood" }
+local doc_itemstring_boat
+local doc_itemstring_chest_boat
 
-for b=1, #boat_ids do
-	local itemstring = "mcl_boats:"..boat_ids[b]
+function mcl_boats.register_boat(name,item_def,object_properties,entity_overrides)
+	local itemstring = "mcl_boats:boat_"..name
+	local id = name.."_boat"
 
 	local longdesc, usagehelp, tt_help, help, helpname
 	help = false
 	-- Only create one help entry for all boats
-	if b == 1 then
+	if not doc_itemstring_boat then
 		help = true
 		longdesc = S("Boats are used to travel on the surface of water.")
 		usagehelp = S("Rightclick on a water source to place the boat. Rightclick the boat to enter it. Use [Left] and [Right] to steer, [Forwards] to speed up and [Backwards] to slow down or move backwards. Use [Sneak] to leave the boat, punch the boat to make it drop as an item.")
 		helpname = S("Boat")
+		doc_itemstring_boat = itemstring
+		doc.sub.identifier.register_object("mcl_boats:boat", "craftitems", itemstring)
+	else
+		doc.add_entry_alias("craftitems", doc_itemstring_boat, "craftitems", itemstring)
 	end
 	tt_help = S("Water vehicle")
 
 	local inventory_image
 	local texture
-	local id = boat_ids[b]
 	if id:find("chest") then
-		if id == "chest_boat" then id = "oak" end
-		local id = id:gsub("chest_boat_", "")
-		inventory_image = "mcl_boats_" .. id .. "_chest_boat.png"
-		texture = "mcl_boats_texture_" .. id .. "_boat.png"
+		inventory_image = "mcl_boats_" .. id .. ".png"
+		texture = "mcl_boats_texture_" .. id:gsub("chest_", "") .. ".png"
+		if not doc_itemstring_chest_boat then
+			help = true
+			longdesc = S("Chest Boats are used to travel on the surface of water. And transport goods")
+			usagehelp = S("Rightclick on a water source to place the boat. Rightclick the boat to enter it. Use [Left] and [Right] to steer, [Forwards] to speed up and [Backwards] to slow down or move backwards. Use [Sneak] to leave the boat, punch the boat to make it drop as an item. Use [Sneak] + [Rightclick] to open the boat's chest")
+			helpname = S("Chest Boat")
+			doc_itemstring_chest_boat = itemstring
+			doc.sub.identifier.register_object("mcl_boats:chest_boat", "craftitems", doc_itemstring_chest_boat)
+		else
+			doc.add_entry_alias("craftitems", doc_itemstring_chest_boat, "craftitems", itemstring)
+		end
 	else
-		if id == "boat" then id = "oak" end
-		local id = id:gsub("boat_", "")
-		inventory_image = "mcl_boats_" .. id .. "_boat.png"
-		texture = "mcl_boats_texture_" .. id .. "_boat.png"
+		inventory_image = "mcl_boats_" .. name .. "_boat.png"
+		texture = "mcl_boats_texture_" .. name .. "_boat.png"
 	end
-	
-	minetest.register_craftitem(itemstring, {
-		description = names[b],
+
+	minetest.register_craftitem(":"..itemstring, table.merge({
+		description = S(name.." Boat"),
 		_tt_help = tt_help,
 		_doc_items_create_entry = help,
 		_doc_items_entry_name = helpname,
@@ -491,20 +511,15 @@ for b=1, #boat_ids do
 				return itemstack
 			end
 
-			-- Call on_rightclick if the pointed node defines it
-			local node = minetest.get_node(pointed_thing.under)
-			if placer and not placer:get_player_control().sneak then
-				if minetest.registered_nodes[node.name] and minetest.registered_nodes[node.name].on_rightclick then
-					return minetest.registered_nodes[node.name].on_rightclick(pointed_thing.under, node, placer, itemstack) or itemstack
-				end
-			end
+			local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+			if rc then return rc end
 
 			local pos = table.copy(pointed_thing.under)
 			local dir = vector.subtract(pointed_thing.above, pointed_thing.under)
 
 			if math.abs(dir.x) > 0.9 or math.abs(dir.z) > 0.9 then
 				pos = vector.add(pos, vector.multiply(dir, boat_side_offset))
-			elseif is_water(pos) then
+			elseif flowlib.is_water(pos) then
 				pos = vector.add(pos, vector.multiply(dir, boat_y_offset))
 			else
 				pos = vector.add(pos, vector.multiply(dir, boat_y_offset_ground))
@@ -516,9 +531,15 @@ for b=1, #boat_ids do
 				chest_tex = "mcl_chests_normal.png"
 			end
 			local boat = minetest.add_entity(pos, boat_ent)
-			boat:get_luaentity()._itemstring = itemstring
-			boat:set_properties({ textures = { texture, chest_tex } })
-			boat:set_yaw(placer:get_look_horizontal())
+			if boat and boat:get_pos() then
+				local ent = boat:get_luaentity()
+				ent._itemstring = itemstring
+				boat:set_properties(table.merge({ textures = { texture, chest_tex }},object_properties or {}))
+				boat:set_yaw(placer:get_look_horizontal())
+				for k,v in pairs(entity_overrides or {}) do
+					ent[k] = v
+				end
+			end
 			if not minetest.is_creative_enabled(placer:get_player_name()) then
 				itemstack:take_item()
 			end
@@ -534,17 +555,18 @@ for b=1, #boat_ids do
 				minetest.add_item(droppos, stack)
 			end
 		end,
-	})
+	},item_def or {}))
 
-	local c = craftstuffs[b]
-	if not itemstring:find("chest") then
+	local c = "mcl_trees:wood_"..name
+	if itemstring:find("chest") then
 		minetest.register_craft({
-			output = itemstring:gsub(":boat",":chest_boat"),
+			output = itemstring,
 			recipe = {
 				{"mcl_chests:chest"},
-				{itemstring},
+				{"mcl_boats:boat_"..name:gsub("_chest","")},
 			},
 		})
+	elseif minetest.registered_nodes[c] then
 		minetest.register_craft({
 			output = itemstring,
 			recipe = {
@@ -560,7 +582,3 @@ minetest.register_craft({
 	recipe = "group:boat",
 	burntime = 20,
 })
-
-if minetest.get_modpath("doc_identifier") then
-	doc.sub.identifier.register_object("mcl_boats:boat", "craftitems", "mcl_boats:boat")
-end

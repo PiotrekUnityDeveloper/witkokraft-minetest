@@ -8,22 +8,6 @@ local S = minetest.get_translator(modname)
 
 local has_mcl_portals = minetest.get_modpath("mcl_portals")
 
-local set_node = minetest.set_node
-local get_node = minetest.get_node
-local add_node = minetest.add_node
-local remove_node = minetest.remove_node
-local swap_node = minetest.swap_node
-local get_node_or_nil = minetest.get_node_or_nil
-
-local find_nodes_in_area = minetest.find_nodes_in_area
-local find_node_near = minetest.find_node_near
-local get_item_group = minetest.get_item_group
-
-local get_connected_players = minetest.get_connected_players
-
-local vector = vector
-local math = math
-
 local adjacents = {
 	{ x =-1, y = 0, z = 0 },
 	{ x = 1, y = 0, z = 0 },
@@ -73,9 +57,6 @@ local smoke_pdef = {
 -- When enabled, fire destroys other blocks.
 local fire_enabled = minetest.settings:get_bool("enable_fire", true)
 
--- Enable sound
-local flame_sound = minetest.settings:get_bool("flame_sound", true)
-
 -- Help texts
 local fire_help, eternal_fire_help
 if fire_enabled then
@@ -91,7 +72,7 @@ else
 end
 
 local function spawn_fire(pos, age)
-	set_node(pos, {name="mcl_fire:fire", param2 = age})
+	minetest.set_node(pos, {name="mcl_fire:fire", param2 = age})
 	minetest.check_single_for_falling({x=pos.x, y=pos.y+1, z=pos.z})
 end
 
@@ -120,7 +101,7 @@ minetest.register_node("mcl_fire:fire", {
 	groups = {fire = 1, dig_immediate = 3, not_in_creative_inventory = 1, dig_by_piston=1, destroys_items=1, set_on_fire=8},
 	floodable = true,
 	on_flood = function(pos, oldnode, newnode)
-		if get_item_group(newnode.name, "water") ~= 0 then
+		if minetest.get_item_group(newnode.name, "water") ~= 0 then
 			minetest.sound_play("fire_extinguish_flame", {pos = pos, gain = 0.25, max_hear_distance = 16}, true)
 		end
 	end,
@@ -129,11 +110,11 @@ minetest.register_node("mcl_fire:fire", {
 	-- Turn into eternal fire on special blocks, light Nether portal (if possible), start burning timer
 	on_construct = function(pos)
 		local bpos = {x=pos.x, y=pos.y-1, z=pos.z}
-		local under = get_node(bpos).name
+		local under = minetest.get_node(bpos).name
 
 		local dim = mcl_worlds.pos_to_dimension(bpos)
 		if under == "mcl_nether:magma" or under == "mcl_nether:netherrack" or (under == "mcl_core:bedrock" and dim == "end") then
-			swap_node(pos, {name = "mcl_fire:eternal_fire"})
+			minetest.swap_node(pos, {name = "mcl_fire:eternal_fire"})
 		end
 
 		if has_mcl_portals then
@@ -173,7 +154,7 @@ minetest.register_node("mcl_fire:eternal_fire", {
 	groups = {fire = 1, dig_immediate = 3, not_in_creative_inventory = 1, dig_by_piston = 1, destroys_items = 1, set_on_fire=8},
 	floodable = true,
 	on_flood = function(pos, oldnode, newnode)
-		if get_item_group(newnode.name, "water") ~= 0 then
+		if minetest.get_item_group(newnode.name, "water") ~= 0 then
 			minetest.sound_play("fire_extinguish_flame", {pos = pos, gain = 0.25, max_hear_distance = 16}, true)
 		end
 	end,
@@ -196,111 +177,108 @@ minetest.register_node("mcl_fire:eternal_fire", {
 -- Sound
 --
 
-if flame_sound then
+local handles = {}
+local timer = 0
 
-	local handles = {}
-	local timer = 0
+-- Parameters
 
-	-- Parameters
+local radius = 8 -- Flame node search radius around player
+local cycle = 3 -- Cycle time for sound updates
 
-	local radius = 8 -- Flame node search radius around player
-	local cycle = 3 -- Cycle time for sound updates
+-- Update sound for player
 
-	-- Update sound for player
-
-	function mcl_fire.update_player_sound(player)
-		local player_name = player:get_player_name()
-		-- Search for flame nodes in radius around player
-		local ppos = player:get_pos()
-		local areamin = vector.subtract(ppos, radius)
-		local areamax = vector.add(ppos, radius)
-		local fpos, num = find_nodes_in_area(
-			areamin,
-			areamax,
-			{"mcl_fire:fire", "mcl_fire:eternal_fire"}
-		)
-		-- Total number of flames in radius
-		local flames = (num["mcl_fire:fire"] or 0) +
-			(num["mcl_fire:eternal_fire"] or 0)
-		-- Stop previous sound
-		if handles[player_name] then
-			minetest.sound_fade(handles[player_name], -0.4, 0.0)
-			handles[player_name] = nil
-		end
-		-- If flames
-		if flames > 0 then
-			-- Find centre of flame positions
-			local fposmid = fpos[1]
-			-- If more than 1 flame
-			if #fpos > 1 then
-				local fposmin = areamax
-				local fposmax = areamin
-				for i = 1, #fpos do
-					local fposi = fpos[i]
-					if fposi.x > fposmax.x then
-						fposmax.x = fposi.x
-					end
-					if fposi.y > fposmax.y then
-						fposmax.y = fposi.y
-					end
-					if fposi.z > fposmax.z then
-						fposmax.z = fposi.z
-					end
-					if fposi.x < fposmin.x then
-						fposmin.x = fposi.x
-					end
-					if fposi.y < fposmin.y then
-						fposmin.y = fposi.y
-					end
-					if fposi.z < fposmin.z then
-						fposmin.z = fposi.z
-					end
+function mcl_fire.update_player_sound(player)
+	local player_name = player:get_player_name()
+	-- Search for flame nodes in radius around player
+	local ppos = player:get_pos()
+	local areamin = vector.subtract(ppos, radius)
+	local areamax = vector.add(ppos, radius)
+	local fpos, num = minetest.find_nodes_in_area(
+		areamin,
+		areamax,
+		{"mcl_fire:fire", "mcl_fire:eternal_fire"}
+	)
+	-- Total number of flames in radius
+	local flames = (num["mcl_fire:fire"] or 0) +
+		(num["mcl_fire:eternal_fire"] or 0)
+	-- Stop previous sound
+	if handles[player_name] then
+		minetest.sound_fade(handles[player_name], -0.4, 0.0)
+		handles[player_name] = nil
+	end
+	-- If flames
+	if flames > 0 then
+		-- Find centre of flame positions
+		local fposmid = fpos[1]
+		-- If more than 1 flame
+		if #fpos > 1 then
+			local fposmin = areamax
+			local fposmax = areamin
+			for i = 1, #fpos do
+				local fposi = fpos[i]
+				if fposi.x > fposmax.x then
+					fposmax.x = fposi.x
 				end
-				fposmid = vector.divide(vector.add(fposmin, fposmax), 2)
+				if fposi.y > fposmax.y then
+					fposmax.y = fposi.y
+				end
+				if fposi.z > fposmax.z then
+					fposmax.z = fposi.z
+				end
+				if fposi.x < fposmin.x then
+					fposmin.x = fposi.x
+				end
+				if fposi.y < fposmin.y then
+					fposmin.y = fposi.y
+				end
+				if fposi.z < fposmin.z then
+					fposmin.z = fposi.z
+				end
 			end
-			-- Play sound
-			local handle = minetest.sound_play(
-				"fire_fire",
-				{
-					pos = fposmid,
-					to_player = player_name,
-					gain = math.min(0.06 * (1 + flames * 0.125), 0.18),
-					max_hear_distance = 32,
-					loop = true, -- In case of lag
-				}
-			)
-			-- Store sound handle for this player
-			if handle then
-				handles[player_name] = handle
-			end
+			fposmid = vector.divide(vector.add(fposmin, fposmax), 2)
+		end
+		-- Play sound
+		local handle = minetest.sound_play(
+			"fire_fire",
+			{
+				pos = fposmid,
+				to_player = player_name,
+				gain = math.min(0.06 * (1 + flames * 0.125), 0.18),
+				max_hear_distance = 32,
+				loop = true, -- In case of lag
+			}
+		)
+		-- Store sound handle for this player
+		if handle then
+			handles[player_name] = handle
 		end
 	end
-
-	-- Cycle for updating players sounds
-
-	minetest.register_globalstep(function(dtime)
-		timer = timer + dtime
-		if timer < cycle then
-			return
-		end
-
-		timer = 0
-		local players = get_connected_players()
-		for n = 1, #players do
-			mcl_fire.update_player_sound(players[n])
-		end
-	end)
-
-	-- Stop sound and clear handle on player leave
-
-	minetest.register_on_leaveplayer(function(player)
-		local player_name = player:get_player_name()
-		if handles[player_name] then
-			minetest.sound_stop(handles[player_name])
-			handles[player_name] = nil
-		end
-	end)
 end
+
+-- Cycle for updating players sounds
+
+minetest.register_globalstep(function(dtime)
+	timer = timer + dtime
+	if timer < cycle then
+		return
+	end
+
+	timer = 0
+	local players = minetest.get_connected_players()
+	for n = 1, #players do
+		mcl_fire.update_player_sound(players[n])
+	end
+end)
+
+-- Stop sound and clear handle on player leave
+
+minetest.register_on_leaveplayer(function(player)
+	local player_name = player:get_player_name()
+	if handles[player_name] then
+		minetest.sound_stop(handles[player_name])
+		handles[player_name] = nil
+	end
+end)
 
 -- [...]a fire that is not adjacent to any flammable block does not spread, even to another flammable block within the normal range.
 -- https://minecraft.fandom.com/wiki/Fire#Spread
@@ -455,12 +433,12 @@ function mcl_fire.set_fire(pointed_thing, player, allow_on_fire)
 	end
 
 	local n_pointed = minetest.get_node(pointed_thing.under)
-	if allow_on_fire == false and get_item_group(n_pointed.name, "fire") ~= 0 then
+	if allow_on_fire == false and minetest.get_item_group(n_pointed.name, "fire") ~= 0 then
 		return
 	end
 
-	local n_fire_pos = minetest.get_node(pointed_thing.above)
-	if n_fire_pos.name ~= "air" then
+	local n_fire = minetest.get_node(pointed_thing.above)
+	if n_fire.name ~= "air" then
 		return
 	end
 
@@ -469,7 +447,7 @@ function mcl_fire.set_fire(pointed_thing, player, allow_on_fire)
 		return
 	end
 
-	add_node(pointed_thing.above, {name="mcl_fire:fire"})
+	minetest.set_node(pointed_thing.above, {name="mcl_fire:fire"})
 end
 
 minetest.register_lbm({

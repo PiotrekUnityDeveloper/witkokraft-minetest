@@ -117,6 +117,7 @@ local function check_placement_allowed(node, wdir)
 	elseif not def.buildable_to then
 		if node.name ~= "mcl_core:ice" and node.name ~= "mcl_nether:soul_sand" and node.name ~= "mcl_mobspawners:spawner" and node.name ~= "mcl_core:barrier" and node.name ~= "mcl_end:chorus_flower" and node.name ~= "mcl_end:chorus_flower_dead" and (not def.groups.glass) and
 				((not def.groups.solid) or (not def.groups.opaque)) then
+
 			-- Only allow top placement on these nodes
 			if node.name == "mcl_end:dragon_egg" or node.name == "mcl_portals:end_portal_frame_eye" or def.groups.fence == 1 or def.groups.wall or def.groups.slab_top == 1 or def.groups.anvil or def.groups.pane or (def.groups.stair == 1 and minetest.facedir_to_dir(node.param2).y ~= 0) then
 				if wdir ~= 1 then
@@ -150,6 +151,10 @@ function mcl_torches.register_torch(def)
 	groups.destroy_by_lava_flow = 1
 	groups.dig_by_piston = 1
 	groups.flame_type = def.flame_type or 1
+	groups.attaches_to_top = 1
+	groups.attaches_to_side = 1
+	groups.offhand_item = 1
+	groups.offhand_placeable = 1
 
 	local floordef = {
 		description = def.description,
@@ -190,16 +195,25 @@ function mcl_torches.register_torch(def)
 			if not def then return itemstack end
 
 			-- Call on_rightclick if the pointed node defines it
-			if placer and not placer:get_player_control().sneak then
-				if minetest.registered_nodes[node.name] and minetest.registered_nodes[node.name].on_rightclick then
-					return minetest.registered_nodes[node.name].on_rightclick(under, node, placer, itemstack) or itemstack
-				end
+			if placer and placer:is_player() and not placer:get_player_control().sneak then
+				local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+				if rc ~= nil then return rc end --check for nil explicitly to determine if on_rightclick existed
 			end
 
 			local above = pointed_thing.above
 			local wdir = minetest.dir_to_wallmounted({x = under.x - above.x, y = under.y - above.y, z = under.z - above.z})
 
-			if check_placement_allowed(node, wdir) == false then
+			if type(def.placement_prevented) == "function" then
+				if
+					def.placement_prevented({
+						itemstack = itemstack,
+						placer = placer,
+						pointed_thing = pointed_thing,
+					})
+				then
+					return itemstack
+				end
+			elseif check_placement_allowed(node, wdir) == false then
 				return itemstack
 			end
 

@@ -11,8 +11,11 @@ local mod_target = minetest.get_modpath("mcl_target")
 --################### BLAZE
 --###################
 
-local function spawn_check(pos, environmental_light, artificial_light, sky_light)
-	return artificial_light <= 11
+local function check_light(pos, environmental_light, artificial_light, sky_light)
+	if artificial_light > 11 then
+		return false, "To bright"
+	end
+	return true, ""
 end
 
 mcl_mobs.register_mob("mobs_mc:blaze", {
@@ -140,21 +143,8 @@ mcl_mobs.register_mob("mobs_mc:blaze", {
 			},
 		})
 	end,
-	spawn_check = spawn_check,
+	check_light = check_light,
 })
-
-mcl_mobs:spawn_specific(
-"mobs_mc:blaze",
-"nether",
-"ground",
-{"Nether"},
-0,
-minetest.LIGHT_MAX+1,
-30,
-5000,
-3,
-mcl_vars.mg_nether_min,
-mcl_vars.mg_nether_max)
 
 -- Blaze fireball
 mcl_mobs.register_arrow("mobs_mc:blaze_fireball", {
@@ -165,21 +155,8 @@ mcl_mobs.register_arrow("mobs_mc:blaze_fireball", {
 	_is_fireball = true,
 
 	-- Direct hit, no fire... just plenty of pain
-	hit_player = function(self, player)
-		mcl_burning.set_on_fire(player, 5)
-		player:punch(self.object, 1.0, {
-			full_punch_interval = 1.0,
-			damage_groups = {fleshy = 5},
-		}, nil)
-	end,
-
-	hit_mob = function(self, mob)
-		mcl_burning.set_on_fire(mob, 5)
-		mob:punch(self.object, 1.0, {
-			full_punch_interval = 1.0,
-			damage_groups = {fleshy = 5},
-		}, nil)
-	end,
+	hit_player = mcl_mobs.get_arrow_damage_func(5, "fireball"),
+	hit_mob = mcl_mobs.get_arrow_damage_func(5, "fireball"),
 
 	hit_object = function(self, object)
 		local lua = object:get_luaentity()
@@ -211,6 +188,5 @@ mcl_mobs.register_arrow("mobs_mc:blaze_fireball", {
 	end
 })
 
-mcl_mobs:non_spawn_specific("mobs_mc:blaze", "overworld", 0, 11)
--- spawn eggs.
+-- spawn eggs
 mcl_mobs.register_egg("mobs_mc:blaze", S("Blaze"), "#f6b201", "#fff87e", 0)

@@ -1,12 +1,3 @@
-local vector = vector
-local table = table
-
-local hash_node_position = minetest.hash_node_position
-local add_particlespawner = minetest.add_particlespawner
-local delete_particlespawner = minetest.delete_particlespawner
-
-local ipairs = ipairs
-
 mcl_particles = {}
 
 -- Table of particlespawner IDs on a per-node hash basis
@@ -41,11 +32,11 @@ function mcl_particles.add_node_particlespawner(pos, particlespawner_definition,
 	if allowed_level == 0 or levels[level] > allowed_level then
 		return
 	end
-	local poshash = hash_node_position(pos)
+	local poshash = minetest.hash_node_position(pos)
 	if not poshash then
 		return
 	end
-	local id = add_particlespawner(particlespawner_definition)
+	local id = minetest.add_particlespawner(particlespawner_definition)
 	if id == -1 then
 		return
 	end
@@ -56,8 +47,6 @@ function mcl_particles.add_node_particlespawner(pos, particlespawner_definition,
 	return id
 end
 
-local add_node_particlespawner = mcl_particles.add_node_particlespawner
-
 -- Deletes all particlespawners that are assigned to a node position.
 -- If no particlespawners exist for this position, nothing happens.
 -- pos: Node positon. MUST use integer values!
@@ -66,11 +55,11 @@ function mcl_particles.delete_node_particlespawners(pos)
 	if allowed_level == 0 then
 		return false
 	end
-	local poshash = hash_node_position(pos)
+	local poshash = minetest.hash_node_position(pos)
 	local ids = particle_nodes[poshash]
 	if ids then
 		for i=1, #ids do
-			delete_particlespawner(ids[i])
+			minetest.delete_particlespawner(ids[i])
 		end
 		particle_nodes[poshash] = nil
 		return true
@@ -91,7 +80,7 @@ function mcl_particles.spawn_smoke(pos, name, smoke_pdef_base)
 		for i, smoke_pdef in ipairs(smoke_pdef_cached[name]) do
 			smoke_pdef.minpos = new_minpos
 			smoke_pdef.maxpos = new_maxpos
-			add_node_particlespawner(pos, smoke_pdef, "high")
+			mcl_particles.add_node_particlespawner(pos, smoke_pdef, "high")
 		end
 		-- cache already populated
 	else
@@ -123,7 +112,7 @@ function mcl_particles.spawn_smoke(pos, name, smoke_pdef_base)
 				-- even if its very short. Larger exptime -> larger range
 				smoke_pdef.minexptime = math.min(exptime, (7.0/8.0 * (exptime + 0.1) + 0.1))
 				smoke_pdef.texture = "mcl_particles_smoke_anim.png^[colorize:#000000:" ..colorize
-				add_node_particlespawner(pos, smoke_pdef, "high")
+				mcl_particles.add_node_particlespawner(pos, smoke_pdef, "high")
 				table.insert(smoke_pdef_cached[name], table.copy(smoke_pdef))
 			end
 		end

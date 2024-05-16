@@ -1,5 +1,10 @@
-local minetest, math = minetest, math
 mcl_offhand = {}
+
+-- TODO: when < minetest 5.9 isn't supported anymore, remove this variable check and replace all occurences of [hud_elem_type_field] with type
+local hud_elem_type_field = "type"
+if not minetest.features.hud_def_type_field then
+	hud_elem_type_field = "hud_elem_type"
+end
 
 local max_offhand_px = 128
 -- only supports up to 128px textures
@@ -7,6 +12,39 @@ local max_offhand_px = 128
 function mcl_offhand.get_offhand(player)
 	return player:get_inventory():get_stack("offhand", 1)
 end
+
+function mcl_offhand.set_offhand(player, itemstack)
+	return player:get_inventory():set_stack("offhand", 1, itemstack)
+end
+
+function mcl_offhand.place(placer, pointed_thing)
+	local offhand = mcl_offhand.get_offhand(placer)
+	if offhand and minetest.get_item_group(offhand:get_name(), "offhand_placeable") ~= 0 and pointed_thing.above then
+		local new_stack
+		local odef = offhand:get_definition()
+		if odef.on_place then
+			new_stack = odef.on_place(offhand, placer,pointed_thing)
+		else
+			new_stack = minetest.item_place_node(offhand, placer, pointed_thing)
+		end
+		if not new_stack then
+			offhand:set_count(offhand:get_count() - 1)
+		else
+			mcl_offhand.set_offhand(placer, new_stack)
+		end
+		return true
+	end
+
+	return false
+end
+
+minetest.override_item("", {
+	on_place = function(itemstack, placer, pointed_thing)
+		local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+		if rc then return rc end
+		mcl_offhand.place(placer, pointed_thing)
+	end
+})
 
 local function offhand_get_wear(player)
 	return mcl_offhand.get_offhand(player):get_wear()
@@ -39,7 +77,7 @@ end
 local function update_wear_bar(player, itemstack)
 	local wear_bar_percent = (65535 - offhand_get_wear(player)) / 65535
 
-	local color = {255, 255, 255}
+	local color
 	local wear = itemstack:get_wear() / 65535;
 	local wear_i = math.min(math.floor(wear * 600), 511);
 	wear_i = math.min(wear_i + 10, 511);
@@ -67,7 +105,7 @@ minetest.register_globalstep(function(dtime)
 
 			if not offhand_hud.slot then
 				offhand_hud.slot = player:hud_add({
-					hud_elem_type = "image",
+					[hud_elem_type_field] = "image",
 					position = position,
 					offset = offset,
 					scale = {x = 0.46875, y = 0.46875},
@@ -77,7 +115,7 @@ minetest.register_globalstep(function(dtime)
 			end
 			if not offhand_hud.item then
 				offhand_hud.item = player:hud_add({
-					hud_elem_type = "image",
+					[hud_elem_type_field] = "image",
 					position = position,
 					offset = offset,
 					scale = {x = 0.375, y = 0.375},
@@ -91,7 +129,7 @@ minetest.register_globalstep(function(dtime)
 				if offhand_get_wear(player) > 0 then
 					local texture = "mcl_wear_bar.png^[colorize:#000000"
 					offhand_hud.wear_bar_bg = player:hud_add({
-						hud_elem_type = "image",
+						[hud_elem_type_field] = "image",
 						position = {x = 0.5, y = 1},
 						offset = {x = -320, y = -13},
 						scale = {x = 40, y = 3},
@@ -99,7 +137,7 @@ minetest.register_globalstep(function(dtime)
 						z_index = 2,
 					})
 					offhand_hud.wear_bar = player:hud_add({
-						hud_elem_type = "image",
+						[hud_elem_type_field] = "image",
 						position = {x = 0.5, y = 1},
 						offset = {x = -320, y = -13},
 						scale = {x = 10, y = 3},
@@ -112,7 +150,7 @@ minetest.register_globalstep(function(dtime)
 
 			if not offhand_hud.item_count and offhand_get_count(player) > 1 then
 				offhand_hud.item_count = player:hud_add({
-					hud_elem_type = "text",
+					[hud_elem_type_field] = "text",
 					position = {x = 0.5, y = 1},
 					offset = {x = -298, y = -18},
 					scale = {x = 1, y = 1},
@@ -155,7 +193,7 @@ end)
 minetest.register_allow_player_inventory_action(function(player, action, inventory, inventory_info)
 	if action == "move" and inventory_info.to_list == "offhand" then
 		local itemstack = inventory:get_stack(inventory_info.from_list, inventory_info.from_index)
-		if not (minetest.get_item_group(itemstack:get_name(), "offhand_item") > 0)  then
+		if minetest.get_item_group(itemstack:get_name(), "offhand_item") <= 0  then
 			return 0
 		else
 			return itemstack:get_stack_max()

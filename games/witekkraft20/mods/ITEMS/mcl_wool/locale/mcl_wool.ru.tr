@@ -1,6 +1,12 @@
 # textdomain: mcl_wool
-Wool=Шерсть
 Carpet=Ковёр
+Wool=Шерсть
+Wool is a decorative block which comes in many different colors.=Шерсть это декоративный блок, который может быть разных цветов.
+Carpets are thin floor covers which come in many different colors.=Ковры это тонкие напольные покрытия, которые бывают разных цветов.
+
+
+##### not used anymore #####
+
 White Wool=Белая шерсть
 White Carpet=Белый ковёр
 Grey Wool=Серая шерсть
@@ -33,5 +39,3 @@ Lime Wool=Лаймовая шерсть
 Lime Carpet=Лаймовый ковёр
 Light Blue Wool=Голубая шерсть
 Light Blue Carpet=Голубой ковёр
-Wool is a decorative block which comes in many different colors.=Шерсть это декоративный блок, который может быть разных цветов.
-Carpets are thin floor covers which come in many different colors.=Ковры это тонкие напольные покрытия, которые бывают разных цветов.

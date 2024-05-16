@@ -1,11 +1,13 @@
-local S = minetest.get_translator(minetest.get_current_modname())
+local S = minetest.get_translator("doc")
 local F = function(f) return minetest.formspec_escape(S(f)) end
 
-local mod_central_messages = minetest.get_modpath("central_message")
-local mod_inventory_plus = minetest.get_modpath("inventory_plus")
-
-local math = math
-local colorize = minetest.colorize
+-- Compability for 0.4.14 or earlier
+local colorize
+if minetest.colorize then
+	colorize = minetest.colorize
+else
+	colorize = function(color, text) return text end
+end
 
 doc = {}
 
@@ -39,10 +41,10 @@ doc.FORMSPEC.ENTRY_HEIGHT = doc.FORMSPEC.ENTRY_END_Y - doc.FORMSPEC.ENTRY_START_
 -- Internal helper variables
 local DOC_INTRO = S("This is the help.")
 
-local COLOR_NOT_VIEWED = "#00FFFF"     -- cyan
-local COLOR_VIEWED = "#FFFFFF"         -- white
-local COLOR_HIDDEN = "#999999"         -- gray
-local COLOR_ERROR = "#FF0000"          -- red
+local COLOR_NOT_VIEWED = "#00FFFF"	-- cyan
+local COLOR_VIEWED = "#FFFFFF"		-- white
+local COLOR_HIDDEN = "#999999"		-- gray
+local COLOR_ERROR = "#FF0000"		-- red
 
 local CATEGORYFIELDSIZE = {
 	WIDTH = math.ceil(doc.FORMSPEC.WIDTH / 4),
@@ -67,7 +69,7 @@ local set_category_order_was_called = false
 local function get_entry(category_id, entry_id)
 	local category = doc.data.categories[category_id]
 	local entry
-	if category then
+	if category ~= nil then
 		entry = category.entries[entry_id]
 	end
 	if category == nil or entry == nil then
@@ -97,7 +99,7 @@ end
 
 -- Add a new category
 function doc.add_category(id, def)
-	if doc.data.categories[id] == nil and id then
+	if doc.data.categories[id] == nil and id ~= nil then
 		doc.data.categories[id] = {}
 		doc.data.categories[id].entries = {}
 		doc.data.categories[id].entry_count = 0
@@ -127,7 +129,7 @@ end
 -- Add a new entry
 function doc.add_entry(category_id, entry_id, def)
 	local cat = doc.data.categories[category_id]
-	if cat then
+	if cat ~= nil then
 		local hidden = def.hidden or (def.hidden == nil and cat.def.hide_entries_by_default)
 		if hidden then
 			cat.hidden_count = cat.hidden_count + 1
@@ -181,7 +183,7 @@ function doc.mark_entry_as_revealed(playername, category_id, entry_id)
 		doc.data.players[playername].entry_textlist_needs_updating = true
 		-- Notify player of entry revelation
 		if doc.data.players[playername].stored_data.notify_on_reveal == true then
-			if mod_central_messages then
+			if minetest.get_modpath("central_message") ~= nil then
 				local cat = doc.data.categories[category_id]
 				cmsg.push_message_player(minetest.get_player_by_name(playername), S("New help entry unlocked: @1 > @2", cat.def.name, entry.name))
 			end
@@ -228,7 +230,7 @@ function doc.mark_all_entries_as_revealed(playername)
 		msg = S("All help entries are already revealed.")
 	end
 	-- Notify
-	if mod_central_messages then
+	if minetest.get_modpath("central_message") ~= nil then
 		cmsg.push_message_player(minetest.get_player_by_name(playername), msg)
 	else
 		minetest.chat_send_player(playername, msg)
@@ -431,7 +433,7 @@ end
 -- Returns the currently viewed entry and/or category of the player
 function doc.get_selection(playername)
 	local playerdata = doc.data.players[playername]
-	if playerdata then
+	if playerdata ~= nil then
 		local cat = playerdata.category
 		if cat then
 			local entry = playerdata.entry
@@ -452,18 +454,18 @@ end
 doc.entry_builders = {}
 
 -- Scrollable freeform text
-function doc.entry_builders.text(data)
+doc.entry_builders.text = function(data)
 	local formstring = doc.widgets.text(data, doc.FORMSPEC.ENTRY_START_X, doc.FORMSPEC.ENTRY_START_Y, doc.FORMSPEC.ENTRY_WIDTH - 0.4, doc.FORMSPEC.ENTRY_HEIGHT)
 	return formstring
 end
 
 -- Scrollable freeform text with an optional standard gallery (3 rows, 3:2 aspect ratio)
-function doc.entry_builders.text_and_gallery(data, playername)
+doc.entry_builders.text_and_gallery = function(data, playername)
 	-- How much height the image gallery “steals” from the text widget
 	local stolen_height = 0
 	local formstring = ""
 	-- Only add the gallery if images are in the data, otherwise, the text widget gets all of the space
-	if data.images then
+	if data.images ~= nil then
 		local gallery
 		gallery, stolen_height = doc.widgets.gallery(data.images, playername, nil, doc.FORMSPEC.ENTRY_END_Y + 0.2, nil, nil, nil, nil, false)
 		formstring = formstring .. gallery
@@ -480,7 +482,7 @@ end
 doc.widgets = {}
 
 -- Scrollable freeform text
-function doc.widgets.text(data, x, y, width, height)
+doc.widgets.text = function(data, x, y, width, height)
 	if x == nil then
 		x = doc.FORMSPEC.ENTRY_START_X
 	end
@@ -506,7 +508,7 @@ end
 
 -- Image gallery
 -- Currently, only one gallery per entry is supported. TODO: Add support for multiple galleries in an entry (low priority)
-function doc.widgets.gallery(imagedata, playername, x, y, aspect_ratio, width, rows, align_left, align_top)
+doc.widgets.gallery = function(imagedata, playername, x, y, aspect_ratio, width, rows, align_left, align_top)
 	if playername == nil then return nil end -- emergency exit
 
 	local formstring = ""
@@ -591,11 +593,12 @@ function doc.widgets.gallery(imagedata, playername, x, y, aspect_ratio, width, r
 		formstring = formstring .. "label["..nx..","..ny..";"..i.."]"
 		pos = pos + 1
 	end
+
 	return formstring, ih
 end
 
 -- Direct formspec
-function doc.entry_builders.formspec(data)
+doc.entry_builders.formspec = function(data)
 	return data
 end
 
@@ -609,7 +612,7 @@ do
 		minetest.log("action", "[doc] doc.mt opened.")
 		local string = file:read()
 		io.close(file)
-		if string then
+		if(string ~= nil) then
 			local savetable = minetest.deserialize(string)
 			for name, players_stored_data in pairs(savetable.players_stored_data) do
 				doc.data.players[name] = {}
@@ -676,13 +679,13 @@ function doc.formspec_main(playername)
 				local data = doc.data.categories[id]
 				local bw = doc.FORMSPEC.WIDTH / math.floor(((doc.data.category_count-1) / CATEGORYFIELDSIZE.HEIGHT)+1)
 				-- Skip categories which do not exist
-				if data then
+				if data ~= nil then
 					-- Category buton
 					local button = "button["..((x-1)*bw)..","..y..";"..bw..",1;doc_button_category_"..id..";"..minetest.formspec_escape(data.def.name).."]"
 					local tooltip = ""
 					-- Optional description
-					if data.def.description then
-						tooltip = "tooltip[doc_button_category_"..id..";"..minetest.formspec_escape(data.def.description).."]"
+					if data.def.description ~= nil then
+					tooltip = "tooltip[doc_button_category_"..id..";"..minetest.formspec_escape(data.def.description).."]"
 					end
 					formstring = formstring .. button .. tooltip
 					y = y + 1
@@ -705,7 +708,7 @@ function doc.formspec_main(playername)
 				end
 			end
 			local sel = doc.data.categories[doc.data.players[playername].category]
-			if sel then
+			if sel ~= nil then
 				formstring = formstring .. ";"
 				formstring = formstring .. doc.data.categories[doc.data.players[playername].category].order_position
 			end
@@ -715,7 +718,7 @@ function doc.formspec_main(playername)
 			notify_checkbox_y = doc.FORMSPEC.HEIGHT-1
 		end
 		local text
-		if mod_central_messages then
+		if minetest.get_modpath("central_message") then
 			text = F("Notify me when new help is available")
 		else
 			text = F("Play notification sound when new help is available")
@@ -806,7 +809,7 @@ function doc.get_sorted_entry_names(cid)
 	local cat = doc.data.categories[cid]
 	local used_eids = {}
 	-- Helper function to extract the entry ID out of the output table
-	local function extract(entry_table)
+	local extract = function(entry_table)
 		local eids = {}
 		for k,v in pairs(entry_table) do
 			local eid = v.eid
@@ -935,7 +938,6 @@ function doc.formspec_entry(category_id, entry_id, playername)
 		if ename == nil or ename == "" then
 			ename = S("Nameless entry (@1)", entry_id)
 		end
-
 		formstring = "style_type[textarea;textcolor=#FFFFFF]"
 		formstring = formstring .. "label[0,0;"..minetest.formspec_escape(S("Help > @1 > @2", category.def.name, ename)).."]"
 		formstring = formstring .. category.def.build_formspec(entry.data, playername)
@@ -948,7 +950,7 @@ function doc.process_form(player,formname,fields)
 	local playername = player:get_player_name()
 	--[[ process clicks on the tab header ]]
 	if(formname == "doc:main" or formname == "doc:category" or formname == "doc:entry") then
-		if fields.doc_header then
+		if fields.doc_header ~= nil then
 			local tab = tonumber(fields.doc_header)
 			local formspec, subformname, contents
 			local cid, eid
@@ -963,7 +965,7 @@ function doc.process_form(player,formname,fields)
 			elseif(tab==3) then
 				doc.data.players[playername].galidx = 1
 				contents = doc.formspec_entry(cid, eid, playername)
-				if cid and eid then
+				if cid ~= nil and eid ~= nil then
 					doc.mark_entry_as_viewed(playername, cid, eid)
 				end
 				subformname = "entry"
@@ -988,7 +990,7 @@ function doc.process_form(player,formname,fields)
 		if fields["doc_mainlist"] then
 			local event = minetest.explode_textlist_event(fields["doc_mainlist"])
 			local cid = doc.data.category_order[event.index]
-			if cid then
+			if cid ~= nil then
 				if event.type == "CHG" then
 					doc.data.players[playername].catsel = nil
 					doc.data.players[playername].category = cid
@@ -1018,10 +1020,10 @@ function doc.process_form(player,formname,fields)
 	elseif(formname == "doc:category") then
 		if fields["doc_button_goto_entry"] then
 			local cid = doc.data.players[playername].category
-			if cid then
+			if cid ~= nil then
 				local eid = nil
 				local eids, catsel = doc.data.players[playername].entry_ids, doc.data.players[playername].catsel
-				if eids and catsel then
+				if eids ~= nil and catsel ~= nil then
 					eid = eids[catsel]
 				end
 				doc.data.players[playername].galidx = 1
@@ -1044,7 +1046,7 @@ function doc.process_form(player,formname,fields)
 				local cid = doc.data.players[playername].category
 				local eid = nil
 				local eids, catsel = doc.data.players[playername].entry_ids, event.index
-				if eids and catsel then
+				if eids ~= nil and catsel ~= nil then
 					eid = eids[catsel]
 				end
 				doc.mark_entry_as_viewed(playername, cid, eid)
@@ -1105,7 +1107,7 @@ function doc.process_form(player,formname,fields)
 			minetest.show_formspec(playername, "doc:entry", formspec)
 		end
 	else
-		if fields["doc_inventory_plus"] and mod_inventory_plus then
+		if fields["doc_inventory_plus"] and minetest.get_modpath("inventory_plus") then
 			doc.show_doc(playername)
 			return
 		end
@@ -1173,18 +1175,18 @@ minetest.register_on_joinplayer(function(player)
 	end
 
 	-- Add button for Inventory++
-	if mod_inventory_plus then
+	if minetest.get_modpath("inventory_plus") ~= nil then
 		inventory_plus.register_button(player, "doc_inventory_plus", S("Help"))
 	end
 end)
 
 ---[[ Add buttons for inventory mods ]]
-local function button_action(player)
+local button_action = function(player)
 	doc.show_doc(player:get_player_name())
 end
 
 -- Unified Inventory
-if minetest.get_modpath("unified_inventory") then
+if minetest.get_modpath("unified_inventory") ~= nil then
 	unified_inventory.register_button("doc", {
 		type = "image",
 		image = "doc_button_icon_hires.png",
@@ -1194,7 +1196,7 @@ if minetest.get_modpath("unified_inventory") then
 end
 
 -- sfinv_buttons
-if minetest.get_modpath("sfinv_buttons") then
+if minetest.get_modpath("sfinv_buttons") ~= nil then
 	sfinv_buttons.register_button("doc", {
 		image = "doc_button_icon_lores.png",
 		tooltip = S("Collection of help texts"),

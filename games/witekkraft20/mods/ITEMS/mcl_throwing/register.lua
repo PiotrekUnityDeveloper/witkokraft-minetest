@@ -1,19 +1,18 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 
-local math = math
-local vector = vector
-
 local mod_target = minetest.get_modpath("mcl_target")
 
 -- The snowball entity
 local snowball_ENTITY={
-	physical = false,
-	timer=0,
-	textures = {"mcl_throwing_snowball.png"},
-	visual_size = {x=0.5, y=0.5},
-	collisionbox = {0,0,0,0,0,0},
-	pointable = false,
+	initial_properties = {
+		physical = false,
+		textures = {"mcl_throwing_snowball.png"},
+		visual_size = {x=0.5, y=0.5},
+		collisionbox = {0,0,0,0,0,0},
+		pointable = false,
+	},
 
+	timer=0,
 	get_staticdata = mcl_throwing.get_staticdata,
 	on_activate = mcl_throwing.on_activate,
 	_thrower = nil,
@@ -22,13 +21,14 @@ local snowball_ENTITY={
 }
 
 local egg_ENTITY={
-	physical = false,
+	initial_properties = {
+		physical = false,
+		textures = {"mcl_throwing_egg.png"},
+		visual_size = {x=0.45, y=0.45},
+		collisionbox = {0,0,0,0,0,0},
+		pointable = false,
+	},
 	timer=0,
-	textures = {"mcl_throwing_egg.png"},
-	visual_size = {x=0.45, y=0.45},
-	collisionbox = {0,0,0,0,0,0},
-	pointable = false,
-
 	get_staticdata = mcl_throwing.get_staticdata,
 	on_activate = mcl_throwing.on_activate,
 	_thrower = nil,
@@ -38,13 +38,15 @@ local egg_ENTITY={
 
 -- Ender pearl entity
 local pearl_ENTITY={
-	physical = false,
-	timer=0,
-	textures = {"mcl_throwing_ender_pearl.png"},
-	visual_size = {x=0.9, y=0.9},
-	collisionbox = {0,0,0,0,0,0},
-	pointable = false,
+	initial_properties = {
+		physical = false,
+		textures = {"mcl_throwing_ender_pearl.png"},
+		visual_size = {x=0.9, y=0.9},
+		collisionbox = {0,0,0,0,0,0},
+		pointable = false,
+	},
 
+	timer=0,
 	get_staticdata = mcl_throwing.get_staticdata,
 	on_activate = mcl_throwing.on_activate,
 
@@ -258,8 +260,8 @@ local function pearl_on_step(self, dtime)
 				player:set_pos(telepos)
 				player:set_hp(player:get_hp() - 5, { type = "fall", from = "mod" })
 
-				-- 5% chance to spawn endermite at the player's origin
-				local r = math.random(1,20)
+				-- 10% chance to spawn endermite at the player's origin
+				local r = math.random(1,10)
 				if r == 1 then
 					minetest.add_entity(oldpos, "mobs_mc:endermite")
 				end
@@ -309,6 +311,7 @@ minetest.register_craftitem("mcl_throwing:egg", {
 	stack_max = 16,
 	on_use = mcl_throwing.get_player_throw_function("mcl_throwing:egg_entity"),
 	_on_dispense = mcl_throwing.dispense_function,
+	_dispense_into_walkable = true,
 	groups = { craftitem = 1 },
 })
 
@@ -317,11 +320,12 @@ minetest.register_craftitem("mcl_throwing:ender_pearl", {
 	description = S("Ender Pearl"),
 	_tt_help = S("Throwable").."\n"..minetest.colorize(mcl_colors.YELLOW, S("Teleports you on impact for cost of 5 HP")),
 	_doc_items_longdesc = S("An ender pearl is an item which can be used for teleportation at the cost of health. It can be thrown and teleport the thrower to its impact location when it hits a solid block or a plant. Each teleportation hurts the user by 5 hit points."),
-	_doc_items_usagehelp = how_to_throw,
+	_doc_items_usagehelp =  S("Use the place/use key to throw."),
 	wield_image = "mcl_throwing_ender_pearl.png",
 	inventory_image = "mcl_throwing_ender_pearl.png",
 	stack_max = 16,
-	on_use = mcl_throwing.get_player_throw_function("mcl_throwing:ender_pearl_entity"),
+	on_place = mcl_throwing.get_player_throw_function("mcl_throwing:ender_pearl_entity"),
+	on_secondary_use = mcl_throwing.get_player_throw_function("mcl_throwing:ender_pearl_entity"),
 	groups = { transport = 1 },
 })
 

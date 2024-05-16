@@ -130,7 +130,7 @@ doc.sub.items.register_factoid(nil, "groups", function(itemstring, def)
 		s = s .. S("Hunger points restored: @1", def.groups.eatable)
 	end
 	if def._mcl_saturation and def._mcl_saturation > 0 then
-		s = s .. "\n" .. S("Saturation points restored: @1%.1f", string.format("%.1f", def._mcl_saturation))
+		s = s .. "\n" .. S("Saturation points restored: @1%", string.format("%.1f", def._mcl_saturation))
 	end
 	return s
 end)
@@ -174,22 +174,6 @@ doc.sub.items.register_factoid(nil, "groups", function(itemstring, def)
 		s = s .. S("Armor durability: @1", use)
 	end
 	return s
-end)
-
--- TODO: Move this info to the crafting guide
-doc.sub.items.register_factoid(nil, "groups", function(itemstring, def)
-	if def._repair_material then
-		local mdef = minetest.registered_items[def._repair_material]
-		if mdef and mdef.description and mdef.description ~= "" then
-			return S("This item can be repaired at an anvil with: @1.", mdef.description)
-		elseif def._repair_material == "group:wood" then
-			return S("This item can be repaired at an anvil with any wooden planks.")
-		elseif string.sub(def._repair_material, 1, 6) == "group:" then
-			local group = string.sub(def._repair_material, 7)
-			return S("This item can be repaired at an anvil with any item in the “@1” group.", group)
-		end
-	end
-	return ""
 end)
 
 doc.sub.items.register_factoid(nil, "groups", function(itemstring, def)
@@ -279,7 +263,7 @@ doc.sub.items.register_factoid("nodes", "mining", function(itemstring, def)
 	if not blast then
 		blast = 0
 	end
-	-- TODO: Blast resistance as number
+	datastring = datastring .. "\n" .. S("Blast Resistance: @1", string.format("%.2f", blast))
 	if blast >= 1000 then
 		datastring = datastring .. "\n" .. S("This block will not be destroyed by TNT explosions.")
 	end

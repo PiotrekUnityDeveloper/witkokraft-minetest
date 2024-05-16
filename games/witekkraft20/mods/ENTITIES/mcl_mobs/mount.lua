@@ -1,15 +1,8 @@
-local math, vector, minetest, mcl_mobs = math, vector, minetest, mcl_mobs
 local mob_class = mcl_mobs.mob_class
--- lib_mount by Blert2112 (edited by TenPlus1)
 
 local enable_crash = false
 local crash_threshold = 6.5 -- ignored if enable_crash=false
 
-------------------------------------------------------------------------------
-
---
--- Helper functions
---
 
 local node_ok = function(pos, fallback)
 
@@ -92,15 +85,12 @@ local function force_detach(player)
 	end
 
 	player:set_detach()
-	mcl_player.player_attached[player:get_player_name()] = false
+	mcl_player.players[player].attached = false
 	player:set_eye_offset({x = 0, y = 0, z = 0}, {x = 0, y = 0, z = 0})
 	mcl_player.player_set_animation(player, "stand" , 30)
 	player:set_properties({visual_size = {x = 1, y = 1} })
 
 end
-
--------------------------------------------------------------------------------
-
 
 minetest.register_on_leaveplayer(function(player)
 	force_detach(player)
@@ -117,8 +107,6 @@ minetest.register_on_dieplayer(function(player)
 	force_detach(player)
 	return true
 end)
-
--------------------------------------------------------------------------------
 
 function mcl_mobs.attach(entity, player)
 
@@ -142,7 +130,7 @@ function mcl_mobs.attach(entity, player)
 	force_detach(player)
 
 	player:set_attach(entity.object, "", attach_at, entity.player_rotation)
-	mcl_player.player_attached[player:get_player_name()] = true
+	mcl_player.players[player].attached = true
 	player:set_eye_offset(eye_offset, {x = 0, y = 0, z = 0})
 
 	player:set_properties({
@@ -199,17 +187,12 @@ function mcl_mobs.drive(entity, moving_anim, stand_anim, can_fly, dtime)
 
 	entity.v = get_v(velo) * get_sign(entity.v)
 
-	-- process controls
 	if entity.driver then
-
 		local ctrl = entity.driver:get_player_control()
-
-		-- move forwards
 		if ctrl.up then
 
 			entity.v = entity.v + entity.accel / 10 * entity.run_velocity / 2.6
 
-		-- move backwards
 		elseif ctrl.down then
 
 			if entity.max_speed_reverse == 0 and entity.v == 0 then
@@ -219,12 +202,10 @@ function mcl_mobs.drive(entity, moving_anim, stand_anim, can_fly, dtime)
 			entity.v = entity.v - entity.accel / 10
 		end
 
-		-- fix mob rotation
 		entity.object:set_yaw(entity.driver:get_look_horizontal() - entity.rotate)
 
 		if can_fly then
 
-			-- fly up
 			if ctrl.jump then
 				velo.y = velo.y + 1
 				if velo.y > entity.accel then velo.y = entity.accel end
@@ -234,7 +215,6 @@ function mcl_mobs.drive(entity, moving_anim, stand_anim, can_fly, dtime)
 				if velo.y < 0 then velo.y = 0 end
 			end
 
-			-- fly down
 			if ctrl.sneak then
 				velo.y = velo.y - 1
 				if velo.y < -entity.accel then velo.y = -entity.accel end
@@ -246,9 +226,7 @@ function mcl_mobs.drive(entity, moving_anim, stand_anim, can_fly, dtime)
 
 		else
 
-			-- jump
 			if ctrl.jump then
-
 				if velo.y == 0 then
 					velo.y = velo.y + entity.jump_height
 					acce_y = acce_y + (acce_y * 3) + 1
@@ -262,18 +240,16 @@ function mcl_mobs.drive(entity, moving_anim, stand_anim, can_fly, dtime)
 	if entity.v == 0 and velo.x == 0 and velo.y == 0 and velo.z == 0 then
 
 		if stand_anim then
-			mcl_mobs:set_animation(entity, stand_anim)
+			entity:set_animation(stand_anim)
 		end
 
 		return
 	end
 
-	-- set moving animation
 	if moving_anim then
-		mcl_mobs:set_animation(entity, moving_anim)
+		entity:set_animation(moving_anim)
 	end
 
-	-- Stop!
 	local s = get_sign(entity.v)
 
 	entity.v = entity.v - 0.02 * s
@@ -285,7 +261,6 @@ function mcl_mobs.drive(entity, moving_anim, stand_anim, can_fly, dtime)
 		return
 	end
 
-	-- enforce speed limit forward and reverse
 	local max_spd = entity.max_speed_reverse
 
 	if get_sign(entity.v) >= 0 then
@@ -296,7 +271,6 @@ function mcl_mobs.drive(entity, moving_anim, stand_anim, can_fly, dtime)
 		entity.v = entity.v - get_sign(entity.v)
 	end
 
-	-- Set position, velocity and acceleration
 	local p = entity.object:get_pos()
 	local new_velo
 	local new_acce = {x = 0, y = -9.8, z = 0}
@@ -386,10 +360,7 @@ function mcl_mobs.drive(entity, moving_anim, stand_anim, can_fly, dtime)
 	entity.v2 = v
 end
 
--- directional flying routine by D00Med (edited by TenPlus1)
-
-function mcl_mobs.fly(entity, dtime, speed, shoots, arrow, moving_anim, stand_anim)
-
+function mcl_mobs.fly_drive(entity, dtime, speed, shoots, arrow, moving_anim, stand_anim)
 	local ctrl = entity.driver:get_player_control()
 	local velo = entity.object:get_velocity()
 	local dir = entity.driver:get_look_dir()
@@ -440,15 +411,15 @@ function mcl_mobs.fly(entity, dtime, speed, shoots, arrow, moving_anim, stand_an
 	-- change animation if stopped
 	if velo.x == 0 and velo.y == 0 and velo.z == 0 then
 
-		mcl_mobs:set_animation(entity, stand_anim)
+		entity:set_animation(stand_anim)
 	else
 		-- moving animation
-		mcl_mobs:set_animation(entity, moving_anim)
+		entity:set_animation(moving_anim)
 	end
 end
 
 mcl_mobs.mob_class.drive = mcl_mobs.drive
-mcl_mobs.mob_class.fly = mcl_mobs.fly
+mcl_mobs.mob_class.fly_drive = mcl_mobs.fly_drive
 mcl_mobs.mob_class.attach = mcl_mobs.attach
 
 function mob_class:on_detach_child(child)

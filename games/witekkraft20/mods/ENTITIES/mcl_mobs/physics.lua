@@ -1,16 +1,11 @@
-local math, vector, minetest, mcl_mobs = math, vector, minetest, mcl_mobs
 local mob_class = mcl_mobs.mob_class
-local validate_vector = mcl_util.validate_vector
 
 local ENTITY_CRAMMING_MAX = 24
 local CRAMMING_DAMAGE = 3
 local DEATH_DELAY = 0.5
-local DEFAULT_FALL_SPEED = -9.81*1.5
 
 local PATHFINDING = "gowp"
-local mobs_debug = minetest.settings:get_bool("mobs_debug", false)
 local mobs_drop_items = minetest.settings:get_bool("mobs_drop_items") ~= false
-local mob_active_range = tonumber(minetest.settings:get("mcl_mob_active_range")) or 48
 local show_health = false
 
 -- get node but use fallback for nil or unknown
@@ -48,10 +43,15 @@ end
 
 function mob_class:player_in_active_range()
 	for _,p in pairs(minetest.get_connected_players()) do
-		local pos = self.object:get_pos()
-		if pos and vector.distance(pos, p:get_pos()) <= mob_active_range then return true end
+		if vector.distance(self.object:get_pos(),p:get_pos()) <= self.player_active_range then return true end
 		-- slightly larger than the mc 32 since mobs spawn on that circle and easily stand still immediately right after spawning.
 	end
+end
+
+function mob_class:object_in_follow_range(object)
+	local dist = 6
+	local p1, p2 = self.object:get_pos(), object:get_pos()
+	return p1 and p2 and (vector.distance(p1, p2) <= dist)
 end
 
 -- Return true if object is in view_range
@@ -89,7 +89,7 @@ function mob_class:item_drop(cooked, looting_level)
 		return
 	end
 
-	local obj, item, num
+	local obj, item
 	local pos = self.object:get_pos()
 
 	self.drops = self.drops or {}
@@ -157,10 +157,10 @@ end
 function mob_class:collision()
 	local pos = self.object:get_pos()
 	if not pos then return {0,0} end
-	local vel = self.object:get_velocity()
 	local x = 0
 	local z = 0
-	local width = -self.collisionbox[1] + self.collisionbox[4] + 0.5
+	local cbox = self.object:get_properties().collisionbox
+	local width = -cbox[1] + cbox[4]
 	for _,object in pairs(minetest.get_objects_inside_radius(pos, width)) do
 
 		local ent = object:get_luaentity()
@@ -172,7 +172,7 @@ function mob_class:collision()
 
 			local pos2 = object:get_pos()
 			local vec  = {x = pos.x - pos2.x, z = pos.z - pos2.z}
-			local force = (width + 0.5) - vector.distance(
+			local force = width - vector.distance(
 				{x = pos.x, y = 0, z = pos.z},
 				{x = pos2.x, y = 0, z = pos2.z})
 
@@ -184,23 +184,21 @@ function mob_class:collision()
 	return({x,z})
 end
 
-function mob_class:check_death_and_slow_mob()
-	local d = 0.7
-	local dying = self:check_dying()
-	if dying then d = 0.92 end
+function mob_class:slow_mob()
+	local d = 0.85
+	if self:check_dying() then d = 0.92 end
 
-	local v = self.object:get_velocity()
-	if v then
-		--diffuse object velocity
-		self.object:set_velocity({x = v.x*d, y = v.y, z = v.z*d})
+	if self.object then
+		local v = self.object:get_velocity()
+		if v then
+			--diffuse object velocity
+			self.object:set_velocity({x = v.x*d, y = v.y, z = v.z*d})
+		end
 	end
-	return dying
 end
 
 -- move mob in facing direction
 function mob_class:set_velocity(v)
-	if not v then return end
-
 	local c_x, c_y = 0, 0
 
 	-- can mob be pushed, if so calculate direction
@@ -210,8 +208,8 @@ function mob_class:set_velocity(v)
 
 	-- halt mob if it has been ordered to stay
 	if self.order == "stand" or self.order == "sit" then
-		self.acc = vector.zero()
-		return
+	  self.acc=vector.new(0,0,0)
+	  return
 	end
 
 	local yaw = (self.object:get_yaw() or 0) + self.rotate
@@ -237,13 +235,13 @@ function mob_class:update_roll()
 	local was_Fleckenstein = false
 
 	local rot = self.object:get_rotation()
-	rot.z = is_Fleckenstein and pi or 0
+	rot.z = is_Fleckenstein and math.pi or 0
 	self.object:set_rotation(rot)
 
-	local cbox = table.copy(self.collisionbox)
+	local cbox = table.copy(self.initial_properties.collisionbox)
 	local acbox = self.object:get_properties().collisionbox
 
-	if math.abs(cbox[2] - acbox[2]) > 0.1 then
+	if tonumber(cbox[2]) and tonumber(acbox[2]) and math.abs(cbox[2] - acbox[2]) > 0.1 then
 		was_Fleckenstein = true
 	end
 
@@ -311,8 +309,6 @@ end
 function mob_class:set_yaw(yaw, delay, dtime)
 	if self.noyaw then return end
 
-	if not self.object:get_yaw() or not self.object:get_pos() then return end
-
 	if self.state ~= PATHFINDING then
 		self._turn_to = yaw
 	end
@@ -356,7 +352,7 @@ function mob_class:set_yaw(yaw, delay, dtime)
 
 	if math.abs(target_shortest_path_nums) > 10 then
 		self.object:set_yaw(self.object:get_yaw()+(target_shortest_path*(3.6*ddtime)))
-		if validate_vector(self.acc) then
+		if self.acc and mcl_mobs.check_vector(self.acc) then
 			self.acc=vector.rotate_around_axis(self.acc,vector.new(0,1,0), target_shortest_path*(3.6*ddtime))
 		end
 	end
@@ -369,7 +365,7 @@ function mob_class:set_yaw(yaw, delay, dtime)
 		if self.shaking and dtime then
 			yaw = yaw + (math.random() * 2 - 1) * 5 * dtime
 		end
-		--self:update_roll()
+		self:update_roll()
 		return yaw
 	end
 
@@ -422,22 +418,22 @@ function mob_class:check_for_death(cause, cmi_cause)
 		return false
 	end
 
-	local damaged = self.health < self.old_health
+	local damaged = self.health < ( self.old_health or 0 )
 	self.old_health = self.health
 
 	-- still got some health?
 	if self.health > 0 then
 
 		-- make sure health isn't higher than max
-		if self.health > self.hp_max then
-			self.health = self.hp_max
+		if self.health > self.object:get_properties().hp_max then
+			self.health = self.object:get_properties().hp_max
 		end
 
 		-- play damage sound if health was reduced and make mob flash red.
 		if damaged then
 			self:add_texture_mod("^[colorize:#d42222:175")
-			minetest.after(1, function(self)
-				if self and self.object then
+			minetest.after(0.5, function(self)
+				if self and self.object and self.object:get_pos() then
 					self:remove_texture_mod("^[colorize:#d42222:175")
 				end
 			end, self)
@@ -453,7 +449,7 @@ function mob_class:check_for_death(cause, cmi_cause)
 		and (cmi_cause and cmi_cause.type == "punch") then
 
 			self.htimer = 2
-			self.nametag = "♥ " .. self.health .. " / " .. self.hp_max
+			self.nametag = "♥ " .. self.health .. " / " .. self.object:get_properties().hp_max
 
 			self:update_tag()
 		end
@@ -464,15 +460,11 @@ function mob_class:check_for_death(cause, cmi_cause)
 	self:mob_sound("death")
 
 	local function death_handle(self)
-		if cmi_cause and cmi_cause["type"] then
-			--minetest.log("cmi_cause: " .. tostring(cmi_cause["type"]))
+		local killed_by_player = false
+		if self.last_player_hit_time and minetest.get_gametime() - self.last_player_hit_time <= 5 then
+			killed_by_player  = true
 		end
-		--minetest.log("cause: " .. tostring(cause))
 
-		-- TODO other env damage shouldn't drop xp
-		-- "rain", "water", "drowning", "suffocation"
-
-		-- dropped cooked item if mob died in fire or lava
 		if cause == "lava" or cause == "fire" then
 			self:item_drop(true, 0)
 		else
@@ -486,18 +478,16 @@ function mob_class:check_for_death(cause, cmi_cause)
 			local cooked = mcl_burning.is_burning(self.object) or mcl_enchanting.has_enchantment(wielditem, "fire_aspect")
 			local looting = mcl_enchanting.get_enchantment(wielditem, "looting")
 			self:item_drop(cooked, looting)
-
-			if ((not self.child) or self.type ~= "animal") and (minetest.get_us_time() - self.xp_timestamp <= math.huge) then
-				local pos = self.object:get_pos()
-				local xp_amount = math.random(self.xp_min, self.xp_max)
-
-				if not mcl_sculk.handle_death(pos, xp_amount) then
-					--minetest.log("Xp not thrown")
-					if minetest.is_creative_enabled("") ~= true then
+			if killed_by_player then
+				if self.type == "monster" or self.name == "mobs_mc:zombified_piglin" then
+					awards.unlock(self.last_player_hit_name, "mcl:monsterHunter")
+				end
+				if ((not self.child) or self.type ~= "animal") and (minetest.get_us_time() - self.xp_timestamp <= math.huge) then
+					local pos = self.object:get_pos()
+					local xp_amount = math.random(self.xp_min, self.xp_max)
+					if not minetest.is_creative_enabled(self.last_player_hit_name) and not mcl_sculk.handle_death(pos, xp_amount) then
 						mcl_experience.throw_xp(pos, xp_amount)
 					end
-				else
-					--minetest.log("xp thrown")
 				end
 			end
 		end
@@ -515,9 +505,8 @@ function mob_class:check_for_death(cause, cmi_cause)
 		end
 
 		if on_die_exit == true then
-			self.state = "die"
-			mcl_burning.extinguish(self.object)
-			self.object:remove()
+			self:set_state("die")
+			self:safe_remove()
 			return true
 		end
 	end
@@ -526,17 +515,9 @@ function mob_class:check_for_death(cause, cmi_cause)
 		self.riden_by_jock = nil
 		self.jockey = nil
 	end
-
-
-	local collisionbox
-	if self.collisionbox then
-		collisionbox = table.copy(self.collisionbox)
-	end
-
-	self.state = "die"
+	self:set_state("die")
 	self.attack = nil
 	self.v_start = false
-	self.fall_speed = DEFAULT_FALL_SPEED
 	self.timer = 0
 	self.blinktimer = 0
 	self:remove_texture_mod("^[colorize:#FF000040")
@@ -549,9 +530,9 @@ function mob_class:check_for_death(cause, cmi_cause)
 	})
 
 	self:set_velocity(0)
-	local acc = self.object:get_acceleration()
-	if acc then
-		acc.x, acc.y, acc.z = 0, DEFAULT_FALL_SPEED, 0
+	if self.object then
+		local acc = self.object:get_acceleration()
+		acc.x, acc.y, acc.z = 0, self.fall_speed, 0
 		self.object:set_acceleration(acc)
 	end
 
@@ -559,7 +540,10 @@ function mob_class:check_for_death(cause, cmi_cause)
 	-- default death function and die animation (if defined)
 	if self.instant_death then
 		length = 0
-	elseif self.animation and self.animation.die_start and self.animation.die_end then
+	elseif self.animation
+	and self.animation.die_start
+	and self.animation.die_end then
+
 		local frames = self.animation.die_end - self.animation.die_start
 		local speed = self.animation.die_speed or 15
 		length = math.max(frames / speed, 0) + DEATH_DELAY
@@ -575,15 +559,14 @@ function mob_class:check_for_death(cause, cmi_cause)
 		if not self.object:get_luaentity() then
 			return
 		end
+
 		death_handle(self)
 		local dpos = self.object:get_pos()
-		local cbox = self.collisionbox
+		local cbox = self.object:get_properties().collisionbox
 		local yaw = self.object:get_rotation().y
-		mcl_burning.extinguish(self.object)
-		self.object:remove()
+		self:safe_remove()
 		mcl_mobs.death_effect(dpos, yaw, cbox, not self.instant_death)
 	end
-
 	if length <= 0 then
 		kill(self)
 	else
@@ -604,6 +587,13 @@ function mob_class:deal_light_damage(pos, damage)
 			return true
 		end
 	end
+end
+
+function mob_class:is_in_node(itemstring) --can be group:...
+	local cb = self.object:get_properties().collisionbox
+	local pos = self.object:get_pos()
+	local nn = minetest.find_nodes_in_area(vector.offset(pos, cb[1], cb[2], cb[3]), vector.offset(pos, cb[4], cb[5], cb[6]), {itemstring})
+	if nn and #nn > 0 then return true end
 end
 
 -- environmental damage (water, lava, fire, light etc.)
@@ -629,45 +619,35 @@ function mob_class:do_env_damage()
 
 	-- remove mob if beyond map limits
 	if not within_limits(pos, 0) then
-		mcl_burning.extinguish(self.object)
-		self.object:remove()
+		self:safe_remove()
 		return true
 	end
 
-	local node = minetest.get_node(pos)
-	if node then
-		if node.name ~= "ignore" then
-			-- put below code in this block if we can prove that unloaded maps are causing crash.
-			-- it should warn then error
-		else
-			--minetest.log("warning", "Pos is ignored: " .. dump(pos))
+	local sunlight = minetest.get_natural_light(pos, self.time_of_day)
+
+	-- bright light harms mob
+	if self.light_damage ~= 0 and (sunlight or 0) > 12 then
+		if self:deal_light_damage(pos, self.light_damage) then
+			return true
 		end
-
-		local sunlight = mcl_util.get_natural_light(pos, self.time_of_day)
-
-		if self.light_damage ~= 0 and (sunlight or 0) > 12 then
-			if self:deal_light_damage(pos, self.light_damage) then
+	end
+	local _, dim = mcl_worlds.y_to_layer(pos.y)
+	if (self.sunlight_damage ~= 0 or self.ignited_by_sunlight) and (sunlight or 0) >= minetest.LIGHT_MAX and dim == "overworld" then
+		if self.armor_list and not self.armor_list.helmet or not self.armor_list or self.armor_list and self.armor_list.helmet and self.armor_list.helmet == "" then
+			if self.ignited_by_sunlight then
+				mcl_burning.set_on_fire(self.object, 10)
+			else
+				self:deal_light_damage(pos, self.sunlight_damage)
 				return true
 			end
 		end
-		local _, dim = mcl_worlds.y_to_layer(pos.y)
-		if (self.sunlight_damage ~= 0 or self.ignited_by_sunlight) and (sunlight or 0) >= minetest.LIGHT_MAX and dim == "overworld" then
-			if self.armor_list and not self.armor_list.helmet or not self.armor_list or self.armor_list and self.armor_list.helmet and self.armor_list.helmet == "" then
-				if self.ignited_by_sunlight then
-					mcl_burning.set_on_fire(self.object, 10)
-				else
-					self:deal_light_damage(pos, self.sunlight_damage)
-					return true
-				end
-			end
-		end
-
 	end
 
-	local y_level = self.collisionbox[2]
+	local cbox = self.object:get_properties().collisionbox
+	local y_level = cbox[2]
 
 	if self.child then
-		y_level = self.collisionbox[2] * 0.5
+		y_level = cbox[2] * 0.5
 	end
 
 	-- what is mob standing in?
@@ -676,7 +656,7 @@ function mob_class:do_env_damage()
 	self.standing_in = node_ok(pos, "air").name
 	self.standing_on = node_ok(pos2, "air").name
 
-	local pos3 = vector.offset(pos, 0, 1, 0)
+	local pos3 = {x=pos.x, y=pos.y + cbox[5] , z=pos.z}
 	self.standing_under = node_ok(pos3, "air").name
 
 	-- don't fall when on ignore, just stand still
@@ -694,6 +674,7 @@ function mob_class:do_env_damage()
 	-- rain
 	if self.rain_damage > 0 then
 		if mcl_weather.rain.raining and mcl_weather.is_outdoor(pos) then
+
 			self.health = self.health - self.rain_damage
 
 			if self:check_for_death("rain", {type = "environment",
@@ -706,9 +687,13 @@ function mob_class:do_env_damage()
 	pos.y = pos.y + 1 -- for particle effect position
 
 	-- water damage
-	if self.water_damage > 0 and nodef.groups.water then
+	if self.water_damage > 0
+	and nodef.groups.water then
+
 		if self.water_damage ~= 0 then
+
 			self.health = self.health - self.water_damage
+
 			mcl_mobs.effect(pos, 5, "mcl_particles_smoke.png", nil, nil, 1, nil)
 
 			if self:check_for_death("water", {type = "environment",
@@ -716,10 +701,27 @@ function mob_class:do_env_damage()
 				return true
 			end
 		end
-	elseif self.lava_damage > 0 and (nodef.groups.lava) then
-		-- lava damage
+	-- magma damage
+	elseif self.fire_damage > 0
+	and (nodef2.groups.fire) then
+
+		if self.fire_damage ~= 0 then
+
+			self.health = self.health - self.fire_damage
+
+			if self:check_for_death("fire", {type = "environment",
+					pos = pos, node = self.standing_in}) then
+				return true
+			end
+		end
+	-- lava damage
+	elseif self.lava_damage > 0
+	and self:is_in_node("group:lava") then
+
 		if self.lava_damage ~= 0 then
+
 			self.health = self.health - self.lava_damage
+
 			mcl_mobs.effect(pos, 5, "fire_basic_flame.png", nil, nil, 1, nil)
 			mcl_burning.set_on_fire(self.object, 10)
 
@@ -728,20 +730,15 @@ function mob_class:do_env_damage()
 				return true
 			end
 		end
-	elseif self.fire_damage > 0 and (nodef2.groups.fire) then
-		-- magma damage
+
+	-- fire damage
+	elseif self.fire_damage > 0
+	and self:is_in_node("group:fire") then
+
 		if self.fire_damage ~= 0 then
+
 			self.health = self.health - self.fire_damage
 
-			if self:check_for_death("fire", {type = "environment",
-											 pos = pos, node = self.standing_in}) then
-				return true
-			end
-		end
-	elseif self.fire_damage > 0 and (nodef.groups.fire) then
-		-- fire damage
-		if self.fire_damage ~= 0 then
-			self.health = self.health - self.fire_damage
 			mcl_mobs.effect(pos, 5, "fire_basic_flame.png", nil, nil, 1, nil)
 			mcl_burning.set_on_fire(self.object, 5)
 
@@ -750,9 +747,12 @@ function mob_class:do_env_damage()
 				return true
 			end
 		end
+
+	-- damage_per_second node check
 	elseif nodef.damage_per_second ~= 0 and not nodef.groups.lava and not nodef.groups.fire then
-		-- damage_per_second node check
+
 		self.health = self.health - nodef.damage_per_second
+
 		mcl_mobs.effect(pos, 5, "mcl_particles_smoke.png")
 
 		if self:check_for_death("dps", {type = "environment",
@@ -762,9 +762,8 @@ function mob_class:do_env_damage()
 	end
 
 	-- Drowning damage
-	if self.breath_max ~= -1 then
+	if self.object:get_properties().breath_max ~= -1 then
 		local drowning = false
-
 		if self.breathes_in_water then
 			if minetest.get_item_group(self.standing_in, "water") == 0 then
 				drowning = true
@@ -772,9 +771,10 @@ function mob_class:do_env_damage()
 		elseif nodef.drowning > 0 and nodef3.drowning > 0 then
 			drowning = true
 		end
-
 		if drowning then
+
 			self.breath = math.max(0, self.breath - 1)
+
 			mcl_mobs.effect(pos, 2, "bubble.png", nil, nil, 1, nil)
 			if self.breath <= 0 then
 				local dmg
@@ -791,7 +791,7 @@ function mob_class:do_env_damage()
 				return true
 			end
 		else
-			self.breath = math.min(self.breath_max, self.breath + 1)
+			self.breath = math.min(self.object:get_properties().breath_max, self.breath + 1)
 		end
 	end
 
@@ -825,33 +825,25 @@ function mob_class:do_env_damage()
 		self.suffocation_timer = 0
 	end
 
-	return self:check_for_death("unknown", {type = "unknown"})
+	return self:check_for_death("", {type = "unknown"})
 end
 
-function mob_class:step_damage (dtime, pos)
-	if not self.fire_resistant then
-		mcl_burning.tick(self.object, dtime, self)
-		if not self.object:get_pos() then return true end -- mcl_burning.tick may remove object immediately
-
-		if self:check_for_death("fire", {type = "fire"}) then
-			return true
-		end
-	end
-
+function mob_class:env_damage (dtime, pos)
 	-- environmental damage timer (every 1 second)
 	self.env_damage_timer = self.env_damage_timer + dtime
 
-	if self.env_damage_timer > 1 then
-		self.env_damage_timer = 0
-
+	if (self.state == "attack" and self.env_damage_timer > 1)
+			or self.state ~= "attack" then
 		self:check_entity_cramming()
+		self.env_damage_timer = 0
 
 		-- check for environmental damage (water, fire, lava etc.)
 		if self:do_env_damage() then
 			return true
 		end
 
-		self:replace_node(pos) -- (sheep eats grass etc.)
+		-- node replace check (cow eats grass etc.)
+		self:replace(pos)
 	end
 end
 
@@ -908,65 +900,77 @@ function mob_class:falling(pos)
 		return
 	end
 
-	if not self.fall_speed then self.fall_speed = DEFAULT_FALL_SPEED end
-
-	if mcl_portals ~= nil then
-		if mcl_portals.nether_portal_cooloff(self.object) then
-			return false -- mob has teleported through Nether portal - it's 99% not falling
-		end
+	local v = self.object:get_velocity()
+	if self._just_portaled then
+		self.reset_fall_damage = 1
+		return false -- mob has teleported through portal - it's 99% not falling
 	end
 
 	-- floating in water (or falling)
-	local v = self.object:get_velocity()
-	if v then
-		local new_acceleration
+	if v.y > 0 then
 
-		if v.y > 0 then
-			-- apply gravity when moving up
-			new_acceleration = vector.new(0, DEFAULT_FALL_SPEED, 0)
-		elseif v.y <= 0 and v.y > self.fall_speed then
-			-- fall downwards at set speed
-			new_acceleration = vector.new(0, self.fall_speed, 0)
-		else
-			-- stop accelerating once max fall speed hit
-			new_acceleration =vector.zero()
-		end
+		-- apply gravity when moving up
+		self.object:set_acceleration({
+			x = 0,
+			y = self.fall_speed,
+			z = 0
+		})
 
-		self.object:set_acceleration(new_acceleration)
+	elseif v.y <= 0 and v.y > self.fall_speed then
+
+		-- fall downwards at set speed
+		self.object:set_acceleration({
+			x = 0,
+			y = self.fall_speed,
+			z = 0
+		})
+	else
+		-- stop accelerating once max fall speed hit
+		self.object:set_acceleration({x = 0, y = 0, z = 0})
 	end
 
-	local acc = self.object:get_acceleration()
+	if minetest.registered_nodes[node_ok(pos).name].groups.lava then
 
-	local registered_node = minetest.registered_nodes[node_ok(pos).name]
+		if self.floats_on_lava == 1 then
 
-	if registered_node.groups.lava then
-		if acc and self.floats_on_lava == 1 then
-			self.object:set_acceleration(vector.new(0, -self.fall_speed / (math.max(1, v.y) ^ 2), 0))
+			self.object:set_acceleration({
+				x = 0,
+				y = -self.fall_speed / (math.max(1, v.y) ^ 2),
+				z = 0
+			})
 		end
 	end
 
 	-- in water then float up
-	if registered_node.groups.water then
-		if acc and self.floats == 1 and minetest.registered_nodes[node_ok(vector.offset(pos,0,self.collisionbox[5] -0.25,0)).name].groups.water then
+	if minetest.registered_nodes[node_ok(pos).name].groups.water then
+		local cbox = self.object:get_properties().collisionbox
+		if self.floats == 1 and minetest.registered_nodes[node_ok(vector.offset(pos,0,cbox[5] -0.25,0)).name].groups.water then
 			self.object:set_acceleration(vector.new(0, -self.fall_speed / (math.max(1, v.y) ^ 2), 0))
 		end
-	else
-		-- fall damage onto solid ground
-		if self.fall_damage == 1 and self.object:get_velocity().y == 0 then
-			local n = node_ok(vector.offset(pos,0,-1,0)).name
-			local d = (self.old_y or 0) - self.object:get_pos().y
 
-			if d > 5 and n ~= "air" and n ~= "ignore" then
+		-- Reset fall damage when falling into water first.
+		self.reset_fall_damage = 1
+	else
+
+		-- fall damage onto solid ground
+		if self.fall_damage == 1
+		and self.object:get_velocity().y == 0 then
+			local n = node_ok(vector.offset(pos,0,-1,0)).name
+			-- init old_y to current height if not set.
+			local d = (self.old_y or self.object:get_pos().y) - self.object:get_pos().y
+
+			if d > 5 and n ~= "air" and n ~= "ignore" and self.reset_fall_damage ~= 1 then
 				local add = minetest.get_item_group(self.standing_on, "fall_damage_add_percent")
 				local damage = d - 5
 				if add ~= 0 then
 					damage = damage + damage * (add/100)
 				end
 				self:damage_mob("fall",damage)
+				self.reset_fall_damage = 0
 			end
-
 			self.old_y = self.object:get_pos().y
 		end
+		self.reset_fall_damage = 0
 	end
 end
 
@@ -1012,8 +1016,8 @@ end
 
 function mob_class:check_dying()
 	if ((self.state and self.state=="die") or self:check_for_death()) and not self.animation.die_end then
-		local rot = self.object:get_rotation()
-		if rot then
+		if self.object then
+			local rot = self.object:get_rotation()
 			rot.z = ((math.pi/2-rot.z)*.2)+rot.z
 			self.object:set_rotation(rot)
 		end
@@ -1021,20 +1025,15 @@ function mob_class:check_dying()
 	end
 end
 
-function mob_class:check_suspend(player_in_active_range)
-	local pos = self.object:get_pos()
-
-	if pos and not player_in_active_range then
+function mob_class:check_suspend()
+	if not self:player_in_active_range() then
+		local pos = self.object:get_pos()
 		local node_under = node_ok(vector.offset(pos,0,-1,0)).name
-
-		self:set_animation( "stand", true)
-
 		local acc = self.object:get_acceleration()
-		if acc then
-			if acc.y > 0 or node_under ~= "air" then
-				self.object:set_acceleration(vector.zero())
-				self.object:set_velocity(vector.zero())
-			end
+		self:set_animation( "stand", true)
+		if acc.y > 0 or node_under ~= "air" then
+			self.object:set_acceleration(vector.new(0,0,0))
+			self.object:set_velocity(vector.new(0,0,0))
 		end
 		return true
 	end

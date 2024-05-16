@@ -17,6 +17,12 @@ for _,_ in pairs(EF) do
 	EFFECT_TYPES = EFFECT_TYPES + 1
 end
 
+-- TODO: when < minetest 5.9 isn't supported anymore, remove this variable check and replace all occurences of [hud_elem_type_field] with type
+local hud_elem_type_field = "type"
+if not minetest.features.hud_def_type_field then
+	hud_elem_type_field = "hud_elem_type"
+end
+
 local icon_ids = {}
 
 local function potions_set_hudbar(player)
@@ -42,7 +48,7 @@ local function potions_init_icons(player)
 	for e=1, EFFECT_TYPES do
 		local x = -52 * e - 2
 		local id = player:hud_add({
-			hud_elem_type = "image",
+			[hud_elem_type_field] = "image",
 			text = "blank.png",
 			position = { x = 1, y = 0 },
 			offset = { x = x, y = 3 },
@@ -200,7 +206,7 @@ minetest.register_globalstep(function(dtime)
 				player:set_hp(math.min(player:get_properties().hp_max or 20, player:get_hp() + 1), { type = "set_hp", other = "regeneration" })
 				EF.regenerating[player].heal_timer = 0
 			elseif entity and entity.is_mob then
-				entity.health = math.min(entity.hp_max, entity.health + 1)
+				entity.health = math.min(entity.object:get_properties().hp_max, entity.health + 1)
 				EF.regenerating[player].heal_timer = 0
 			else -- stop regenerating if not a player or mob
 				EF.regenerating[player] = nil
@@ -581,15 +587,7 @@ minetest.register_on_joinplayer( function(player)
 	mcl_potions._reset_player_effects(player, false) -- make sure there are no wierd holdover effects
 	mcl_potions._load_player_effects(player)
 	potions_init_icons(player)
-	-- .after required because player:hud_change doesn't work when called
-	-- in same tick as player:hud_add
-	-- (see <https://github.com/minetest/minetest/pull/9611>)
-	-- FIXME: Remove minetest.after
-	minetest.after(3, function(player)
-		if player and player:is_player() then
-			potions_set_hud(player)
-		end
-	end, player)
+	potions_set_hud(player)
 end)
 
 minetest.register_on_shutdown(function()
@@ -743,7 +741,7 @@ function mcl_potions.healing_func(player, hp)
 		end
 
 		if obj and obj.is_mob then
-			obj.health = math.max(obj.health + hp, obj.hp_max)
+			obj.health = math.max(obj.health + hp, obj.object:get_properties().hp_max)
 		elseif player:is_player() then
 			player:set_hp(math.min(player:get_hp() + hp, player:get_properties().hp_max), { type = "set_hp", other = "healing" })
 		end

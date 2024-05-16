@@ -1,15 +1,22 @@
 # textdomain: mcl_boats
+Sneak to dismount=Нажмите [Красться] для высадки
+Boats are used to travel on the surface of water.=На лодке можно плыть по водной поверхности.
+Rightclick on a water source to place the boat. Rightclick the boat to enter it. Use [Left] and [Right] to steer, [Forwards] to speed up and [Backwards] to slow down or move backwards. Use [Sneak] to leave the boat, punch the boat to make it drop as an item.=Правый клик на воде, чтобы установить лодку. Правый клик по лодке, чтобы сесть в нее. [Влево] и [Вправо] - рулить, [Вперед] - разгоняться, [Назад] - тормозить или плыть назад. Нажмите [Красться] для высадки, бейте по лодке, чтобы забрать её.
+Boat=Лодка
+Water vehicle=Водный транспорт
+Chest Boats are used to travel on the surface of water. And transport goods=
+Rightclick on a water source to place the boat. Rightclick the boat to enter it. Use [Left] and [Right] to steer, [Forwards] to speed up and [Backwards] to slow down or move backwards. Use [Sneak] to leave the boat, punch the boat to make it drop as an item. Use [Sneak] + [Rightclick] to open the boat's chest=
+Chest Boat=
+
+
+##### not used anymore #####
+
 Acacia Boat=Акациевая лодка
 Birch Boat=Берёзовая лодка
-Boat=Лодка
-Boats are used to travel on the surface of water.=На лодке можно плыть по водной поверхности.
 Dark Oak Boat=Лодка из тёмного дуба
 Jungle Boat=Лодка из тропического дерева
 Oak Boat=Дубовая лодка
-Rightclick on a water source to place the boat. Rightclick the boat to enter it. Use [Left] and [Right] to steer, [Forwards] to speed up and [Backwards] to slow down or move backwards. Use [Sneak] to leave the boat, punch the boat to make it drop as an item.=Правый клик на воде, чтобы установить лодку. Правый клик по лодке, чтобы сесть в нее. [Влево] и [Вправо] - рулить, [Вперед] - разгоняться, [Назад] - тормозить или плыть назад. Нажмите [Красться] для высадки, бейте по лодке, чтобы забрать её.
 Spruce Boat=Еловая лодка
-Water vehicle=Водный транспорт
-Sneak to dismount=Нажмите [Красться] для высадки
 Obsidian Boat=Обсидиановая лодка
 Mangrove Boat=Мангровая лодка
 Cherry Boat=Вишнёвая лодка

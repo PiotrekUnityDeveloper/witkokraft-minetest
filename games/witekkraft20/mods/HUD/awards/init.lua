@@ -1,24 +1,45 @@
--- AWARDS
---
--- Copyright (C) 2013-2015 rubenwardy
--- This program is free software; you can redistribute it and/or modify
--- it under the terms of the GNU Lesser General Public License as published by
--- the Free Software Foundation; either version 2.1 of the License, or
--- (at your option) any later version.
--- This program is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU Lesser General Public License for more details.
--- You should have received a copy of the GNU Lesser General Public License along
--- with this program; if not, write to the Free Software Foundation, Inc.,
--- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
---
+-- Copyright (c) 2013-18 rubenwardy. MIT.
 
-local modpath = minetest.get_modpath(minetest.get_current_modname())
+-- Internationalization support.
+local S = minetest.get_translator(minetest.get_current_modname())
 
-dofile(modpath.."/api.lua")
+-- The global award namespace
+awards = {
+	show_mode = "hud",
+	registered_awards = {},
+	registered_triggers = {},
+	on_unlock = {},
+	translator = S,
+}
+
+-- Load files
+local modpath = minetest.get_modpath(minetest.get_current_modname()).."/src"
+dofile(modpath.."/data.lua")
+dofile(modpath.."/api_awards.lua")
+dofile(modpath.."/api_triggers.lua")
 dofile(modpath.."/chat_commands.lua")
-dofile(modpath.."/sfinv.lua")
-dofile(modpath.."/unified_inventory.lua")
+dofile(modpath.."/gui.lua")
 dofile(modpath.."/triggers.lua")
 
+awards.load()
+minetest.register_on_shutdown(awards.save)
+
+local function check_save()
+	awards.save()
+	minetest.after(18, check_save)
+end
+minetest.after(8 * math.random() + 10, check_save)
+
+
+-- Backwards compatibility
+awards.give_achievement     = awards.unlock
+awards.getFormspec          = awards.get_formspec
+awards.showto               = awards.show_to
+awards.register_onDig       = awards.register_on_dig
+awards.register_onPlace     = awards.register_on_place
+awards.register_onDeath     = awards.register_on_death
+awards.register_onChat      = awards.register_on_chat
+awards.register_onJoin      = awards.register_on_join
+awards.register_onCraft     = awards.register_on_craft
+awards.def                  = awards.registered_awards
+awards.register_achievement = awards.register_award

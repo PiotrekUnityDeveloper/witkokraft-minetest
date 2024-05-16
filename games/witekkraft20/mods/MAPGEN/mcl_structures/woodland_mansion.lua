@@ -1,9 +1,7 @@
 local modname = minetest.get_current_modname()
-local S = minetest.get_translator(modname)
 local modpath = minetest.get_modpath(modname)
-local peaceful = minetest.settings:get_bool("only_peaceful_mobs", false)
 
-local spawnon = {"mcl_deepslate:deepslate","mcl_core:birchwood","mcl_wool:red_carpet","mcl_wool:brown_carpet"}
+local spawnon = {"mcl_deepslate:deepslate","mcl_trees:wood_birch","mcl_wool:red_carpet","mcl_wool:brown_carpet"}
 
 mcl_structures.register_structure("woodland_cabin",{
 	place_on = {"group:grass_block","group:dirt","mcl_core:dirt_with_grass"},
@@ -58,7 +56,7 @@ mcl_structures.register_structure("woodland_cabin",{
 				stacks_max = 4,
 				items = {
 				--{ itemstring = "FIXME:lead", weight = 20, amount_min = 1, amount_max = 1 },
-				{ itemstring = "mcl_mobs:nametag", weight = 2, amount_min = 1, amount_max = 3 },
+				{ itemstring = "mcl_mobitems:nametag", weight = 2, amount_min = 1, amount_max = 3 },
 				{ itemstring = "mcl_books:book", weight = 1, func = function(stack, pr)mcl_enchanting.enchant_uniform_randomly(stack, {"soul_speed"}, pr) end },
 				{ itemstring = "mcl_armor:chestplate_chain", weight = 1, },
 				{ itemstring = "mcl_armor:chestplate_diamond", weight = 1, },

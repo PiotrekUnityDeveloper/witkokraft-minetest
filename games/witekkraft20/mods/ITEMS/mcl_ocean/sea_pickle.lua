@@ -2,7 +2,8 @@ local S = minetest.get_translator(minetest.get_current_modname())
 
 local mod_doc = minetest.get_modpath("doc")
 
-local function sea_pickle_on_place(itemstack, placer, pointed_thing)
+local function sea_pickle_on_place(itemstack, placer, pointed_thing, level)
+	if level == nil then level=1 end
 	if pointed_thing.type ~= "node" or not placer then
 		return itemstack
 	end
@@ -12,13 +13,9 @@ local function sea_pickle_on_place(itemstack, placer, pointed_thing)
 	local pos_above = pointed_thing.above
 	local node_under = minetest.get_node(pos_under)
 	local node_above = minetest.get_node(pos_above)
-	local def_under = minetest.registered_nodes[node_under.name]
-	--local def_above = minetest.registered_nodes[node_above.name]
 
-	if def_under and def_under.on_rightclick and not placer:get_player_control().sneak then
-		return def_under.on_rightclick(pos_under, node_under,
-				placer, itemstack, pointed_thing) or itemstack
-	end
+	local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+	if rc then return rc end
 
 	if minetest.is_protected(pos_under, player_name) or
 			minetest.is_protected(pos_above, player_name) then
@@ -38,9 +35,9 @@ local function sea_pickle_on_place(itemstack, placer, pointed_thing)
 	if node_under.name == "mcl_ocean:dead_brain_coral_block" then
 		-- Place on suitable coral block
 		if submerged then
-			node_under.name = "mcl_ocean:sea_pickle_1_dead_brain_coral_block"
+			node_under.name = "mcl_ocean:sea_pickle_"..level.."_dead_brain_coral_block"
 		else
-			node_under.name = "mcl_ocean:sea_pickle_1_off_dead_brain_coral_block"
+			node_under.name = "mcl_ocean:sea_pickle_" .. level .. "_off_dead_brain_coral_block"
 		end
 		minetest.set_node(pos_under, node_under)
 	elseif minetest.get_item_group(node_under.name, "sea_pickle") ~= 0 then
@@ -84,8 +81,46 @@ for s=1,4 do
 	img_off = "mcl_ocean_"..ontop..".png^mcl_ocean_sea_pickle_"..s.."_off.png"
 	local next_on, next_off
 	if s < 4 then
-		next_on = "mcl_ocean:sea_pickle_"..tostring(s+1).."_"..ontop
-		next_off = "mcl_ocean:sea_pickle_"..tostring(s+1).."_off_"..ontop
+		next_on = "mcl_ocean:sea_pickle_" .. tostring(s + 1) .. "_" .. ontop
+		next_off = "mcl_ocean:sea_pickle_" .. tostring(s + 1) .. "_off_" .. ontop
+	end
+
+	local function spread_sea_pickle(pos, placer)
+		local possible_position = {
+			{ x =  2, y =  0, z =  0 },
+			{ x = -2, y =  0, z =  0 },
+			{ x =  1, y =  0, z =  0 },
+			{ x = -1, y =  0, z =  0 },
+			{ x =  0, y =  0, z =  1 },
+			{ x =  0, y =  0, z = -1 },
+			{ x =  0, y =  0, z =  2 },
+			{ x =  0, y =  0, z = -2 },
+			{ x =  1, y = -1, z =  0 },
+			{ x = -1, y = -1, z =  0 },
+			{ x =  0, y = -1, z =  1 },
+			{ x =  0, y = -1, z = -1 },
+			{ x =  1, y =  0, z =  1 },
+			{ x =  1, y =  0, z = -1 },
+			{ x = -1, y =  0, z =  1 },
+			{ x = -1, y =  0, z = -1 },
+		}
+
+		for k, v in pairs(possible_position) do
+			sea_pickle_on_place(
+				ItemStack("mcl_ocean:sea_pickle"),
+				placer,
+				{type="node", under=vector.offset(pos,v.x,v.y,v.z), above=vector.offset(pos,v.x,v.y-1,v.z)},
+				math.random(1, 3))
+		end
+	end
+
+	local function on_bone_meal(itemstack, placer, pointed_thing, pos, node)
+		if pointed_thing.type ~= "node" then return end
+		if 4 ~= s then
+			node.name = "mcl_ocean:sea_pickle_" .. (s + 1) .. "_" .. ontop
+			minetest.swap_node(pos, node)
+		end
+		spread_sea_pickle(pos, placer)
 	end
 
 	minetest.register_node("mcl_ocean:sea_pickle_"..s.."_"..ontop, {
@@ -134,6 +169,7 @@ for s=1,4 do
 		_mcl_sea_pickle_next = next_on,
 		_mcl_hardness = 0,
 		_mcl_blast_resistance = 0,
+		_on_bone_meal = on_bone_meal,
 	})
 
 	minetest.register_node("mcl_ocean:sea_pickle_"..s.."_off_"..ontop, {

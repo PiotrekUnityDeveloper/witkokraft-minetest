@@ -21,10 +21,6 @@ local allowed_non_solid_nodes_floor = {
 	"mcl_portals:end_portal_frame_eye",
 	"mcl_lanterns:chain"
 }
--- The function below allows nodes that call it to be included in the 'allowed floor placement' list above. This lets lanterns be placed on top of said nodes. Most useful for modded in nodes.
-function mcl_lanterns.add_allowed_non_solid_nodes_floor (node_name)
-	table.insert (allowed_non_solid_nodes_floor, node_name) 
-end
 
 local allowed_non_solid_groups_floor = {"anvil", "wall", "glass", "fence", "fence_gate", "pane"}
 
@@ -39,10 +35,6 @@ local allowed_non_solid_nodes_ceiling = {
 	"mcl_core:grass_path",
 	"mcl_lanterns:chain"
 }
--- The function below allows nodes that call it to be included in the 'allowed ceiling placement' list above. This lets lanterns be placed below said nodes. Most useful for modded in nodes. 
-function mcl_lanterns.add_allowed_non_solid_nodes_ceiling (node_name)
-	table.insert (allowed_non_solid_nodes_ceiling, node_name) 
-end
 
 local allowed_non_solid_groups_ceiling = {"anvil", "wall", "glass", "fence", "fence_gate", "soil", "pane", "end_portal_frame"}
 
@@ -92,13 +84,22 @@ local function check_placement(node, wdir)
 	end
 end
 
+
 function mcl_lanterns.register_lantern(name, def)
 	local itemstring_floor = "mcl_lanterns:"..name.."_floor"
 	local itemstring_ceiling = "mcl_lanterns:"..name.."_ceiling"
 
 	local sounds = mcl_sounds.node_sound_metal_defaults()
 
-	minetest.register_node(":"..itemstring_floor, {
+	local groups = def.groups or {}
+	groups.pickaxey = def.pickaxey or 1
+	groups.attached_node = 1
+	groups.deco_block = 1
+	groups.lantern = 1
+	groups.attaches_to_top = 1
+	groups.attaches_to_base = 1
+
+	minetest.register_node(itemstring_floor, {
 		description = def.description,
 		_doc_items_longdesc = def.longdesc,
 		drawtype = "mesh",
@@ -118,7 +119,7 @@ function mcl_lanterns.register_lantern(name, def)
 		node_placement_prediction = "",
 		sunlight_propagates = true,
 		light_source = def.light_level,
-		groups = {pickaxey = 1, attached_node = 1, deco_block = 1, lantern = 1, dig_by_piston=1},
+		groups = groups,
 		selection_box = {
 			type = "fixed",
 			fixed = {
@@ -145,11 +146,22 @@ function mcl_lanterns.register_lantern(name, def)
 			local under = pointed_thing.under
 			local above = pointed_thing.above
 			local node = minetest.get_node(under)
+			local def = minetest.registered_nodes[node.name]
 
 			local wdir = minetest.dir_to_wallmounted(vector.subtract(under, above))
 			local fakestack = itemstack
 
-			if check_placement(node, wdir) == false then
+			if type(def.placement_prevented) == "function" then
+				if
+					def.placement_prevented({
+						itemstack = itemstack,
+						placer = placer,
+						pointed_thing = pointed_thing,
+					})
+				then
+					return itemstack
+				end
+			elseif check_placement(node, wdir) == false then
 				return itemstack
 			end
 
@@ -174,7 +186,7 @@ function mcl_lanterns.register_lantern(name, def)
 		_mcl_blast_resistance = 3.5,
 	})
 
-	minetest.register_node(":"..itemstring_ceiling, {
+	minetest.register_node(itemstring_ceiling, {
 		description = def.description,
 		_doc_items_create_entry = false,
 		drawtype = "mesh",
@@ -244,7 +256,7 @@ minetest.register_node("mcl_lanterns:chain", {
 	groups = {pickaxey = 1, deco_block = 1},
 	sounds = mcl_sounds.node_sound_metal_defaults(),
 	on_place = function(itemstack, placer, pointed_thing)
-		if pointed_thing.type ~= "node" then
+		if pointed_thing.type ~= "node" or not placer or not placer:is_player() then
 			return itemstack
 		end
 

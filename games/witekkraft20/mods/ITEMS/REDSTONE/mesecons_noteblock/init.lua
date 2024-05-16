@@ -1,7 +1,5 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 
-local math = math
-
 minetest.register_node("mesecons_noteblock:noteblock", {
 	description = S("Note Block"),
 	_tt_help = S("Plays a musical note when powered by redstone power"),

@@ -27,6 +27,9 @@ minetest.register_node("mcl_target:target_off", {
 			rules = mesecon.rules.alldirs,
 		},
 	},
+	_on_arrow_hit = function(pos, arrowent)
+		mcl_target.hit(pos, 1) --10 redstone ticks
+	end,
 	_mcl_blast_resistance = 0.5,
 	_mcl_hardness = 0.5,
 })

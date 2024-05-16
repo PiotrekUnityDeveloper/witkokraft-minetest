@@ -1,6 +1,5 @@
 -- mcl_raids
 mcl_raids = {}
-local S = minetest.get_translator(minetest.get_current_modname())
 
 -- Define the amount of illagers to spawn each wave.
 local waves = {
@@ -72,7 +71,7 @@ local oban_layers = {
 
 
 local oban_def = table.copy(minetest.registered_entities["mcl_banners:standing_banner"])
-oban_def.visual_size = { x=1, y=1 }
+oban_def.initial_properties.visual_size = { x=1, y=1 }
 local old_step = oban_def.on_step
 oban_def.on_step = function(self,dtime)
 	if not self.object:get_attach() then return self.object:remove() end
@@ -84,7 +83,9 @@ minetest.register_entity(":mcl_raids:ominous_banner",oban_def)
 function mcl_raids.drop_obanner(pos)
 	local it = ItemStack("mcl_banners:banner_item_white")
 	it:get_meta():set_string("layers",minetest.serialize(oban_layers))
-	it:get_meta():set_string("name",S("Ominous Banner"))
+	local banner_description = string.gsub(it:get_definition().description, "White Banner", "Ominous Banner")
+	local description = mcl_banners.make_advanced_banner_description(banner_description, oban_layers)
+	it:get_meta():set_string("description", description)
 	minetest.add_item(pos,it)
 end
 
@@ -93,8 +94,9 @@ function mcl_raids.promote_to_raidcaptain(c) -- object
 	local pos = c:get_pos()
 	local l = c:get_luaentity()
 	l._banner = minetest.add_entity(pos,"mcl_raids:ominous_banner")
+	if not l._banner or not l._banner:get_pos() then return end
 	l._banner:set_properties({textures = {mcl_banners.make_banner_texture("unicolor_white", oban_layers)}})
-	l._banner:set_attach(c,"",vector.new(-1,5.5,0),vector.new(0,0,0),true)
+	l._banner:set_attach(c,"",vector.new(0,5.5,0),vector.new(0,0,0),true)
 	l._raidcaptain = true
 	local old_ondie = l.on_die
 	l.on_die = function(self, pos, cmi_cause)
@@ -129,7 +131,7 @@ function mcl_raids.register_possible_raidcaptain(mob)
 	table.insert(minetest.registered_entities[mob].pick_up,"mcl_banners:banner_item_white")
 	minetest.registered_entities[mob].on_pick_up = function(self,e)
 		local stack = ItemStack(e.itemstring)
-		if not self._raidcaptain and stack:get_meta():get_string("name"):find("Ominous Banner") then
+		if not self._raidcaptain and stack:get_meta():get_string("description"):find("Ominous Banner") then
 			stack:take_item(1)
 			mcl_raids.promote_to_raidcaptain(self.object)
 			return stack
@@ -150,9 +152,6 @@ mcl_raids.register_possible_raidcaptain("mobs_mc:evoker")
 
 function mcl_raids.spawn_raid(event)
 	local pos = event.pos
-	local wave = event.stage
-	local illager_count = 0
-	local spawnable = false
 	local r = 32
 	local n = 12
 	local i = math.random(1, n)
@@ -179,7 +178,6 @@ function mcl_raids.spawn_raid(event)
 						l.raidmob = true
 						event.health_max = event.health_max + l.health
 						table.insert(event.mobs,mob)
-						--minetest.log("action", "[mcl_raids] Here we go. Raid time")
 						l:gopath(pos)
 					end
 				end
@@ -226,33 +224,6 @@ function mcl_raids.find_village(pos)
 	if bed and mcl_raids.find_villager(bed) then
 		return bed
 	end
-end
-
-local function get_point_on_circle(pos,r,n)
-	local rt = {}
-	for i=1, n do
-		table.insert(rt,vector.offset(pos,r * math.cos(((i-1)/n) * (2*math.pi)),0,  r* math.sin(((i-1)/n) * (2*math.pi)) ))
-	end
-	table.shuffle(rt)
-	return rt[1]
-end
-
-local function start_firework_rocket(pos)
-	local p = get_point_on_circle(pos,math.random(32,64),32)
-	local n = minetest.get_node(p)
-	local l = mcl_util.get_natural_light(pos,0.5)
-	if n.name ~= "air" or l <= minetest.LIGHT_MAX then return end
-	local o = minetest.add_entity(p,"mcl_bows:rocket_entity")
-	o:get_luaentity()._harmless = true
-	o:set_acceleration(vector.new(math.random(0,2),math.random(30,50),math.random(0,2)))
-end
-
-local function make_firework(pos,stime)
-	if os.time() - stime > 60 then return end
-	for i=1,math.random(25) do
-		minetest.after(math.random(i),start_firework_rocket,pos)
-	end
-	minetest.after(10,make_firework,pos,stime)
 end
 
 local function is_player_near(self)
@@ -332,7 +303,6 @@ mcl_events.register_event("raid",{
 	on_complete = function(self)
 		awards.unlock(self.player,"mcl:hero_of_the_village")
 		mcl_potions.player_clear_effect(minetest.get_player_by_name(self.player),"bad_omen")
-		make_firework(self.pos,os.time())
 	end,
 })
 
@@ -357,40 +327,4 @@ minetest.register_chatcommand("dump_banner_layers",{
 			end
 		end
 	end
-})
-
-local function is_new_years()
-	local d = os.date("*t")
-	return d.month == 1 and d.day == 1 and d.hour < 1
-end
-
-mcl_events.register_event("new_years",{
-	stage = 0,
-	max_stage = 1,
-	readable_name = "New Years",
-	pos = vector.new(0,0,0),
-	exclusive_to_area = 256,
-	cond_start = function(event)
-		if not is_new_years() then return false end
-		local r = {}
-		for _,p in pairs(minetest.get_connected_players()) do
-			table.insert(r,{ player = p:get_player_name(), pos = p:get_pos()})
-		end
-		return r
-	end,
-	on_start = function(self)
-		minetest.chat_send_player(self.player,"<cora> Happy new year <3")
-	end,
-	on_step = function(self,dtime)
-		if not self.timer or self.timer < 0 then
-			self.timer = math.random(1,5)
-			for i=1,math.random(8) do
-				minetest.after(math.random(i),start_firework_rocket,minetest.get_player_by_name(self.player):get_pos())
-			end
-		end
-		self.timer = self.timer - dtime
-	end,
-	cond_complete = function(event)
-		return not is_new_years()
-	end, --return success
 })

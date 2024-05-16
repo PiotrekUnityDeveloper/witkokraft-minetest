@@ -3,8 +3,10 @@ local S = minetest.get_translator(minetest.get_current_modname())
 -- Spawn a stand entity
 local function spawn_stand_entity(pos, node)
 	local luaentity = minetest.add_entity(pos, "mcl_armor_stand:armor_entity"):get_luaentity()
-	luaentity:update_rotation(node or minetest.get_node(pos))
-	return luaentity
+	if luaentity then
+		luaentity:update_rotation(node or minetest.get_node(pos))
+		return luaentity
+	end
 end
 
 -- Find a stand entity or spawn one
@@ -51,8 +53,8 @@ minetest.register_node("mcl_armor_stand:armor_stand", {
 	_doc_items_usagehelp = S("Just place an armor item on the armor stand. To take the top piece of armor from the armor stand, select your hand and use the place key on the armor stand."),
 	drawtype = "mesh",
 	mesh = "3d_armor_stand.obj",
-	inventory_image = "mcl_armor_stand_item.png",
-	wield_image = "mcl_armor_stand_item.png",
+	inventory_image = "3d_armor_stand_item.png",
+	wield_image = "3d_armor_stand_item.png",
 	tiles = {"default_wood.png", "mcl_stairs_stone_slab_top.png"},
 	paramtype = "light",
 	paramtype2 = "facedir",
@@ -106,6 +108,8 @@ minetest.register_entity("mcl_armor_stand:armor_entity", {
 		timer = 0,
 		static_save = false,
 	},
+	_mcl_fishing_hookable = true,
+	_mcl_fishing_reelable = true,
 	on_activate = function(self)
 		self.object:set_armor_groups({immortal = 1})
 		self.node_pos = vector.round(self.object:get_pos())

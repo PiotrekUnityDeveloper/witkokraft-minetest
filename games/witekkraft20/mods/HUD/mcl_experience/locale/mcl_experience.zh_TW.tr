@@ -1,4 +1,5 @@
 # textdomain: mcl_experience
+Bottle o' Enchanting=
 [[<player>] <xp>]=[[<玩家名字>] <經驗值>]
 Gives a player some XP=給予玩家經驗值
 Error: Too many parameters!=錯誤：太多參數！

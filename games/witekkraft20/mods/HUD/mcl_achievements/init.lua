@@ -1,9 +1,28 @@
+mcl_achievements = {}
+
+function mcl_achievements.award_unlocked(playername, awardname)
+	local unlocked = false
+	for _, aw in pairs(awards.get_award_states(playername)) do
+		if aw.name == awardname and aw.unlocked then
+			unlocked = true
+			break
+		end
+	end
+	return unlocked
+end
 -- Settings
 
 -- If true, activates achievements from other Minecraft editions (XBox, PS, etc.)
 local non_pc_achievements = false
 
 local S = minetest.get_translator(minetest.get_current_modname())
+
+awards.register_on_unlock(function(name, def)
+	if def.reward_xp then
+		local player = minetest.get_player_by_name(name)
+		mcl_experience.throw_xp(player:get_pos(), def.reward_xp)
+	end
+end)
 
 -- Achievements from PC Edition
 
@@ -223,14 +242,24 @@ awards.register_achievement("mcl:onARail", {
 	group = "Adventure",
 })
 
--- Triggered in mcl_bows
+-- Triggered in mobs_mc/skeleton+stray.lua
 awards.register_achievement("mcl:snipeSkeleton", {
 	title = S("Sniper Duel"),
-	-- TODO: This achievement should be for killing, not hitting
 	-- TODO: The range should be 50, not 20. Nerfed because of reduced bow range
-	description = S("Hit a skeleton, wither skeleton or stray by bow and arrow from a distance of at least 20 meters."),
+	description = S("Kill a skeleton, wither skeleton or stray by bow and arrow from a distance of at least 20 meters."),
 	icon = "mcl_bows_bow.png",
 	type = "Challenge",
+	group = "Adventure",
+	reward_xp = 50,
+})
+
+--Triggered in mcl_mobs/physics.lua
+
+awards.register_achievement("mcl:monsterHunter", {
+	title = S("Monster Hunter"),
+	description = S("Kill a monster."),
+	icon = "mobs_mc_spawn_icon_zombie.png",
+	type = "Advancement",
 	group = "Adventure",
 })
 
@@ -297,7 +326,7 @@ awards.register_achievement("mcl:whatAdeal", {
 awards.register_achievement("mcl:tacticalFishing", {
 	title = S("Tactical Fishing"),
 	description = S("Catch a fish... without a fishing rod!"),
-	icon = "mcl_buckets_pufferfish_bucket.png",
+	icon = "pufferfish_bucket.png",
 	type = "Advancement",
 	group = "Husbandry",
 })
@@ -305,7 +334,7 @@ awards.register_achievement("mcl:tacticalFishing", {
 awards.register_achievement("mcl:cutestPredator", {
 	title = S("The Cutest Predator"),
 	description = S("Catch an Axolotl with a bucket!"),
-	icon = "mcl_buckets_axolotl_bucket.png",
+	icon = "axolotl_bucket.png",
 	type = "Advancement",
 	group = "Husbandry",
 })
@@ -539,7 +568,7 @@ awards.register_achievement("mcl:stoneAge", {
 awards.register_achievement("mcl:hotStuff", {
 	title		= S("Hot Stuff"),
 	description	= S("Put lava in a bucket."),
-	icon		= "mcl_buckets_lava_bucket.png",
+	icon		= "bucket_lava.png",
 	type = "Advancement",
 	group = "Overworld",
 })
@@ -558,6 +587,7 @@ awards.register_achievement("mcl:hero_of_the_village", {
 	type = "Advancement",
 	group = "Adventure",
 	secret = true,
+	reward_xp = 100,
 })
 
 awards.register_achievement("mcl:voluntary_exile", {

@@ -16,6 +16,7 @@ local size_to_xp = {
 }
 
 local function xp_to_size(xp)
+	if not xp then return 1 end
 	local i, l = 1, #size_to_xp
 
 	while xp > size_to_xp[i][1] and i < l do
@@ -155,7 +156,7 @@ minetest.register_entity("mcl_experience:orb", {
 		collisionbox = {-0.2, -0.2, -0.2, 0.2, 0.2, 0.2},
 		visual = "sprite",
 		visual_size = {x = 0.4, y = 0.4},
-		textures = {name="mcl_experience_orb.png", animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=2.0}},
+		textures = {"mcl_experience_orb.png"},
 		spritediv = {x = 1, y = 14},
 		initial_sprite_basepos = {x = 0, y = 0},
 		is_visible = true,
@@ -187,10 +188,10 @@ minetest.register_entity("mcl_experience:orb", {
 		self.object:set_armor_groups({immortal = 1})
 		self.object:set_velocity({x = 0, y = 2, z = 0})
 		self.object:set_acceleration(gravity)
-		local xp = tonumber(staticdata)
+		local xp = tonumber(staticdata) or 0 --assign 0 xp in case the entity was persisted even though it should not have been (static_save = false) this was a minetest bug for a while: https://github.com/minetest/minetest/issues/14420
 		self._xp = xp
-	        size = xp_to_size(xp)
-	        self.object:set_properties({
+		size = xp_to_size(xp)
+		self.object:set_properties({
 			visual_size = {x = size, y = size},
 			glow = 14,
 		})

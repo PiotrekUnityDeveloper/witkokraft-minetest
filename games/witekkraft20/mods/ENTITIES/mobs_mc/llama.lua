@@ -55,9 +55,11 @@ mcl_mobs.register_mob("mobs_mc:llama", {
 	attack_type = "shoot",
 	shoot_interval = 5.5,
 	arrow = "mobs_mc:llamaspit",
+	retaliates = true,
+	specific_attack = { "player" },
 	shoot_offset = 1, --3.5 *would* be a good value visually but it somehow messes with the projectiles trajectory
-	spawn_in_group_min = 2, -- was 4
-	spawn_in_group = 4, -- was 6 nerfed until we can cap them properly locally. this is a group size, not a per spawn attempt
+	spawn_in_group_min = 4,
+	spawn_in_group = 6,
 
 	head_swivel = "head.control",
 	bone_eye_height = 11,
@@ -116,6 +118,7 @@ mcl_mobs.register_mob("mobs_mc:llama", {
 
 		-- set needed values if not already present
 		if not self.v3 then
+			local vsize = self.object:get_properties().visual_size
 			self.v3 = 0
 			self.max_speed_forward = 4
 			self.max_speed_reverse = 2
@@ -123,7 +126,7 @@ mcl_mobs.register_mob("mobs_mc:llama", {
 			self.terrain_type = 3
 			self.driver_attach_at = {x = 0, y = 12.7, z = -5}
 			self.driver_eye_offset = {x = 0, y = 6, z = 0}
-			self.driver_scale = {x = 1/self.visual_size.x, y = 1/self.visual_size.y}
+			self.driver_scale = {x = 1/vsize.x, y = 1/vsize.y}
 		end
 
 		-- if driver present allow control of llama
@@ -175,7 +178,7 @@ mcl_mobs.register_mob("mobs_mc:llama", {
 			-- Feed with anything else
 			if self:feed_tame(clicker, 1, false, true) then return end
 		end
-		if mcl_mobs:protect(self, clicker) then return end
+		if mcl_mobs.protect(self, clicker) then return end
 
 		-- Make sure tamed llama is mature and being clicked by owner only
 		if self.tamed and not self.child and self.owner == clicker:get_player_name() then
@@ -259,42 +262,28 @@ mcl_mobs.register_arrow("mobs_mc:llamaspit", {
 	visual_size = {x = 0.10, y = 0.10},
 	textures = {"mobs_mc_llama_spit.png"},
 	velocity = 5,
-	hit_player = function(self, player)
-		player:punch(self.object, 1.0, {
-			full_punch_interval = 1.0,
-			damage_groups = {fleshy = 1},
-		}, nil)
-	end,
-
-	hit_mob = function(self, mob)
-	end,
-
-	hit_node = function(self, pos, node)
-	end
+	hit_player = mcl_mobs.get_arrow_damage_func(1),
 })
 
---spawn
-mcl_mobs:spawn_specific(
-"mobs_mc:llama",
-"overworld",
-"ground",
-{
-	"Savanna",
-	"SavannaM",
-	"SavannaM_beach",
-	"Savanna_beach",
-	"Savanna_ocean",
-	"ExtremeHills",
-	"ExtremeHills_beach",
-	"ExtremeHillsM",
-}, --FIXME: Needs Windswept Forest when that is added.
-0,
-minetest.LIGHT_MAX+1,
-30,
-15000,
-5,
-mobs_mc.water_level+15,
-mcl_vars.mg_overworld_max)
+
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:llama",
+	type_of_spawning = "ground",
+	dimension = "overworld",
+	aoc = 5,
+	min_height = mobs_mc.water_level+15,
+	biomes = {
+		"Savanna",
+		"SavannaM",
+		"SavannaM_beach",
+		"Savanna_beach",
+		"Savanna_ocean",
+		"ExtremeHills",
+		"ExtremeHills_beach",
+		"ExtremeHillsM",
+	},
+	chance = 50,
+})
 
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:llama", S("Llama"), "#c09e7d", "#995f40", 0)

@@ -1,5 +1,3 @@
-local table = table
-
 mesecon.queue.actions={} -- contains all ActionQueue actions
 
 function mesecon.queue:add_function(name, func)
@@ -89,8 +87,6 @@ minetest.register_globalstep(function (dtime)
 end)
 
 function mesecon.queue:execute(action)
-	if not action.pos then return end
-	
 	-- ignore if action queue function name doesn't exist,
 	-- (e.g. in case the action queue savegame was written by an old mesecons version)
 	if mesecon.queue.funcs[action.func] then

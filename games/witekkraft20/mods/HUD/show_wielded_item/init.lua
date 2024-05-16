@@ -6,12 +6,13 @@ local huds = {}
 local dtimes = {}
 local dlimit = 3  -- HUD element will be hidden after this many seconds
 
-local math = math
-local string = string
-local tonumber = tonumber
-
 local hudbars_mod = minetest.get_modpath("hudbars")
-local xp_mod = minetest.get_modpath("mcl_experience")
+
+-- TODO: when < minetest 5.9 isn't supported anymore, remove this variable check and replace all occurences of [hud_elem_type_field] with type
+local hud_elem_type_field = "type"
+if not minetest.features.hud_def_type_field then
+	hud_elem_type_field = "hud_elem_type"
+end
 
 local function set_hud(player)
 	if not player:is_player() then return end
@@ -30,11 +31,8 @@ local function set_hud(player)
 			-- Tweak offset if hudbars mod was found
 
 			local rows = math.floor((#hb.get_hudbar_identifiers()-1) / 2) + 1
-			local vmargin = tonumber(minetest.settings:get("hudbars_vmargin")) or 28
+			local vmargin = tonumber(minetest.settings:get("hudbars_vmargin")) or 24
 			off.y = -76 - vmargin*rows
-		end
-		if xp_mod then
-			off.y = off.y - 25
 		end
 
 		-- Dirty trick to avoid collision with Minetest's status text (e.g. “Volume changed to 0%”)
@@ -44,7 +42,7 @@ local function set_hud(player)
 	end
 
 	huds[player_name] = player:hud_add({
-		hud_elem_type = "text",
+		[hud_elem_type_field] = "text",
 		position = {x=0.5, y=1},
 		offset = off,
 		alignment = {x=0, y=0},
@@ -68,6 +66,15 @@ minetest.register_on_leaveplayer(function(player)
 	wieldindex[name] = nil
 end)
 
+local function get_first_line(text)
+	-- Cut off text after first newline
+	local firstnewline = string.find(text, "\n")
+	if firstnewline then
+		text = string.sub(text, 1, firstnewline-1)
+	end
+	return text
+end
+
 minetest.register_globalstep(function(dtime)
 	for _, player in pairs(minetest.get_connected_players()) do
 		local player_name = player:get_player_name()
@@ -78,7 +85,7 @@ minetest.register_globalstep(function(dtime)
 		if dtimes[player_name] and dtimes[player_name] < dlimit then
 			dtimes[player_name] = dtimes[player_name] + dtime
 			if dtimes[player_name] > dlimit and huds[player_name] then
-				player:hud_change(huds[player_name], "text", "")
+				player:hud_change(huds[player_name], 'text', "")
 			end
 		end
 
@@ -90,26 +97,43 @@ minetest.register_globalstep(function(dtime)
 
 			if huds[player_name] then
 
+				-- Get description (various fallback checks for old Minetest versions)
 				local def = minetest.registered_items[wname]
-				local meta = wstack:get_meta()
-
-				--[[ Get description. Order of preference:
-				* description from metadata
-				* description from item definition
-				* itemstring ]]
-				local desc = meta:get_string("description")
-				if (desc == nil or desc == "") and def then
-					desc = def.description
+				local desc
+				if wstack.get_short_description then
+					-- get_short_description()
+					desc = wstack:get_short_description()
 				end
-				if desc == nil or desc == "" then
+				if (not desc or desc == "") and wstack.get_description then
+					-- get_description()
+					desc = wstack:get_description()
+					desc = get_first_line(desc)
+				end
+				if (not desc or desc == "") and not wstack.get_description then
+					-- Metadata (old versions only)
+					local meta = wstack:get_meta()
+					desc = meta:get_string("description")
+					desc = get_first_line(desc)
+				end
+				if not desc or desc == "" then
+					-- Item definition
+					desc = def.description
+					desc = get_first_line(desc)
+				end
+				if not desc or desc == "" then
+					-- Final fallback: itemstring
 					desc = wname
 				end
-				-- Cut off item description after first newline
-				local firstnewline = string.find(desc, "\n")
-				if firstnewline then
-					desc = string.sub(desc, 1, firstnewline-1)
+
+				-- Print description
+				if desc then
+					-- Optionally append the 'technical' itemname
+					local tech = minetest.settings:get_bool("show_wielded_item_itemname", false)
+					if tech and desc ~= "" then
+						desc = desc .. " ["..wname.."]"
+					end
+					player:hud_change(huds[player_name], 'text', desc)
 				end
-				player:hud_change(huds[player_name], "text", desc)
 			end
 		end
 	end

@@ -1,297 +1,174 @@
-local string = string
-local sf = string.format
+mcl_player = {
+	registered_globalsteps = {},
+	registered_globalsteps_slow = {},
+	players = {},
+}
 
--- Minetest 0.4 mod: player
--- See README.txt for licensing and other information.
-mcl_player = {}
+local default_fov = 86.1 --see <https://minecraft.gamepedia.com/Options#Video_settings>>>>
 
--- Player animation blending
--- Note: This is currently broken due to a bug in Irrlicht, leave at 0
-local animation_blend = 0
+local tpl_playerinfo = {
+	textures = { "character.png", "blank.png", "blank.png" },
+	model = "",
+	animation = "",
+	sneak = false,
+	visible = true,
+	attached = false,
+	elytra = {active = false, rocketing = 0, speed = 0},
+	is_pressing_jump = {},
+	lastPos = nil,
+	swimDistance = 0,
+	jump_cooldown = -1,	-- Cooldown timer for jumping, we need this to prevent the jump exhaustion to increase rapidly
+	vel_yaw = nil,
+	is_swimming = false,
+	nodes = {},
+}
 
-local function get_mouse_button(player)
-	local controls = player:get_player_control()
-	local get_wielded_item_name = player:get_wielded_item():get_name()
-	if controls.RMB and not string.find(get_wielded_item_name, "mcl_bows:bow") and
-		not string.find(get_wielded_item_name, "mcl_bows:crossbow") and
-		not mcl_shields.wielding_shield(player, 1) and not mcl_shields.wielding_shield(player, 2) or controls.LMB then
-		return true
-	else
-		return false
-	end
+local nodeinfo_pos = { --offset positions of the "nodeinfo" nodes.
+	stand =       vector.new(0, -0.1, 0),
+	stand_below = vector.new(0, -1.1, 0),
+	head =        vector.new(0, 1.5, 0),
+	head_top =    vector.new(0, 2, 0),
+	feet =        vector.new(0, 0.3, 0),
+}
+mcl_player.node_offsets = nodeinfo_pos
+
+-- Minetest bug: get_bone_position() returns all zeros vectors.
+-- Workaround: call set_bone_position() one time first.
+-- (Set in on_joinplayer)
+local bone_start_positions = {
+	Head_Control =            vector.new(0, 6.75, 0),
+	Arm_Right_Pitch_Control = vector.new(-3, 5.785, 0),
+	Arm_Left_Pitch_Control =  vector.new(3, 5.785, 0),
+	Body_Control =            vector.new(0, 6.75, 0),
+}
+
+for k, _ in pairs(nodeinfo_pos) do
+	tpl_playerinfo.nodes[k] = ""
 end
 
-mcl_player.registered_player_models = {}
+local slow_gs_timer = 0.5
 
--- Local for speed.
-local models = mcl_player.registered_player_models
-
-function mcl_player.player_register_model(name, def)
-	models[name] = def
-end
-
--- Player stats and animations
-local player_model = {}
-local player_textures = {}
-local player_anim = {}
-local player_sneak = {}
-local player_visible = {}
-mcl_player.player_attached = {}
-
-function mcl_player.player_get_animation(player)
-	local name = player:get_player_name()
-	local textures = player_textures[name]
-
-	if not player_visible[name] then
-		textures = table.copy(textures)
-		textures[1] = "blank.png"
-	end
-
-	return {
-		model = player_model[name],
-		textures = textures,
-		animation = player_anim[name],
-		visibility = player_visible[name]
-	}
-end
-
-local registered_on_visual_change = {}
-
-function mcl_player.register_on_visual_change(func)
-	table.insert(registered_on_visual_change, func)
-end
-
-local function update_player_textures(player)
-	local name = player:get_player_name()
-	local textures = player_textures[name]
-
-	if not player_visible[name] then
-		textures = table.copy(textures)
-		textures[1] = "blank.png"
-	end
-
-	player:set_properties({ textures = textures })
-
-	-- Delay calling the callbacks because mods (including mcl_player)
-	-- need to fully initialize player data from minetest.register_on_joinplayer
-	-- before callbacks run
-	minetest.after(0.1, function()
-		if player:is_player() then
-			for i, func in ipairs(registered_on_visual_change) do
-				func(player)
-			end
-		end
-	end)
-end
-
--- Called when a player's appearance needs to be updated
-function mcl_player.player_set_model(player, model_name)
-	local name = player:get_player_name()
-	local model = models[model_name]
-	if model then
-		if player_model[name] == model_name then
-			return
-		end
-		player_model[name] = model_name
-		player:set_properties({
-			mesh = model_name,
-			visual = "mesh",
-			visual_size = model.visual_size or { x = 1, y = 1 },
-			damage_texture_modifier = "^[colorize:red:130",
-		})
-		update_player_textures(player)
-
-		local new_anim = "stand"
-		local model_animations = models[model_name].animations
-		local old_anim = player_anim[name]
-		if model_animations and old_anim and model_animations[old_anim] then
-			new_anim = old_anim
-		end
-		mcl_player.player_set_animation(player, new_anim)
-	else
-		player:set_properties({
-			textures = { "player.png", "player_back.png", },
-			visual = "upright_sprite",
-		})
-	end
-end
-
-function mcl_player.player_set_visibility(player, visible)
-	local name = player:get_player_name()
-	if player_visible[name] == visible then return end
-	player_visible[name] = visible
-	update_player_textures(player)
-end
-
-function mcl_player.player_set_skin(player, texture)
-	local name = player:get_player_name()
-	player_textures[name][1] = texture
-	update_player_textures(player)
-end
-
-function mcl_player.player_get_skin(player)
-	local name = player:get_player_name()
-	return player_textures[name][1]
-end
-
-function mcl_player.player_set_armor(player, texture)
-	local name = player:get_player_name()
-	player_textures[name][2] = texture
-	update_player_textures(player)
-end
-
----@param player mt.PlayerObjectRef
----@param x number
----@param y number
----@param w number
----@param h number
----@param fsname string
----@return string
-function mcl_player.get_player_formspec_model(player, x, y, w, h, fsname)
-	local name = player:get_player_name()
-	local model = player_model[name]
-	local anim = models[model].animations[player_anim[name]]
-	local textures = player_textures[name]
-	if not player_visible[name] then
-		textures = table.copy(textures)
-		textures[1] = "blank.png"
-	end
-	return sf("model[%s,%s;%s,%s;%s;%s;%s;0,180;false;false;%s,%s]", x, y, w, h, fsname, model,
-		table.concat(textures, ","), anim.x, anim.y)
-end
-
-function mcl_player.player_set_animation(player, anim_name, speed)
-	local name = player:get_player_name()
-	if player_anim[name] == anim_name then
-		return
-	end
-	local model = player_model[name] and models[player_model[name]]
-	if not (model and model.animations[anim_name]) then
-		return
-	end
-	local anim = model.animations[anim_name]
-	player_anim[name] = anim_name
-	player:set_animation(anim, speed or model.animation_speed, animation_blend)
-end
-
--- Update appearance when the player joins
 minetest.register_on_joinplayer(function(player)
-	local name = player:get_player_name()
-	mcl_player.player_attached[name] = false
-	player_visible[name] = true
-	player_textures[name] = { "character.png", "blank.png", "blank.png" }
-
-	--player:set_local_animation({x=0, y=79}, {x=168, y=187}, {x=189, y=198}, {x=200, y=219}, 30)
--- 	player:set_fov(86.1) -- see <https://minecraft.gamepedia.com/Options#Video_settings>>>>
+	mcl_player.players[player] = table.copy(tpl_playerinfo)
+	player:get_inventory():set_size("hand", 1)
+	player:set_fov(default_fov)
+	for bone, pos in pairs(bone_start_positions) do
+		player:set_bone_position(bone, pos)
+	end
 end)
 
 minetest.register_on_leaveplayer(function(player)
-	local name = player:get_player_name()
-	player_model[name] = nil
-	player_anim[name] = nil
-	player_textures[name] = nil
-	player_sneak[name] = nil
-	player_visible[name] = nil
+	mcl_player.players[player] = nil
 end)
 
--- Localize for better performance.
-local player_set_animation = mcl_player.player_set_animation
-local player_attached = mcl_player.player_attached
+local function node_ok(pos, fallback)
+	local node = minetest.get_node_or_nil(pos)
+	if node and node.name and minetest.registered_nodes[node.name] then
+		return node.name
+	end
+	return fallback or "air"
+end
 
--- Check each player and apply animations
+function mcl_player.register_globalstep(func)
+	table.insert(mcl_player.registered_globalsteps, func)
+end
+
+function mcl_player.register_globalstep_slow(func)
+	table.insert(mcl_player.registered_globalsteps_slow, func)
+end
+
+-- Check each player and run callbacks
 minetest.register_globalstep(function(dtime)
 	for _, player in pairs(minetest.get_connected_players()) do
-		local name = player:get_player_name()
-		local model_name = player_model[name]
-		local model = model_name and models[model_name]
-		if model and not player_attached[name] then
-			local controls = player:get_player_control()
-			local walking = false
-			local animation_speed_mod = model.animation_speed or 30
-
-			-- Determine if the player is walking
-			if controls.up or controls.down or controls.left or controls.right then
-				walking = true
-			end
-
-			-- Determine if the player is sneaking, and reduce animation speed if so
-			if controls.sneak then
-				animation_speed_mod = animation_speed_mod / 2
-			end
-
-			if mcl_shields.is_blocking(player) then
-				animation_speed_mod = animation_speed_mod / 2
-			end
-
-			-- ask if player is swiming
-			local head_in_water = minetest.get_item_group(mcl_playerinfo[name].node_head, "water") ~= 0
-			-- ask if player is sprinting
-			local is_sprinting = mcl_sprint.is_sprinting(name)
-
-			local velocity = player:get_velocity() or player:get_player_velocity()
-
-			-- Apply animations based on what the player is doing
-			if player:get_hp() == 0 then
-				player_set_animation(player, "die")
-			elseif player:get_meta():get_int("mcl_damage:damage_animation") > 0 then
-				player_set_animation(player, "walk", animation_speed_mod)
-				local name = player:get_player_name()
-				minetest.after(0.5, function()
-					local player = minetest.get_player_by_name(name)
-					if not player then return end
-					player:get_meta():set_int("mcl_damage:damage_animation", 0)
-				end)
-			elseif mcl_playerplus.elytra[player] and mcl_playerplus.elytra[player].active then
-				player_set_animation(player, "stand")
-			elseif walking and velocity.x > 0.35
-				or walking and velocity.x < -0.35
-				or walking and velocity.z > 0.35
-				or walking and velocity.z < -0.35 then
-				local wielded_itemname = player:get_wielded_item():get_name()
-				local no_arm_moving = string.find(wielded_itemname, "mcl_bows:bow") or
-					mcl_shields.wielding_shield(player, 1) or
-					mcl_shields.wielding_shield(player, 2)
-				if player_sneak[name] ~= controls.sneak then
-					player_anim[name] = nil
-					player_sneak[name] = controls.sneak
-				end
-				if get_mouse_button(player) == true and not controls.sneak and head_in_water and is_sprinting == true then
-					player_set_animation(player, "swim_walk_mine", animation_speed_mod)
-				elseif not controls.sneak and head_in_water and is_sprinting == true then
-					player_set_animation(player, "swim_walk", animation_speed_mod)
-				elseif no_arm_moving and controls.RMB and controls.sneak or
-					string.find(wielded_itemname, "mcl_bows:crossbow_") and controls.sneak then
-					player_set_animation(player, "bow_sneak", animation_speed_mod)
-				elseif no_arm_moving and controls.RMB or string.find(wielded_itemname, "mcl_bows:crossbow_") then
-					player_set_animation(player, "bow_walk", animation_speed_mod)
-				elseif is_sprinting == true and get_mouse_button(player) == true and not controls.sneak and not head_in_water then
-					player_set_animation(player, "run_walk_mine", animation_speed_mod)
-				elseif get_mouse_button(player) == true and not controls.sneak then
-					player_set_animation(player, "walk_mine", animation_speed_mod)
-				elseif get_mouse_button(player) == true and controls.sneak and is_sprinting ~= true then
-					player_set_animation(player, "sneak_walk_mine", animation_speed_mod)
-				elseif is_sprinting == true and not controls.sneak and not head_in_water then
-					player_set_animation(player, "run_walk", animation_speed_mod)
-				elseif controls.sneak and not get_mouse_button(player) == true then
-					player_set_animation(player, "sneak_walk", animation_speed_mod)
-				else
-					player_set_animation(player, "walk", animation_speed_mod)
-				end
-			elseif get_mouse_button(player) == true and not controls.sneak and head_in_water and is_sprinting == true then
-				player_set_animation(player, "swim_mine")
-			elseif not get_mouse_button(player) == true and not controls.sneak and head_in_water and is_sprinting == true then
-				player_set_animation(player, "swim_stand")
-			elseif get_mouse_button(player) == true and not controls.sneak then
-				player_set_animation(player, "mine")
-			elseif get_mouse_button(player) == true and controls.sneak then
-				player_set_animation(player, "sneak_mine")
-			elseif not controls.sneak and head_in_water and is_sprinting == true then
-				player_set_animation(player, "swim_stand", animation_speed_mod)
-			elseif not controls.sneak then
-				player_set_animation(player, "stand", animation_speed_mod)
-			else
-				player_set_animation(player, "sneak_stand", animation_speed_mod)
+		for _, func in pairs(mcl_player.registered_globalsteps) do
+			if mcl_player.players[player] then
+				func(player, dtime)
 			end
 		end
 	end
+
+	slow_gs_timer = slow_gs_timer - dtime
+	if slow_gs_timer > 0 then return end
+	slow_gs_timer = 0.5
+	for _, player in pairs(minetest.get_connected_players()) do
+		for _, func in pairs(mcl_player.registered_globalsteps_slow) do
+			if mcl_player.players[player] then
+				func(player, dtime)
+			end
+		end
+		mcl_player.players[player].lastPos = player:get_pos()
+	end
 end)
+
+--cache nodes near the player according to offsets defined above
+mcl_player.register_globalstep_slow(function(player, dtime)
+	for k, v in pairs(nodeinfo_pos) do
+		mcl_player.players[player].nodes[k] = node_ok(vector.add(player:get_pos(), v))
+	end
+end)
+
+mcl_player.register_globalstep_slow(function(player, dtime)
+	-- Is player suffocating inside node? (Only for solid full opaque cube type nodes
+	-- without group disable_suffocation=1)
+	-- if swimming, check the feet node instead, because the head node will be above the player when swimming
+	local ndef = minetest.registered_nodes[mcl_player.players[player].nodes.head]
+	if mcl_player.players[player].is_swimming then
+		ndef = minetest.registered_nodes[mcl_player.players[player].nodes.feet]
+	end
+	if (ndef.walkable == nil or ndef.walkable == true)
+	and (ndef.collision_box == nil or ndef.collision_box.type == "regular")
+	and (ndef.node_box == nil or ndef.node_box.type == "regular")
+	and (ndef.groups.disable_suffocation ~= 1)
+	and (ndef.groups.opaque == 1)
+	and (mcl_player.players[player].nodes.head ~= "ignore")
+	-- Check privilege, too
+	and (not minetest.check_player_privs(player:get_player_name(), {noclip = true})) then
+		if player:get_hp() > 0 then
+			mcl_util.deal_damage(player, 1, {type = "in_wall"})
+		end
+	end
+end)
+
+-- Don't change HP if the player falls in the water or through End Portal:
+mcl_damage.register_modifier(function(obj, damage, reason)
+	if reason.type == "fall" then
+		local pos = obj:get_pos()
+		local node = minetest.get_node(pos)
+		local velocity = obj:get_velocity() or obj:get_player_velocity() or {x=0,y=-10,z=0}
+		local v_axis_max = math.max(math.abs(velocity.x), math.abs(velocity.y), math.abs(velocity.z))
+		local step = {x = velocity.x / v_axis_max, y = velocity.y / v_axis_max, z = velocity.z / v_axis_max}
+		for i = 1, math.ceil(v_axis_max/5)+1 do -- trace at least 1/5 of the way per second
+			if not node or node.name == "ignore" then
+				minetest.get_voxel_manip():read_from_map(pos, pos)
+				node = minetest.get_node(pos)
+			end
+			if node then
+				local def = minetest.registered_nodes[node.name]
+				if not def or def.walkable then
+					return
+				end
+				if minetest.get_item_group(node.name, "water") ~= 0 then
+					return 0
+				end
+				if node.name == "mcl_portals:portal_end" then
+					if mcl_portals and mcl_portals.end_teleport then
+						mcl_portals.end_teleport(obj)
+					end
+					return 0
+				end
+				if node.name == "mcl_core:cobweb" then
+					return 0
+				end
+				if node.name == "mcl_core:vine" then
+					return 0
+				end
+			end
+			pos = vector.add(pos, step)
+			node = minetest.get_node(pos)
+		end
+	end
+end, -200)
+
+local modpath = minetest.get_modpath(minetest.get_current_modname())
+dofile(modpath.."/animations.lua")
+dofile(modpath.."/compat.lua")

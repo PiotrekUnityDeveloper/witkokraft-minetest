@@ -1,90 +1,102 @@
-local function mcl_log (message)
-	mcl_util.mcl_log (message, "[Village - Foundation]")
-end
 
-local foundation_materials = {}
+local circles = minetest.settings:get_bool("mcl_villages_circles", true)
+local terrace = minetest.settings:get_bool("mcl_villages_terrace", true)
+local padding = tonumber(minetest.settings:get("mcl_villages_padding")) or 2
+local top_padding = tonumber(minetest.settings:get("mcl_villages_top_padding")) or 8
+local terrace_max_ext = tonumber(minetest.settings:get("mcl_villages_terrace_max_ext")) or 6
 
-foundation_materials["mcl_core:sand"] = "mcl_core:sandstone"
---"mcl_core:sandstonecarved"
 
 -------------------------------------------------------------------------------
 -- function to fill empty space below baseplate when building on a hill
 -------------------------------------------------------------------------------
-function settlements.ground(pos, pr, platform_material) -- role model: Wendelsteinkircherl, Brannenburg
+function mcl_villages.ground(pos, pr) -- role model: Wendelsteinkircherl, Brannenburg
 	local p2 = vector.new(pos)
 	local cnt = 0
-
 	local mat = "mcl_core:dirt"
-	if not platform_material then
-		mat = "mcl_core:dirt"
-	else
-		mat = platform_material
-	end
-
 	p2.y = p2.y-1
 	while true do
 		cnt = cnt+1
 		if cnt > 20 then break end
 		if cnt>pr:next(2,4) then
-			if not platform_material then
-				mat = "mcl_core:stone"
-			end
+			mat = "mcl_core:stone"
 		end
 		minetest.swap_node(p2, {name=mat})
 		p2.y = p2.y-1
 	end
 end
--------------------------------------------------------------------------------
--- function clear space above baseplate
--------------------------------------------------------------------------------
-function settlements.terraform(settlement_info, pr)
-	local fheight, fwidth, fdepth, schematic_data
 
-	for i, built_house in ipairs(settlement_info) do
-		-- pick right schematic_info to current built_house
-		for j, schem in ipairs(settlements.schematic_table) do
-			if settlement_info[i]["name"] == schem["name"] then
-				schematic_data = schem
-			        break
-			end
-		end
-		local pos = settlement_info[i]["pos"]
-		if settlement_info[i]["rotat"] == "0" or settlement_info[i]["rotat"] == "180" then
-			fwidth = schematic_data["hwidth"]
-			fdepth = schematic_data["hdepth"]
-		else
-			fwidth = schematic_data["hdepth"]
-			fdepth = schematic_data["hwidth"]
-		end
-		--fheight = schematic_data["hheight"] * 3  -- remove trees and leaves above
-		fheight = schematic_data["hheight"]  -- remove trees and leaves above
+-- Empty space above ground
+local function overground(pos, fwidth, fdepth, fheight)
 
-		local surface_mat = settlement_info[i]["surface_mat"]
-		mcl_log("Surface material: " .. tostring(surface_mat))
-		local platform_mat = foundation_materials[surface_mat]
-		mcl_log("Foundation material: " .. tostring(platform_mat))
+	if circles then
+		local y = math.ceil(pos.y + 1)
+		local radius_base = math.max(fwidth, fdepth)
+		local radius = math.round((radius_base / 2) + padding)
+		local dome = fheight + top_padding
 
-		--
-		-- now that every info is available -> create platform and clear space above
-		--
-		for xi = 0,fwidth-1 do
-			for zi = 0,fdepth-1 do
-				for yi = 0,fheight *3 do
-					if yi == 0 then
-						local p = {x=pos.x+xi, y=pos.y, z=pos.z+zi}
-						-- Pass in biome info and make foundations of same material (seed: apple for desert)
-						settlements.ground(p, pr, platform_mat)
-					else
-						-- write ground
---						local p = {x=pos.x+xi, y=pos.y+yi, z=pos.z+zi}
---						local node = mcl_vars.get_node(p)
---						if node and node.name ~= "air" then
---							minetest.swap_node(p,{name="air"})
---						end
-						minetest.swap_node({x=pos.x+xi, y=pos.y+yi, z=pos.z+zi},{name="air"})
-					end
+		for count2 = 1, fheight + top_padding do
+			if terrace and radius_base > 3 then
+				if count2 > dome then
+					radius = radius - 1
+				elseif count2 <= terrace_max_ext then
+					radius = radius + 1
 				end
 			end
+
+			mcl_util.circle_bulk_set_node_vm(radius, pos, y, "air")
+
+			y = y + 1
+		end
+	else
+		local count = 1
+		if not terrace then
+			count = count + 2
+		end
+
+		if terrace then
+			for y_adj = 1, pos.y + fheight + top_padding do
+				local pos1 = vector.offset(pos, -count, y_adj, -count)
+				local pos2 = vector.offset(pos, fwidth + count, y_adj, fdepth + count)
+				mcl_util.bulk_set_node_vm(pos1, pos2, "air")
+
+				if terrace and count <= terrace_max_ext then
+					count = count + 1
+				end
+			end
+		else
+			local x_adjust = fwidth / 2
+			local z_adjust = fdepth / 2
+
+			local pos1 = vector.offset(pos, -x_adjust, 0, -z_adjust)
+			local pos2 = vector.offset(pos, x_adjust, fheight, z_adjust)
+			mcl_util.bulk_set_node_vm(pos1, pos2, "air")
+		end
+	end
+end
+
+function mcl_villages.terraform_new(settlement_info)
+	local fheight, fwidth, fdepth
+
+	-- Do ground first so that we can clear overhang for lower buildings
+	for i, schematic_data in ipairs(settlement_info) do
+		local pos = vector.copy(schematic_data["pos"])
+		fwidth = schematic_data["size"]["x"]
+		fdepth = schematic_data["size"]["z"]
+
+		if schematic_data["name"] ~= "lamp" then
+			mcl_util.create_ground_turnip(pos, fwidth, fdepth)
+		end
+	end
+
+	for i, schematic_data in ipairs(settlement_info) do
+		local pos = vector.copy(schematic_data["pos"])
+
+		fwidth = schematic_data["size"]["x"]
+		fdepth = schematic_data["size"]["z"]
+		fheight = schematic_data["size"]["y"]
+
+		if schematic_data["name"] ~= "lamp" then
+			overground(pos, fwidth, fdepth, fheight)
 		end
 	end
 end

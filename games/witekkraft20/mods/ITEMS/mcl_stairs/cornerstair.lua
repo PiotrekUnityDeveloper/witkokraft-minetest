@@ -184,6 +184,89 @@ local function stair_connect_to_param(connect, ceiling)
 	return param
 end
 
+local function placement_prevented_inner(params)
+
+	if params == nil or params.itemstack == nil or params.pointed_thing == nil then
+		return true
+	end
+
+	local wield_name = params.itemstack:get_name()
+	local ndef = minetest.registered_nodes[wield_name]
+	local groups = ndef.groups or {}
+
+	local under = params.pointed_thing.under
+	local node = minetest.get_node(under)
+	local above = params.pointed_thing.above
+	local wdir = minetest.dir_to_wallmounted({ x = under.x - above.x, y = under.y - above.y, z = under.z - above.z })
+
+	-- on top of upside down
+	if groups.attaches_to_top and (node.param2 >= 20 and wdir == 1) then
+		return false
+	end
+
+	-- on base of upright stair
+	if groups.attaches_to_base and (node.param2 < 20 and wdir == 0) then
+		return false
+	end
+
+	-- On back of rotated stair, corners have 2 backs
+	if
+		groups.attaches_to_side
+		and (
+			-- upright
+			(node.param2 == 0 and wdir == 2)
+			or (node.param2 == 0 and wdir == 5)
+			or (node.param2 == 1 and wdir == 3)
+			or (node.param2 == 1 and wdir == 5)
+			or (node.param2 == 2 and wdir == 3)
+			or (node.param2 == 2 and wdir == 4)
+			or (node.param2 == 3 and wdir == 2)
+			or (node.param2 == 3 and wdir == 4)
+			-- upside down
+			or (node.param2 == 20 and wdir == 3)
+			or (node.param2 == 20 and wdir == 5)
+			or (node.param2 == 21 and wdir == 2)
+			or (node.param2 == 21 and wdir == 5)
+			or (node.param2 == 22 and wdir == 2)
+			or (node.param2 == 22 and wdir == 4)
+			or (node.param2 == 23 and wdir == 3)
+			or (node.param2 == 23 and wdir == 4)
+		)
+	then
+		return false
+	end
+
+	return true
+end
+
+local function placement_prevented_outer(params)
+
+	if params == nil or params.itemstack == nil or params.pointed_thing == nil then
+		return true
+	end
+
+	local wield_name = params.itemstack:get_name()
+	local ndef = minetest.registered_nodes[wield_name]
+	local groups = ndef.groups or {}
+
+	local under = params.pointed_thing.under
+	local node = minetest.get_node(under)
+	local above = params.pointed_thing.above
+	local wdir = minetest.dir_to_wallmounted({ x = under.x - above.x, y = under.y - above.y, z = under.z - above.z })
+
+	-- on top of upside down
+	if groups.attaches_to_top and (node.param2 >= 20 and wdir == 1) then
+		return false
+	end
+
+	-- on base of upright stair
+	if groups.attaches_to_base and (node.param2 < 20 and wdir == 0) then
+		return false
+	end
+
+	return true
+end
+
 --[[
 mcl_stairs.cornerstair.add(name, stairtiles)
 
@@ -203,35 +286,47 @@ Usage:
     * nil: Equivalent to "default"
 ]]
 
+local directions = {
+	{ -1, 0, 0 },
+	{ 1, 0, 0 },
+	{ 0, 0, -1 },
+	{ 0, 0, 1 },
+}
+
+local function check_sides(pos)
+	local source = minetest.get_node(pos)
+
+	local def = minetest.registered_nodes[source.name]
+
+	for _, offset in pairs(directions) do
+		local npos = vector.offset(pos, offset[1], offset[2], offset[3])
+		local node = minetest.get_node(npos)
+		local ndef = minetest.registered_nodes[node.name]
+		local groups = ndef.groups or {}
+
+		if groups.attaches_to_base or groups.attaches_to_side or groups.attaches_to_top then
+			if
+				def.placement_prevented({
+					itemstack = ItemStack(node.name),
+					pointed_thing = { under = pos, above = npos },
+				})
+			then
+				mcl_attached.drop_attached_node(npos)
+			end
+		end
+	end
+end
+
 function mcl_stairs.cornerstair.add(name, stairtiles)
 	local node_def = minetest.registered_nodes[name]
 	local outer_tiles
 	local inner_tiles
-	if stairtiles == "woodlike" then
-		outer_tiles = table.copy(node_def.tiles)
-		inner_tiles = table.copy(node_def.tiles)
-		for i=2,6 do
-			if outer_tiles[i] == nil then
-				outer_tiles[i] = outer_tiles[i-1]
-			end
-			if inner_tiles[i] == nil then
-				inner_tiles[i] = inner_tiles[i-1]
-			end
-		end
-		local t = node_def.tiles[1]
-		outer_tiles[1] = t.."^("..t.."^[transformR90^mcl_stairs_turntexture.png^[makealpha:255,0,255)"
-		outer_tiles[2] = t.."^("..t.."^mcl_stairs_turntexture.png^[transformR270^[makealpha:255,0,255)"
-		outer_tiles[3] = t
-		inner_tiles[1] = t.."^("..t.."^[transformR90^(mcl_stairs_turntexture.png^[transformR180)^[makealpha:255,0,255)"
-		inner_tiles[2] = t.."^("..t.."^[transformR270^(mcl_stairs_turntexture.png^[transformR90)^[makealpha:255,0,255)"
-		inner_tiles[3] = t
-	elseif stairtiles == nil or stairtiles == "default" then
-		outer_tiles = node_def.tiles
-		inner_tiles = node_def.tiles
-	else
+	if stairtiles ~= nil and stairtiles ~= "default" and stairtiles ~= "woodlike" then
 		outer_tiles = stairtiles[1]
 		inner_tiles = stairtiles[2]
 	end
+	if inner_tiles == nil then inner_tiles = node_def.tiles end
+	if outer_tiles == nil then outer_tiles = node_def.tiles end
 	local outer_groups = table.copy(node_def.groups)
 	outer_groups.not_in_creative_inventory = 1
 	local inner_groups = table.copy(outer_groups)
@@ -279,6 +374,7 @@ function mcl_stairs.cornerstair.add(name, stairtiles)
 			connect[n2] = true
 			local node = get_stair_from_param(stair_connect_to_param(connect, ceiling), t[index].stairs)
 			minetest.swap_node(t[index].pos, node)
+			check_sides(t[index].pos)
 		end
 		if t[3].stairs then
 			if t[7].connect[1] and t[3].connect[6] then
@@ -405,9 +501,10 @@ function mcl_stairs.cornerstair.add(name, stairtiles)
 				end
 			end
 			local connect = stair_param_to_connect(get_stair_param(node), ceiling)
+			local def = minetest.registered_nodes[name]
 			local t = {
 				{pos = {x = pos.x - 1, y = pos.y, z = pos.z + 1}}, {pos = {x = pos.x, y = pos.y, z = pos.z + 1}}, {pos = {x = pos.x + 1, y = pos.y, z = pos.z + 1}},
-				{pos = {x = pos.x - 1, y = pos.y, z = pos.z}}, {pos = pos, stairs = {name, name.."_outer", name.."_inner"}, connect = connect}, {pos = {x = pos.x + 1, y = pos.y, z = pos.z}},
+				{pos = {x = pos.x - 1, y = pos.y, z = pos.z}}, {pos = pos, stairs = {name, def.stairs[2], def.stairs[3]}, connect = connect}, {pos = {x = pos.x + 1, y = pos.y, z = pos.z}},
 				{pos = {x = pos.x - 1, y = pos.y, z = pos.z - 1}}, {pos = {x = pos.x, y = pos.y, z = pos.z - 1}}, {pos = {x = pos.x + 1, y = pos.y, z = pos.z - 1}},
 			}
 			for i,v in ipairs(t) do
@@ -665,6 +762,7 @@ function mcl_stairs.cornerstair.add(name, stairtiles)
 		after_dig_node = function(pos, oldnode) after_dig_node(pos, oldnode) end,
 		_mcl_hardness = node_def._mcl_hardness,
 		on_rotate = false,
+		placement_prevented = placement_prevented_outer,
 	})
 	minetest.register_node(":"..name.."_inner", {
 		description = node_def.description,
@@ -689,6 +787,7 @@ function mcl_stairs.cornerstair.add(name, stairtiles)
 		after_dig_node = function(pos, oldnode) after_dig_node(pos, oldnode) end,
 		_mcl_hardness = node_def._mcl_hardness,
 		on_rotate = false,
+		placement_prevented = placement_prevented_inner,
 	})
 
 	if minetest.get_modpath("doc") then

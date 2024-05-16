@@ -1,14 +1,8 @@
 -- register extra flavours of a base nodedef
-
-local get_connected_players = minetest.get_connected_players
-local get_node = minetest.get_node
-local vector = vector
-local ceil = math.ceil
-local pairs = pairs
-
 walkover = {}
 
 local on_walk = {}
+local on_walk_through = {}
 local registered_globals = {}
 
 walkover.registered_globals = registered_globals
@@ -22,28 +16,28 @@ minetest.register_on_mods_loaded(function()
 		if def.on_walk_over then
 			on_walk[name] = def.on_walk_over
 		end
+		if def._on_walk_through then
+			on_walk_through[name] = def._on_walk_through
+		end
 	end
 end)
 
-local timer = 0
-minetest.register_globalstep(function(dtime)
-	timer = timer + dtime
-	if timer >= 0.6 then
-		for _, player in pairs(get_connected_players()) do
-			local ppos = player:get_pos()
-			local npos = vector.add(ppos, vector.new(0, -0.1, 0))
-			if npos then
-				local node = get_node(npos)
-				if node then
-					if on_walk[node.name] then
-						on_walk[node.name](npos, node, player)
-					end
-					for i = 1, #registered_globals do
-						registered_globals[i](npos, node, player)
-					end
-				end
-			end
-		end
-		timer = 0
+mcl_player.register_globalstep_slow(function(player)
+	local pos = player:get_pos()
+	local npos = vector.add(pos, mcl_player.node_offsets.stand)
+	local node = minetest.get_node(npos)
+	if on_walk[mcl_player.players[player].nodes.stand] then
+		on_walk[mcl_player.players[player].nodes.stand](npos, node, player)
+	end
+	for i = 1, #registered_globals do
+		registered_globals[i](npos, node, player)
+	end
+	if on_walk_through[mcl_player.players[player].nodes.feet] then
+		local npos = vector.add(pos, mcl_player.node_offsets.feet)
+		on_walk_through[mcl_player.players[player].nodes.feet](npos, minetest.get_node(npos), player)
+	end
+	if on_walk_through[mcl_player.players[player].nodes.head] then
+		local npos = vector.add(pos, mcl_player.node_offsets.head)
+		on_walk_through[mcl_player.players[player].nodes.head](npos, minetest.get_node(npos), player)
 	end
 end)

@@ -1,12 +1,14 @@
 local S = minetest.get_translator(minetest.get_current_modname())
-
+local function on_bone_meal(itemstack,placer,pointed_thing,pos,node)
+	return mcl_farming.on_bone_meal(itemstack,placer,pointed_thing,pos,node,"plant_melon_stem")
+end
+--_on_bone_meal = on_bone_meal,
 -- Seeds
 minetest.register_craftitem("mcl_farming:melon_seeds", {
 	description = S("Melon Seeds"),
 	_tt_help = S("Grows on farmland"),
 	_doc_items_longdesc = S("Grows into a melon stem which in turn grows melons. Chickens like melon seeds."),
 	_doc_items_usagehelp = S("Place the melon seeds on farmland (which can be created with a hoe) to plant a melon stem. Melon stems grow in sunlight and grow faster on hydrated farmland. When mature, the stem will attempt to grow a melon at the side. Rightclick an animal to feed it melon seeds."),
-	stack_max = 64,
 	groups = {craftitem = 1, compostability = 30},
 	inventory_image = "mcl_farming_melon_seeds.png",
 	on_place = function(itemstack, placer, pointed_thing)
@@ -19,10 +21,9 @@ minetest.register_craftitem("mcl_farming:melon_seeds", {
 local melon_base_def = {
 	description = S("Melon"),
 	_doc_items_longdesc = S("A melon is a block which can be grown from melon stems, which in turn are grown from melon seeds. It can be harvested for melon slices."),
-	stack_max = 64,
 	tiles = {"farming_melon_top.png", "farming_melon_top.png", "farming_melon_side.png", "farming_melon_side.png", "farming_melon_side.png", "farming_melon_side.png"},
 	groups = {
-		handy = 1, axey = 1, plant = 1, building_block = 1, dig_by_piston = 1, dig_immediate_piston = 1,
+		handy = 1, axey = 1, plant = 1, building_block = 1, dig_by_piston = 1,
 		enderman_takable = 1, compostability = 65
 	},
 	drop = {
@@ -109,6 +110,7 @@ for s=1,7 do
 		groups = {dig_immediate=3, not_in_creative_inventory=1, plant=1,attached_node=1, dig_by_water=1,destroy_by_lava_flow=1, plant_melon_stem=s},
 		sounds = mcl_sounds.node_sound_leaves_defaults(),
 		_mcl_blast_resistance = 0,
+		_on_bone_meal = on_bone_meal,
 	})
 end
 
@@ -133,7 +135,6 @@ minetest.register_craftitem("mcl_farming:melon_item", {
 	-- Original name: “Melon”
 	description = S("Melon Slice"),
 	_doc_items_longdesc = S("This is a food item which can be eaten."),
-	stack_max = 64,
 	inventory_image = "farming_melon.png",
 	on_place = minetest.item_eat(2),
 	on_secondary_use = minetest.item_eat(2),

@@ -36,23 +36,9 @@ local stereotype_frame = 18
 -- Increase if there are performance problems.
 local spin_timer_tick = 0.5
 
--- Local aliases to globals for better lua performance
-local m_deg = math.deg
-local m_atan2 = math.atan2
-local m_floor = math.floor
-local m_rnd = math.random
-local vec_new = vector.new
-local string_find = string.find
-local string_to_pos = minetest.string_to_pos
-local get_connected_players = minetest.get_connected_players
-local get_item_group = minetest.get_item_group
-local setting_get_pos = minetest.setting_get_pos
-local compass_works = mcl_worlds.compass_works
-local y_to_layer = mcl_worlds.y_to_layer
-
 -- Initialize random compass frame for spinning compass.  It is updated in
 -- the compass globalstep function.
-local random_frame = m_rnd(0, compass_frames-1)
+local random_frame = math.random(0, compass_frames-1)
 
 local function get_far_node(pos, itemstack) --code from minetest dev wiki: https://dev.minetest.net/minetest.get_node, some edits have been made to add a cooldown for force loads
 	local node = minetest.get_node(pos)
@@ -82,11 +68,11 @@ end
 -- dir: rotational direction of the compass.
 --
 local function get_compass_angle(pos, target, dir)
-	local angle_north = m_deg(m_atan2(target.x - pos.x, target.z - pos.z))
+	local angle_north = math.deg(math.atan2(target.x - pos.x, target.z - pos.z))
 	if angle_north < 0 then angle_north = angle_north + 360 end
-	local angle_dir = -m_deg(dir)
+	local angle_dir = -math.deg(dir)
 	local angle_relative = (angle_north - angle_dir + 180) % 360
-	return m_floor((angle_relative/11.25) + 0.5) % compass_frames
+	return math.floor((angle_relative/11.25) + 0.5) % compass_frames
 end
 
 --- Get compass image frame.
@@ -98,24 +84,24 @@ end
 -- itemstack: the compass including its optional lodestone metadata.
 --
 local function get_compass_frame(pos, dir, itemstack)
-	if not string_find(itemstack:get_name(), "_lodestone") then -- normal compass
+	if not string.find(itemstack:get_name(), "_lodestone") then -- normal compass
 		-- Compasses only work in the overworld
-		if compass_works(pos) then
-			local spawn_pos = setting_get_pos("static_spawnpoint")
-				or vec_new(0, 0, 0)
+		if mcl_worlds.compass_works(pos) then
+			local spawn_pos = minetest.setting_get_pos("static_spawnpoint")
+				or vector.new(0, 0, 0)
 			return get_compass_angle(pos, spawn_pos, dir)
 		else
 			return random_frame
 		end
 	else -- lodestone compass
 		local lpos_str = itemstack:get_meta():get_string("pointsto")
-		local lpos = string_to_pos(lpos_str)
+		local lpos = minetest.string_to_pos(lpos_str)
 		if not lpos then
 			minetest.log("warning", "mcl_compass: invalid lodestone position!")
 			return random_frame
 		end
-		local _, l_dim = y_to_layer(lpos.y)
-		local _, p_dim = y_to_layer(pos.y)
+		local _, l_dim = mcl_worlds.y_to_layer(lpos.y)
+		local _, p_dim = mcl_worlds.y_to_layer(pos.y)
 		-- compass and lodestone must be in the same dimension
 		if l_dim == p_dim then
 			--check if lodestone still exists
@@ -177,24 +163,24 @@ local spin_timer = 0
 minetest.register_globalstep(function(dtime)
 	spin_timer = spin_timer + dtime
 	if spin_timer >= spin_timer_tick then
-		random_frame = (random_frame + m_rnd(-1, 1)) % compass_frames
+		random_frame = (random_frame + math.random(-1, 1)) % compass_frames
 		spin_timer = 0
 	end
 
 	local compass_nr, compass_frame
 	local pos, dir, inv
-	for _, player in pairs(get_connected_players()) do
+	for _, player in pairs(minetest.get_connected_players()) do
 		pos = player:get_pos()
 		dir = player:get_look_horizontal()
 		inv = player:get_inventory()
 		for j, stack in pairs(inv:get_list("main")) do
-			compass_nr = get_item_group(stack:get_name(), "compass")
-			if compass_nr ~= 0 and not string_find(stack:get_name(), "_recovery") then
+			compass_nr = minetest.get_item_group(stack:get_name(), "compass")
+			if compass_nr ~= 0 and not string.find(stack:get_name(), "_recovery") then
 				-- check if current compass image still matches true orientation
 				compass_frame = get_compass_frame(pos, dir, stack)
 				if compass_nr - 1 ~= compass_frame then
 
-					if string_find(stack:get_name(), "_lodestone") then
+					if string.find(stack:get_name(), "_lodestone") then
 						stack:set_name("mcl_compass:" .. compass_frame .. "_lodestone")
 						awards.unlock(player:get_player_name(), "mcl:countryLode")
 					else
@@ -209,8 +195,8 @@ minetest.register_globalstep(function(dtime)
 					stack:set_name("mcl_compass:"..random_frame .. "_recovery")
 				else
 					local targetpos = minetest.string_to_pos(posstring)
-					local _, target_dim = y_to_layer(targetpos.y)
-					local _, p_dim = y_to_layer(pos.y)
+					local _, target_dim = mcl_worlds.y_to_layer(targetpos.y)
+					local _, p_dim = mcl_worlds.y_to_layer(pos.y)
 					if p_dim ~= target_dim then
 						stack:set_name("mcl_compass:"..random_frame.."_recovery")
 					else
@@ -294,7 +280,7 @@ minetest.register_node("mcl_compass:lodestone",{
 	description=S("Lodestone"),
 	on_rightclick = function(pos, node, player, itemstack)
 		local name = itemstack.get_name(itemstack)
-		if string_find(name,"mcl_compass:") then
+		if string.find(name,"mcl_compass:") then
 			if name ~= "mcl_compass:lodestone" then
 				itemstack:get_meta():set_string("pointsto", minetest.pos_to_string(pos))
 				local dir = player:get_look_horizontal()

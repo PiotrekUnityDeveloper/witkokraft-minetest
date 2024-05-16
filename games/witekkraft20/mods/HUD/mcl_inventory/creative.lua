@@ -2,16 +2,15 @@ local S = minetest.get_translator(minetest.get_current_modname())
 local F = minetest.formspec_escape
 local C = minetest.colorize
 
+local show_nici = minetest.settings:get_bool("mcl_creative_show_nici_tab", false)
+
 -- Prepare player info table
----@type table<string, {page: string, filter: string, start_i: integer, inv_size: integer}>
 local players = {}
 
 -- Containing all the items for each Creative Mode tab
----@type table<string, string[]>
 local inventory_lists = {}
 
 -- Create tables
----@type string[]
 local builtin_filter_ids = {
 	"blocks",
 	"deco",
@@ -24,14 +23,14 @@ local builtin_filter_ids = {
 	"brew",
 	"matr",
 	"misc",
-	"all"
+	"all",
+	"nici",
 }
 
 for _, f in pairs(builtin_filter_ids) do
 	inventory_lists[f] = {}
 end
 
----@param tbl string[]
 local function replace_enchanted_books(tbl)
 	for k, item in ipairs(tbl) do
 		if item:find("mcl_enchanting:book_enchanted") == 1 then
@@ -50,18 +49,15 @@ minetest.register_on_mods_loaded(function()
 	for name, def in pairs(minetest.registered_items) do
 		if (not def.groups.not_in_creative_inventory or def.groups.not_in_creative_inventory == 0) and def.description and
 			def.description ~= "" then
-			---@param def mt.ItemDef|mt.NodeDef
 			local function is_redstone(def)
 				return def.mesecons or def.groups.mesecon or def.groups.mesecon_conductor_craftable or
 					def.groups.mesecon_effecor_off
 			end
 
-			---@param def mt.ItemDef|mt.NodeDef
 			local function is_tool(def)
 				return def.groups.tool or (def.tool_capabilities and def.tool_capabilities.damage_groups == nil)
 			end
 
-			---@param def mt.ItemDef|mt.NodeDef
 			local function is_weapon_or_armor(def)
 				return def.groups.weapon or def.groups.weapon_ranged or def.groups.ammo or def.groups.combat_item or
 					(
@@ -118,6 +114,8 @@ minetest.register_on_mods_loaded(function()
 			end
 
 			table.insert(inventory_lists["all"], name)
+		elseif minetest.get_item_group(name, "not_in_creative_inventory") > 0 then
+			table.insert(inventory_lists["nici"], name)
 		end
 	end
 
@@ -138,11 +136,6 @@ minetest.register_on_mods_loaded(function()
 	end
 end)
 
----@param name string
----@param description string
----@param lang mt.LangCode
----@param filter string
----@return integer
 local function filter_item(name, description, lang, filter)
 	local desc
 	if not lang then
@@ -153,8 +146,6 @@ local function filter_item(name, description, lang, filter)
 	return string.find(name, filter, nil, true) or string.find(desc, filter, nil, true)
 end
 
----@param filter string
----@param player mt.PlayerObjectRef
 local function set_inv_search(filter, player)
 	local playername = player:get_player_name()
 	local inv = minetest.get_inventory({ type = "detached", name = "creative_" .. playername })
@@ -183,8 +174,6 @@ local function set_inv_search(filter, player)
 	inv:set_list("main", creative_list)
 end
 
----@param page string
----@param player mt.PlayerObjectRef
 local function set_inv_page(page, player)
 	local playername = player:get_player_name()
 	local inv = minetest.get_inventory({ type = "detached", name = "creative_" .. playername })
@@ -198,17 +187,11 @@ local function set_inv_page(page, player)
 	inv:set_list("main", creative_list)
 end
 
-
----@param player mt.PlayerObjectRef
 local function init(player)
 	local playername = player:get_player_name()
 	minetest.create_detached_inventory("creative_" .. playername, {
 		allow_move = function(inv, from_list, from_index, to_list, to_index, count, player)
-			if minetest.is_creative_enabled(playername) then
-				return count
-			else
-				return 0
-			end
+			return 0
 		end,
 		allow_put = function(inv, listname, index, stack, player)
 			return 0
@@ -245,31 +228,24 @@ trash:set_size("main", 1)
 ------------------------------
 
 -- Numeric position of tab background image, indexed by tab name
----@type table<string, {[0]: number, [1]: number}>
 local noffset = {}
 
 -- String position of tab button background image, indexed by tab name
----@type table<string, string>
 local offset = {}
 
 -- String position of tab button, indexed by tab name
----@type table<string, string>
 local boffset = {}
 
 -- Used to determine the tab button background image
----@type table<string, ""|"_down">
 local button_bg_postfix = {}
 
 -- Tab caption/tooltip translated string, indexed by tab name
----@type table<string, string>
 local filtername = {}
 
 local noffset_x_start = 0.2
 local noffset_x = noffset_x_start
 local noffset_y = -1.34
 
----@param id string
----@param right? boolean
 local function next_noffset(id, right)
 	if right then
 		noffset[id] = { 11.3, noffset_y }
@@ -297,6 +273,7 @@ next_noffset("tools")
 next_noffset("combat")
 next_noffset("mobs")
 next_noffset("matr")
+next_noffset("nici")
 next_noffset("inv", true)
 
 for k, v in pairs(noffset) do
@@ -318,6 +295,7 @@ button_bg_postfix["combat"] = "_down"
 button_bg_postfix["mobs"] = "_down"
 button_bg_postfix["matr"] = "_down"
 button_bg_postfix["inv"] = "_down"
+button_bg_postfix["nici"] = "_down"
 
 filtername["blocks"] = S("Building Blocks")
 filtername["deco"] = S("Decoration Blocks")
@@ -332,6 +310,7 @@ filtername["mobs"] = S("Mobs")
 filtername["brew"] = S("Brewing")
 filtername["matr"] = S("Materials")
 filtername["inv"] = S("Survival Inventory")
+filtername["nici"] = S("Not in Creative Inventory")
 
 --local dark_bg = "crafting_creative_bg_dark.png"
 
@@ -353,7 +332,6 @@ filtername["inv"] = S("Survival Inventory")
 end]]
 
 -- Item name representing a tab, indexed by tab name
----@type table<string, string>
 local tab_icon = {
 	blocks = "mcl_core:brick_block",
 	deco = "mcl_flowers:peony",
@@ -368,18 +346,15 @@ local tab_icon = {
 	brew = "mcl_potions:dragon_breath",
 	matr = "mcl_core:stick",
 	inv = "mcl_chests:chest",
+	nici = "mcl_core:barrier",
 }
 
 -- Get the player configured stack size when taking items from creative inventory
----@param player mt.PlayerObjectRef
----@return integer
 local function get_stack_size(player)
 	return player:get_meta():get_int("mcl_inventory:switch_stack")
 end
 
 -- Set the player configured stack size when taking items from creative inventory
----@param player mt.PlayerObjectRef
----@param n integer
 local function set_stack_size(player, n)
 	player:get_meta():set_int("mcl_inventory:switch_stack", n)
 end
@@ -390,7 +365,6 @@ minetest.register_on_joinplayer(function(player)
 	end
 end)
 
----@param player mt.PlayerObjectRef
 function mcl_inventory.set_creative_formspec(player)
 	local playername = player:get_player_name()
 	if not players[playername] then return end
@@ -500,7 +474,9 @@ function mcl_inventory.set_creative_formspec(player)
 
 		-- For shortcuts
 		listrings = listrings ..
-			"listring[detached:" .. playername .. "_armor;armor]" ..
+			"listring[current_player;armor]"..
+			"listring[current_player;main]"..
+			"listring[current_player;offhand]"..
 			"listring[current_player;main]"
 	else
 
@@ -509,9 +485,17 @@ function mcl_inventory.set_creative_formspec(player)
 		main_list = table.concat({
 			mcl_formspec.get_itemslot_bg_v4(0.375, 0.875, 9, 5),
 
-			-- Basic code to replace buttons by scrollbar
-			-- Require Minetest 5.8
-			--
+			-- TODO: Enable this code when min supported version is minetest 5.8
+			--This next part implements a scroll_container for the creative inventory
+			--In theory supported since minetest 5.2 this appears to stop working well
+			--When the list becomes very long.
+			--This minetest Patch fixed it: https://github.com/minetest/minetest/pull/13669 (minetest 5.8)
+			--Relevant issue: https://github.com/minetest/minetest/issues/13667
+
+			-- To enable this code uncomment the next part and remove the rest of the formspec
+			-- (The list and the paging buttons)
+			-- Also uncomment the "local nb_lines = .." line above.
+
 			--"scroll_container[0.375,0.875;11.575,6;scroll;vertical;1.25]",
 			--"list[detached:creative_" .. playername .. ";main;0,0;9," .. nb_lines .. ";]",
 			--"scroll_container_end[]",
@@ -527,9 +511,6 @@ function mcl_inventory.set_creative_formspec(player)
 		})
 	end
 
-	---@param current_tab string
-	---@param this_tab string
-	---@return string
 	local function tab(current_tab, this_tab)
 		local bg_img
 		if current_tab == this_tab then
@@ -541,13 +522,18 @@ function mcl_inventory.set_creative_formspec(player)
 			"style[" .. this_tab .. ";border=false;bgimg=;bgimg_pressed=;noclip=true]",
 			"image[" .. offset[this_tab] .. ";1.5,1.44;" .. bg_img .. "]",
 			"item_image_button[" .. boffset[this_tab] .. ";1,1;" .. tab_icon[this_tab] .. ";" .. this_tab .. ";]",
-			"tooltip[blocks;" .. F(filtername[this_tab]) .. "]"
 		})
 	end
 
 	local caption = ""
 	if name ~= "inv" and filtername[name] then
 		caption = "label[0.375,0.375;" .. F(C(mcl_formspec.label_color, filtername[name])) .. "]"
+	end
+
+	local nici = ""
+	if show_nici then
+		nici = tab(name, "nici") ..
+		"tooltip[nici;"..F(filtername["nici"]).."]"
 	end
 
 	local formspec = table.concat({
@@ -570,20 +556,34 @@ function mcl_inventory.set_creative_formspec(player)
 
 		listrings,
 
-		tab(name, "blocks"),
-		tab(name, "deco"),
-		tab(name, "redstone"),
-		tab(name, "rail"),
-		tab(name, "misc"),
-		tab(name, "nix"),
+		tab(name, "blocks") ..
+		"tooltip[blocks;"..F(filtername["blocks"]).."]"..
+		tab(name, "deco") ..
+		"tooltip[deco;"..F(filtername["deco"]).."]"..
+		tab(name, "redstone") ..
+		"tooltip[redstone;"..F(filtername["redstone"]).."]"..
+		tab(name, "rail") ..
+		"tooltip[rail;"..F(filtername["rail"]).."]"..
+		tab(name, "misc") ..
+		"tooltip[misc;"..F(filtername["misc"]).."]"..
+		tab(name, "nix") ..
+		"tooltip[nix;"..F(filtername["nix"]).."]"..
 
-		tab(name, "food"),
-		tab(name, "tools"),
-		tab(name, "combat"),
-		tab(name, "mobs"),
-		tab(name, "brew"),
-		tab(name, "matr"),
-		tab(name, "inv"),
+		tab(name, "food") ..
+		"tooltip[food;"..F(filtername["food"]).."]"..
+		tab(name, "tools") ..
+		"tooltip[tools;"..F(filtername["tools"]).."]"..
+		tab(name, "combat") ..
+		"tooltip[combat;"..F(filtername["combat"]).."]"..
+		tab(name, "mobs") ..
+		"tooltip[mobs;"..F(filtername["mobs"]).."]"..
+		tab(name, "brew") ..
+		"tooltip[brew;"..F(filtername["brew"]).."]"..
+		tab(name, "matr") ..
+		"tooltip[matr;"..F(filtername["matr"]).."]",
+		nici,
+		tab(name, "inv") ..
+		"tooltip[inv;"..F(filtername["inv"]).."]"
 	})
 
 	if name == "nix" then
@@ -593,6 +593,7 @@ function mcl_inventory.set_creative_formspec(player)
 
 		formspec = formspec .. table.concat({
 			"field[5.325,0.15;6.1,0.6;search;;" .. minetest.formspec_escape(filter) .. "]",
+			"field_enter_after_edit[search;true]",
 			"field_close_on_enter[search;false]",
 			"set_focus[search;true]",
 		})
@@ -661,6 +662,10 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		if players[name].page == "matr" then return end
 		set_inv_page("matr", player)
 		page = "matr"
+	elseif fields.nici then
+		if players[name].page == "nici" then return end
+		set_inv_page("nici", player)
+		page = "nici"
 	elseif fields.inv then
 		if players[name].page == "inv" then return end
 		page = "inv"
@@ -725,18 +730,20 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	mcl_inventory.set_creative_formspec(player)
 end)
 
-minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack)
-	return placer and placer:is_player() and minetest.is_creative_enabled(placer:get_player_name())
-end)
 
-if minetest.is_creative_enabled("") then
-	minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack)
+
+minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack)
+	if placer and minetest.is_creative_enabled(placer:get_player_name()) then
 		-- Place infinite nodes, except for shulker boxes
 		local group = minetest.get_item_group(itemstack:get_name(), "shulker_box")
 		return group == 0 or group == nil
-	end)
+	end
+end)
 
-	function minetest.handle_node_drops(pos, drops, digger)
+local old_mt_handle_node_drops = minetest.handle_node_drops
+
+function minetest.handle_node_drops(pos, drops, digger)
+	if digger and minetest.is_creative_enabled(digger:get_player_name()) then
 		if not digger or not digger:is_player() then
 			for _, item in ipairs(drops) do
 				minetest.add_item(pos, item)
@@ -752,6 +759,8 @@ if minetest.is_creative_enabled("") then
 				end
 			end
 		end
+	else
+		return old_mt_handle_node_drops(pos, drops, digger)
 	end
 end
 

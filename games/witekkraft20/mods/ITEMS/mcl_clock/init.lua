@@ -68,7 +68,6 @@ function mcl_clock.register_item(name, image, creative, frame)
 		inventory_image = image,
 		groups = {not_in_creative_inventory=g, tool=1, clock=frame, disable_repair=1},
 		wield_image = "",
-		stack_max = 64,
 	})
 end
 

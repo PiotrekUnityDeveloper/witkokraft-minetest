@@ -2,10 +2,6 @@ mcl_entity_invs = {}
 
 local open_invs = {}
 
-local function mcl_log (message)
-	mcl_util.mcl_log (message, "[Entity Invs]")
-end
-
 local function check_distance(inv,player,count)
 	for _,o in pairs(minetest.get_objects_inside_radius(player:get_pos(),5)) do
 		local l = o:get_luaentity()
@@ -27,19 +23,14 @@ local inv_callbacks = {
 }
 
 function mcl_entity_invs.load_inv(ent,size)
-	mcl_log("load_inv")
 	if not ent._inv_id then return end
-	mcl_log("load_inv 2")
 	local inv = minetest.get_inventory({type="detached", name=ent._inv_id})
 	if not inv then
-		mcl_log("load_inv 3")
 		inv =  minetest.create_detached_inventory(ent._inv_id, inv_callbacks)
 		inv:set_size("main", size)
 		if ent._items then
 			inv:set_list("main",ent._items)
 		end
-	else
-		mcl_log("load_inv 4")
 	end
 	return inv
 end
@@ -62,22 +53,15 @@ local function load_default_formspec (ent, text)
 	local div_by_two = invent_size % 2 == 0
 	local div_by_three =  invent_size % 3 == 0
 
-	--mcl_log("Div by 3: ".. tostring(div_by_three))
-	--mcl_log("Div by 2: ".. tostring(div_by_two))
-	--mcl_log("invent_size: ".. tostring(invent_size))
-	local rows = 3
+	local rows
 	if invent_size > 18 or (div_by_three == true and invent_size > 8) then
-		--mcl_log("Div by 3")
 		rows = 3
 	elseif (div_by_two == true and invent_size > 3) or invent_size > 9 then
-		--mcl_log("Div by 2")
 		rows = 2
 	else
-		--mcl_log("Not div by 2 or 3")
 		rows = 1
 	end
 
-	--local rows = 3
 	local cols = (math.ceil(ent._inv_size/rows))
 	local spacing = (9 - cols) / 2
 
@@ -198,13 +182,15 @@ function mcl_entity_invs.register_inv(entity_name,show_name,size,no_on_righclick
 	local old_od = minetest.registered_entities[entity_name].on_death
 	minetest.registered_entities[entity_name].on_death = function(self,killer)
 		if not self.is_mob then
-			on_remove(self,killer,old_od)
+			return on_remove(self,killer,old_od)
 		end
+		if old_od then return old_od(self,killer) end
 	end
 	local old_odi = minetest.registered_entities[entity_name].on_die
 	minetest.registered_entities[entity_name].on_die = function(self,killer)
 		if self.is_mob then
-			on_remove(self,killer,old_od)
+			return on_remove(self,killer,old_odi)
 		end
+		if old_odi then return old_odi(self,killer) end
 	end
 end

@@ -1,6 +1,11 @@
-local minetest, math, vector = minetest, math, vector
 local modname = minetest.get_current_modname()
 local S = minetest.get_translator(modname)
+
+-- TODO: when < minetest 5.9 isn't supported anymore, remove this variable check and replace all occurences of [hud_elem_type_field] with type
+local hud_elem_type_field = "type"
+if not minetest.features.hud_def_type_field then
+	hud_elem_type_field = "hud_elem_type"
+end
 
 mcl_shields = {
 	types = {
@@ -112,16 +117,18 @@ end
 
 function mcl_shields.is_blocking(obj)
 	if not obj:is_player() then return end
-	local blocking = mcl_shields.players[obj].blocking
-	if blocking <= 0 then
-		return
-	end
+	if mcl_shields.players[obj] then
+		local blocking = mcl_shields.players[obj].blocking
+		if blocking <= 0 then
+			return
+		end
 
-	local shieldstack = obj:get_wielded_item()
-	if blocking == 1 then
-		shieldstack = obj:get_inventory():get_stack("offhand", 1)
+		local shieldstack = obj:get_wielded_item()
+		if blocking == 1 then
+			shieldstack = obj:get_inventory():get_stack("offhand", 1)
+		end
+		return blocking, shieldstack
 	end
-	return blocking, shieldstack
 end
 
 mcl_damage.register_modifier(function(obj, damage, reason)
@@ -149,6 +156,10 @@ mcl_damage.register_modifier(function(obj, damage, reason)
 		return
 	end
 
+	if damager and damager:get_luaentity() and damager:get_luaentity()._piercing and damager:get_luaentity()._piercing > 0 then
+		return
+	end
+
 	local durability = 336
 	local unbreaking = mcl_enchanting.get_enchantment(shieldstack, mcl_shields.enchantments[2])
 	if unbreaking > 0 then
@@ -165,6 +176,23 @@ mcl_damage.register_modifier(function(obj, damage, reason)
 		end
 	end
 	minetest.sound_play({name = "mcl_block"}, {pos = obj:get_pos(), max_hear_distance = 16})
+
+	if mcl_shields.is_blocking(obj) and damager and damager:get_wielded_item() and damager:get_wielded_item():get_name() and
+		(damager:get_wielded_item():get_name() == "mcl_tools:axe_wood" or
+		damager:get_wielded_item():get_name() == "mcl_tools:axe_stone" or
+		damager:get_wielded_item():get_name() == "mcl_tools:axe_iron" or
+		damager:get_wielded_item():get_name() == "mcl_tools:axe_gold" or
+		damager:get_wielded_item():get_name() == "mcl_tools:axe_diamond" or
+		damager:get_wielded_item():get_name() == "mcl_tools:axe_netherite") then
+
+		mcl_shields.players[obj].cooldown = 5
+	elseif mcl_shields.is_blocking(obj) and damager and damager:get_luaentity() and damager:get_luaentity().name and
+		(damager:get_luaentity().name == "mobs_mc:vindicator" or
+		damager:get_luaentity().name == "mobs_mc:piglin_brute") then
+
+		mcl_shields.players[obj].cooldown = 5
+	end
+
 	return 0
 end)
 
@@ -209,16 +237,37 @@ local function set_interact(player, interact)
 		return
 	end
 	local meta = player:get_meta()
-	if meta:get_int("mcl_privs:interact_revoked") ~= 1 then
-		privs.interact = interact
-		minetest.set_player_privs(player_name, privs)
-		meta:set_int("mcl_privs:interact_revoked",0)
+
+	if interact and meta:get_int("mcl_shields:interact_revoked") ~= 0 then
+		meta:set_int("mcl_shields:interact_revoked", 0)
+		privs.interact = true
+	elseif not interact then
+		meta:set_int("mcl_shields:interact_revoked", privs.interact and 1 or 0)
+		privs.interact = nil
 	end
+
+	minetest.set_player_privs(player_name, privs)
 end
+
+-- Prevent player from being able to circumvent interact privilage removal by
+-- using shield.
+minetest.register_on_priv_revoke(function(name, revoker, priv)
+	if priv == "interact" and revoker then
+		local player = minetest.get_player_by_name(name)
+		if not player then
+			return
+		end
+		local meta = player:get_meta()
+		meta:set_int("mcl_shields:interact_revoked", 0)
+	end
+end)
 
 local shield_hud = {}
 
 local function remove_shield_hud(player)
+	set_interact(player, true)
+	playerphysics.remove_physics_factor(player, "speed", "shield_speed")
+
 	if not shield_hud[player] then return end --this function takes a long time. only run it when necessary
 	player:hud_remove(shield_hud[player])
 	shield_hud[player] = nil
@@ -229,16 +278,15 @@ local function remove_shield_hud(player)
 	if not hf.wielditem then
 		player:hud_set_flags({wielditem = true})
 	end
-
-	playerphysics.remove_physics_factor(player, "speed", "shield_speed")
-	set_interact(player, true)
 end
 
 local function add_shield_entity(player, i)
 	local shield = minetest.add_entity(player:get_pos(), "mcl_shields:shield_entity")
-	shield:get_luaentity()._shield_number = i
-	mcl_shields.players[player].shields[i] = shield
-	set_shield(player, false, i)
+	if shield and shield:get_pos() then
+		shield:get_luaentity()._shield_number = i
+		mcl_shields.players[player].shields[i] = shield
+		set_shield(player, false, i)
+	end
 end
 
 local function remove_shield_entity(player, i)
@@ -261,13 +309,24 @@ local function handle_blocking(player)
 	local shield_in_hand = mcl_shields.wielding_shield(player)
 	local not_blocking = player_shield.blocking == 0
 
-	local pos = player:get_pos()
 	if shield_in_hand then
+		if mcl_shields.players[player].cooldown ~= 0 then
+			player_shield.blocking = 0
+			return
+		end
 		if not_blocking then
 			minetest.after(0.25, function()
-				if (not_blocking or not shield_in_offhand) and shield_in_hand and rmb then
+				rmb = player:get_player_control().RMB
+				local is_eating = false
+				if mcl_hunger.is_eating then
+					is_eating = mcl_hunger.is_eating(player)
+				end
+				if (not_blocking or not shield_in_offhand) and shield_in_hand and rmb and not is_eating and mcl_shields.players[player].cooldown == 0 then
 					player_shield.blocking = 2
 					set_shield(player, true, 2)
+				else
+					player_shield.blocking = 0
+					set_shield(player, false, 2)
 				end
 			end)
 		elseif not shield_in_offhand then
@@ -275,7 +334,7 @@ local function handle_blocking(player)
 		end
 	elseif shield_in_offhand then
 		local pointed_thing = mcl_util.get_pointed_thing(player, true)
-		local offhand_can_block = (wielded_item(player) == "" or not pointed_thing)
+		local offhand_can_block = (wielded_item(player) ~= "mcl_shields:shield")
 		and (minetest.get_item_group(wielded_item(player), "bow") ~= 1 and minetest.get_item_group(wielded_item(player), "crossbow") ~= 1)
 
 		if pointed_thing and pointed_thing.type == "node" then
@@ -287,11 +346,23 @@ local function handle_blocking(player)
 		if not offhand_can_block then
 			return
 		end
+		if mcl_shields.players[player].cooldown ~= 0 then
+			player_shield.blocking = 0
+			return
+		end
 		if not_blocking then
 			minetest.after(0.25, function()
-				if (not_blocking or not shield_in_hand) and shield_in_offhand and rmb  and offhand_can_block then
+				rmb = player:get_player_control().RMB
+				local is_eating = false
+				if mcl_hunger.is_eating then
+					is_eating = mcl_hunger.is_eating(player)
+				end
+				if (not_blocking or not shield_in_hand) and shield_in_offhand and rmb and offhand_can_block and not is_eating and mcl_shields.players[player].cooldown == 0 then
 					player_shield.blocking = 1
 					set_shield(player, true, 1)
+				else
+					player_shield.blocking = 0
+					set_shield(player, false, 1)
 				end
 			end)
 		elseif not shield_in_hand then
@@ -334,7 +405,7 @@ local function add_shield_hud(shieldstack, player, blocking)
 		player:hud_set_flags({wielditem = false})
 	end
 	shield_hud[player] = player:hud_add({
-		hud_elem_type = "image",
+		[hud_elem_type_field] = "image",
 		position = {x = 0.5, y = 0.5},
 		scale = {x = -101, y = -101},
 		offset = {x = offset, y = 0},
@@ -342,7 +413,7 @@ local function add_shield_hud(shieldstack, player, blocking)
 		z_index = -200,
 	})
 	playerphysics.add_physics_factor(player, "speed", "shield_speed", 0.5)
-	set_interact(player, nil)
+	set_interact(player, false)
 end
 
 local function update_shield_hud(player, blocking, shieldstack)
@@ -389,6 +460,12 @@ end
 minetest.register_globalstep(function(dtime)
 	for _, player in pairs(minetest.get_connected_players()) do
 
+		if mcl_shields.players[player].cooldown > 0 then
+			mcl_shields.players[player].cooldown = mcl_shields.players[player].cooldown - dtime
+		elseif mcl_shields.players[player].cooldown < 0 then
+			mcl_shields.players[player].cooldown = 0
+		end
+
 		handle_blocking(player)
 
 		local blocking, shieldstack = mcl_shields.is_blocking(player)
@@ -427,10 +504,29 @@ minetest.register_craft({
 	}
 })
 
-for _, colortab in pairs(mcl_banners.colors) do
+local shield_colors = {
+	["unicolor_white"] =      S("White Shield"),
+	["unicolor_darkgrey"] =   S("Grey Shield"),
+	["unicolor_grey"] =       S("Light Grey Shield"),
+	["unicolor_black"] =      S("Black Shield"),
+	["unicolor_red"] =        S("Red Shield"),
+	["unicolor_yellow"] =     S("Yellow Shield"),
+	["unicolor_dark_green"] = S("Green Shield"),
+	["unicolor_cyan"] =       S("Cyan Shield"),
+	["unicolor_blue"] =       S("Blue Shield"),
+	["unicolor_red_violet"] = S("Magenta Shield"),
+	["unicolor_orange"] =     S("Orange Shield"),
+	["unicolor_violet"] =     S("Violet Shield"),
+	["unicolor_brown"] =      S("Brown Shield"),
+	["unicolor_pink"] =       S("Pink Shield"),
+	["unicolor_lime"] =       S("Lime Shield"),
+	["unicolor_light_blue"] = S("Light Blue Shield"),
+}
+
+for colorkey, colortab in pairs(mcl_banners.colors) do
 	local color = colortab[1]
 	minetest.register_tool("mcl_shields:shield_" .. color, {
-		description = S(colortab[6] .. " Shield"),
+		description = shield_colors[colorkey],
 		_doc_items_longdesc = S("A shield is a tool used for protecting the player against attacks."),
 		inventory_image = "mcl_shield.png^(mcl_shield_item_overlay.png^[colorize:" .. colortab[4] ..")",
 		stack_max = 1,
@@ -516,6 +612,7 @@ minetest.register_on_joinplayer(function(player)
 	mcl_shields.players[player] = {
 		shields = {},
 		blocking = 0,
+		cooldown = 0,
 	}
 	remove_shield_hud(player)
 end)

@@ -1,5 +1,6 @@
+mcl_doors = {}
+
 local S = minetest.get_translator(minetest.get_current_modname())
-local minetest_get_meta = minetest.get_meta
 
 -- This helper function calls on_place_node callbacks.
 local function on_place_node(place_to, newnode,
@@ -54,11 +55,19 @@ function mcl_doors:register_door(name, def)
 		def.sound_close = "doors_door_close"
 	end
 
-	if not def.node_box then
-		def.node_box = {{-8/16, -8/16, -8/16, 8/16, 8/16, -5/16}}
+	local box = {{-8/16, -8/16, -8/16, 8/16, 8/16, -5/16}}
+
+	if not def.node_box_bottom then
+		def.node_box_bottom = box
 	end
-	if not def.selection_box then
-		def.selection_box = {{-8/16, -8/16, -8/16, 8/16, 8/16, -5/16}}
+	if not def.node_box_top then
+		def.node_box_top = box
+	end
+	if not def.selection_box_bottom then
+		def.selection_box_bottom= box
+	end
+	if not def.selection_box_top then
+		def.selection_box_top = box
 	end
 
 	local longdesc, usagehelp, tt_help
@@ -66,9 +75,9 @@ function mcl_doors:register_door(name, def)
 	longdesc = def._doc_items_longdesc
 	if not longdesc then
 		if def.only_redstone_can_open then
-			longdesc = S("This door is a 2-block high barrier which can only be opened by redstone power, not by hand.")
-		else
 			longdesc = S("This door is a 2-block high barrier which can be opened or closed by hand or by redstone power.")
+		else
+			longdesc = S("This door is a 2-block high barrier which can only be opened by redstone power, not by hand.")
 		end
 	end
 	usagehelp = def._doc_items_usagehelp
@@ -92,16 +101,15 @@ function mcl_doors:register_door(name, def)
 		craftitem_groups.flammable = def.groups.flammable
 	end
 
-	minetest.register_craftitem(name, {
+	minetest.register_craftitem(":"..name, {
 		description = def.description,
 		_tt_help = tt_help,
 		_doc_items_longdesc = longdesc,
 		_doc_items_usagehelp = usagehelp,
 		inventory_image = def.inventory_image,
-		stack_max = 64,
 		groups = craftitem_groups,
 		on_place = function(itemstack, placer, pointed_thing)
-			if not pointed_thing.type == "node" or not placer or not placer:is_player() then
+			if pointed_thing.type ~= "node" or not placer or not placer:is_player() then
 				return itemstack
 			end
 			local pn = placer:get_player_name()
@@ -110,10 +118,9 @@ function mcl_doors:register_door(name, def)
 			end
 			local ptu = pointed_thing.under
 			local nu = minetest.get_node(ptu)
-			-- Pointed thing's rightclick action takes precedence, unless player holds down the sneak key
-			if minetest.registered_nodes[nu.name] and minetest.registered_nodes[nu.name].on_rightclick and not placer:get_player_control().sneak then
-				return minetest.registered_nodes[nu.name].on_rightclick(ptu, nu, placer, itemstack)
-			end
+
+			local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+			if rc then return rc end
 
 			local pt
 			if minetest.registered_nodes[nu.name] and minetest.registered_nodes[nu.name].buildable_to then
@@ -151,7 +158,7 @@ function mcl_doors:register_door(name, def)
 			local door_dir = 1
 			if left_node.name:sub(1, #name) == name then
 				mirrored = true
-				door_dir = 3
+				door_dir = 2
 				p2 = left_node.param2
 			end
 
@@ -164,14 +171,14 @@ function mcl_doors:register_door(name, def)
 			end
 
 			if def.only_placer_can_open then
-				local meta = minetest_get_meta(pt)
+				local meta = minetest.get_meta(pt)
 				meta:set_string("doors_owner", "")
-				meta = minetest_get_meta(pt2)
+				meta = minetest.get_meta(pt2)
 				meta:set_string("doors_owner", "")
 			end
 
-			local meta1 = minetest_get_meta(pt)
-			local meta2 = minetest_get_meta(pt2)
+			local meta1 = minetest.get_meta(pt)
+			local meta2 = minetest.get_meta(pt2)
 			-- save mirror state for the correct door
 			if mirrored then
 				meta1:set_int("is_mirrored", 1)
@@ -194,30 +201,16 @@ function mcl_doors:register_door(name, def)
 		end,
 	})
 
-	local top_door_texture = def.tiles_top:match("(.+)%..+$") -- This removes the filename extension from the images.
-	local bottom_door_texture = def.tiles_bottom:match("(.+)%..+$") -- This removes the filename extension from the images.
-
-	local texture_top = top_door_texture .. ".png"
-	local texture_bottom = bottom_door_texture .. ".png"
-	local texture_top_toppart = top_door_texture .. "_toppart.png" -- Special texture to make the top of opened doors not look weird.
-	local texture_bottom_bottompart = bottom_door_texture .. "_bottompart.png" -- Special texture to make the bottom of opened doors not look weird.
-	local texture_top_side = top_door_texture .. "_side.png" -- Special texture to make the side of opened doors not look weird.
-	local texture_bottom_side = bottom_door_texture .. "_side.png" -- Special texture to make the side of opened doors not look weird.
-
-	local texture_top_mirrored = texture_top .. "^[transformFX"
-	local texture_bottom_mirrored = texture_bottom .. "^[transformFX"
-	local texture_top_toppart_mirrored = texture_top_toppart .. "^[transformFX"
-	local texture_bottom_bottompart_mirrored = texture_bottom_bottompart .. "^[transformFX"
-	local texture_top_side_mirrored = texture_top_side .. "^[transformFX"
-	local texture_bottom_side_mirrored = texture_bottom_side .. "^[transformFX"
+	local tt = def.tiles_top
+	local tb = def.tiles_bottom
 
 	local function on_open_close(pos, dir, check_name, replace, replace_dir)
-		local meta1 = minetest_get_meta(pos)
+		local meta1 = minetest.get_meta(pos)
 		pos.y = pos.y+dir
-		local meta2 = minetest_get_meta(pos)
+		local meta2 = minetest.get_meta(pos)
 
 		-- if name of other door is not the same as check_name -> return
-		if not minetest.get_node(pos).name == check_name  then
+		if minetest.get_node(pos).name ~= check_name  then
 			return
 		end
 
@@ -248,29 +241,16 @@ function mcl_doors:register_door(name, def)
 	end
 
 	local function on_mesecons_signal_open(pos, node)
-		local meta2 = minetest_get_meta(pos)
-		if meta2:get_int("is_mirrored") ~= 1 then
-			on_open_close(pos, 1, name.."_t_1", name.."_b_2", name.."_t_2")
-		else
-			on_open_close(pos, 1, name.."_t_3", name.."_b_4", name.."_t_4")
-		end
+		on_open_close(pos, 1, name.."_t_1", name.."_b_2", name.."_t_2")
 	end
-
 	local function on_mesecons_signal_close(pos, node)
 		if not mesecon.is_powered({x=pos.x,y=pos.y+1,z=pos.z}) then
-			local meta2 = minetest_get_meta(pos)
-			if meta2:get_int("is_mirrored") ~= 1 then
-				on_open_close(pos, 1, name.."_t_2", name.."_b_1", name.."_t_1")
-			else
-				on_open_close(pos, 1, name.."_t_4", name.."_b_3", name.."_t_3")
-			end
+			on_open_close(pos, 1, name.."_t_2", name.."_b_1", name.."_t_1")
 		end
 	end
-
 	local function on_mesecons_signal_open_top(pos, node)
 		on_mesecons_signal_open({x=pos.x, y=pos.y-1, z=pos.z}, node)
 	end
-
 	local function on_mesecons_signal_close_top(pos, node)
 		if not mesecon.is_powered({x=pos.x,y=pos.y-1,z=pos.z}) then
 			on_mesecons_signal_close({x=pos.x, y=pos.y-1, z=pos.z}, node)
@@ -281,7 +261,7 @@ function mcl_doors:register_door(name, def)
 		if not def.only_placer_can_open then
 			return true
 		end
-		local meta = minetest_get_meta(pos)
+		local meta = minetest.get_meta(pos)
 		local pn = player:get_player_name()
 		return meta:get_string("doors_owner") == pn
 	end
@@ -296,8 +276,8 @@ function mcl_doors:register_door(name, def)
 		end
 	end
 
-	local template_def = {
-		tiles = nil,
+	minetest.register_node(":"..name.."_b_1", {
+		tiles = {"blank.png", tt[2].."^[transformFXR90", tb[2], tb[2].."^[transformFX", tb[1], tb[1].."^[transformFX"},
 		use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "clip" or true,
 		paramtype = "light",
 		paramtype2 = "facedir",
@@ -307,65 +287,56 @@ function mcl_doors:register_door(name, def)
 		drawtype = "nodebox",
 		node_box = {
 			type = "fixed",
-			fixed = def.node_box
+			fixed = def.node_box_bottom
 		},
 		selection_box = {
 			type = "fixed",
-			fixed = def.selection_box
+			fixed = def.selection_box_bottom
 		},
 		groups = def.groups,
 		_mcl_hardness = def._mcl_hardness,
 		_mcl_blast_resistance = def._mcl_blast_resistance,
 		sounds = def.sounds,
 
-		after_destruct = nil,
+		after_destruct = function(bottom, oldnode)
+			local meta_bottom = minetest.get_meta(bottom)
+			if meta_bottom:get_int("rotation") == 1 then
+				meta_bottom:set_int("rotation", 0)
+			else
+				minetest.add_item(bottom, name)
+				local top = { x = bottom.x, y = bottom.y + 1, z = bottom.z }
+				if minetest.get_node(bottom).name ~= name.."_b_2" and minetest.get_node(top).name == name.."_t_1" then
+					minetest.remove_node(top)
+				end
+			end
+		end,
 
-		on_rightclick = nil,
+		on_rightclick = on_rightclick,
 
-		mesecons = nil,
+		mesecons = { effector = {
+			action_on = on_mesecons_signal_open,
+		}},
 
-		on_rotate = nil,
+		on_rotate = function(bottom, node, user, mode, param2)
+			if mode == screwdriver.ROTATE_FACE then
+				local meta_bottom = minetest.get_meta(bottom)
+				meta_bottom:set_int("rotation", 1)
+				node.param2 = screwdriver.rotate.facedir(bottom, node, mode)
+				minetest.swap_node(bottom, node)
+
+				local top = {x=bottom.x,y=bottom.y+1,z=bottom.z}
+				local meta_top = minetest.get_meta(top)
+				meta_top:set_int("rotation", 1)
+				node.name = name .."_t_1"
+				minetest.swap_node(top, node)
+
+				return true
+			end
+			return false
+		end,
 
 		can_dig = check_player_priv,
-	}
-
-	local _b_1_def = table.copy(template_def)
-	_b_1_def.tiles = {"blank.png", texture_bottom_bottompart .. "^[transformFY", texture_bottom_side, texture_bottom_side_mirrored, texture_bottom_mirrored, texture_bottom}
-	_b_1_def.after_destruct = function(bottom, oldnode)
-		local meta_bottom = minetest_get_meta(bottom)
-		if meta_bottom:get_int("rotation") == 1 then
-			meta_bottom:set_int("rotation", 0)
-		else
-			minetest.add_item(bottom, name)
-			local top = { x = bottom.x, y = bottom.y + 1, z = bottom.z }
-			if minetest.get_node(bottom).name ~= name.."_b_2" and minetest.get_node(top).name == name.."_t_1" then
-				minetest.remove_node(top)
-			end
-		end
-	end
-	_b_1_def.on_rightclick = on_rightclick
-	_b_1_def.mesecons = { effector = {
-		action_on = on_mesecons_signal_open,
-	}}
-	_b_1_def.on_rotate = function(bottom, node, user, mode, param2)
-		if mode == screwdriver.ROTATE_FACE then
-			local meta_bottom = minetest_get_meta(bottom)
-			meta_bottom:set_int("rotation", 1)
-			node.param2 = screwdriver.rotate.facedir(bottom, node, mode)
-			minetest.swap_node(bottom, node)
-
-			local top = {x=bottom.x,y=bottom.y+1,z=bottom.z}
-			local meta_top = minetest_get_meta(top)
-			meta_top:set_int("rotation", 1)
-			node.name = name .."_t_1"
-			minetest.swap_node(top, node)
-
-			return true
-		end
-		return false
-	end
-
-	minetest.register_node(name.."_b_1", _b_1_def)
+	})
 
 	if def.only_redstone_can_open then
 		on_rightclick = nil
@@ -377,43 +348,67 @@ function mcl_doors:register_door(name, def)
 		end
 	end
 
-	local _t_1_def = table.copy(template_def)
-	_t_1_def.tiles = {texture_top_toppart .. "^[transformFY", "blank.png", texture_top_side, texture_top_side_mirrored, texture_top_mirrored, texture_top}
-	_t_1_def.after_destruct = function(top, oldnode)
-		local meta_top = minetest_get_meta(top)
-		if meta_top:get_int("rotation") == 1 then
-			meta_top:set_int("rotation", 0)
-		else
-			local bottom = { x = top.x, y = top.y - 1, z = top.z }
-			if minetest.get_node(top).name ~= name.."_t_2" and minetest.get_node(bottom).name == name.."_b_1" and oldnode.name == name.."_t_1" then
-				minetest.dig_node(bottom)
+	minetest.register_node(":"..name.."_t_1", {
+		tiles = {tt[2].."^[transformR90", "blank.png", tt[2], tt[2].."^[transformFX", tt[1], tt[1].."^[transformFX"},
+		use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "clip" or true,
+		paramtype = "light",
+		paramtype2 = "facedir",
+		sunlight_propagates = true,
+		is_ground_content = false,
+		drop = "",
+		drawtype = "nodebox",
+		node_box = {
+			type = "fixed",
+			fixed = def.node_box_top
+		},
+		selection_box = {
+			type = "fixed",
+			fixed = def.selection_box_top
+		},
+		groups = def.groups,
+		_mcl_hardness = def._mcl_hardness,
+		_mcl_blast_resistance = def._mcl_blast_resistance,
+		sounds = def.sounds,
+
+		after_destruct = function(top, oldnode)
+			local meta_top = minetest.get_meta(top)
+			if meta_top:get_int("rotation") == 1 then
+				meta_top:set_int("rotation", 0)
+			else
+				local bottom = { x = top.x, y = top.y - 1, z = top.z }
+				if minetest.get_node(top).name ~= name.."_t_2" and minetest.get_node(bottom).name == name.."_b_1" and oldnode.name == name.."_t_1" then
+					minetest.dig_node(bottom)
+				end
 			end
-		end
-	end
-	_t_1_def.on_rightclick = on_rightclick
-	_t_1_def.mesecons = { effector = {
-		action_on = on_mesecons_signal_open_top,
-		rules = mesecon.rules.flat,
-	}}
-	_t_1_def.on_rotate = function(top, node, user, mode, param2)
-		if mode == screwdriver.ROTATE_FACE then
-			local meta_top = minetest_get_meta(top)
-			meta_top:set_int("rotation", 1)
-			node.param2 = screwdriver.rotate.facedir(top, node, mode)
-			minetest.swap_node(top, node)
+		end,
 
-			local bottom = {x=top.x,y=top.y-1,z=top.z}
-			local meta_bottom = minetest_get_meta(bottom)
-			meta_bottom:set_int("rotation", 1)
-			node.name = name .."_b_1"
-			minetest.swap_node(bottom, node)
+		on_rightclick = on_rightclick,
 
-			return true
-		end
-		return false
-	end
+		mesecons = { effector = {
+			action_on = on_mesecons_signal_open_top,
+			rules = mesecon.rules.flat,
+		}},
 
-	minetest.register_node(name.."_t_1", _t_1_def)
+		on_rotate = function(top, node, user, mode, param2)
+			if mode == screwdriver.ROTATE_FACE then
+				local meta_top = minetest.get_meta(top)
+				meta_top:set_int("rotation", 1)
+				node.param2 = screwdriver.rotate.facedir(top, node, mode)
+				minetest.swap_node(top, node)
+
+				local bottom = {x=top.x,y=top.y-1,z=top.z}
+				local meta_bottom = minetest.get_meta(bottom)
+				meta_bottom:set_int("rotation", 1)
+				node.name = name .."_b_1"
+				minetest.swap_node(bottom, node)
+
+				return true
+			end
+			return false
+		end,
+
+		can_dig = check_player_priv,
+	})
 
 	if def.only_redstone_can_open then
 		on_rightclick = nil
@@ -425,43 +420,67 @@ function mcl_doors:register_door(name, def)
 		end
 	end
 
-	local _b_2_def = table.copy(template_def)
-	_b_2_def.tiles = {"blank.png", texture_bottom_bottompart_mirrored, texture_bottom_side, texture_bottom_side, texture_bottom, texture_bottom_mirrored}
-	_b_2_def.after_destruct = function(bottom, oldnode)
-		local meta_bottom = minetest_get_meta(bottom)
-		if meta_bottom:get_int("rotation") == 1 then
-			meta_bottom:set_int("rotation", 0)
-		else
-			local top = { x = bottom.x, y = bottom.y + 1, z = bottom.z }
-			minetest.add_item(bottom, name)
-			if minetest.get_node(bottom).name ~= name.."_b_1" and minetest.get_node(top).name == name.."_t_2" then
-				minetest.remove_node(top)
+	minetest.register_node(":"..name.."_b_2", {
+		tiles = {"blank.png", tt[2].."^[transformFXR90", tb[2].."^[transformI", tb[2].."^[transformFX", tb[1].."^[transformFX", tb[1]},
+		use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "clip" or true,
+		paramtype = "light",
+		paramtype2 = "facedir",
+		sunlight_propagates = true,
+		is_ground_content = false,
+		drop = "",
+		drawtype = "nodebox",
+		node_box = {
+			type = "fixed",
+			fixed = def.node_box_bottom
+		},
+		selection_box = {
+			type = "fixed",
+			fixed = def.selection_box_bottom
+		},
+		groups = def.groups,
+		_mcl_hardness = def._mcl_hardness,
+		_mcl_blast_resistance = def._mcl_blast_resistance,
+		sounds = def.sounds,
+
+		after_destruct = function(bottom, oldnode)
+			local meta_bottom = minetest.get_meta(bottom)
+			if meta_bottom:get_int("rotation") == 1 then
+				meta_bottom:set_int("rotation", 0)
+			else
+				local top = { x = bottom.x, y = bottom.y + 1, z = bottom.z }
+				minetest.add_item(bottom, name)
+				if minetest.get_node(bottom).name ~= name.."_b_1" and minetest.get_node(top).name == name.."_t_2" then
+					minetest.remove_node(top)
+				end
 			end
-		end
-	end
-	_b_2_def.on_rightclick = on_rightclick
-	_b_2_def.mesecons = { effector = {
-		action_off = on_mesecons_signal_close,
-	}}
-	_b_2_def.on_rotate = function(bottom, node, user, mode, param2)
-		if mode == screwdriver.ROTATE_FACE then
-			local meta_bottom = minetest_get_meta(bottom)
-			meta_bottom:set_int("rotation", 1)
-			node.param2 = screwdriver.rotate.facedir(bottom, node, mode)
-			minetest.swap_node(bottom, node)
+		end,
 
-			local top = {x=bottom.x,y=bottom.y+1,z=bottom.z}
-			local meta_top = minetest_get_meta(top)
-			meta_top:set_int("rotation", 1)
-			node.name = name .."_t_2"
-			minetest.swap_node(top, node)
+		on_rightclick = on_rightclick,
 
-			return true
-		end
-		return false
-	end
+		mesecons = { effector = {
+			action_off = on_mesecons_signal_close,
+		}},
 
-	minetest.register_node(name.."_b_2", _b_2_def)
+		on_rotate = function(bottom, node, user, mode, param2)
+			if mode == screwdriver.ROTATE_FACE then
+				local meta_bottom = minetest.get_meta(bottom)
+				meta_bottom:set_int("rotation", 1)
+				node.param2 = screwdriver.rotate.facedir(bottom, node, mode)
+				minetest.swap_node(bottom, node)
+
+				local top = {x=bottom.x,y=bottom.y+1,z=bottom.z}
+				local meta_top = minetest.get_meta(top)
+				meta_top:set_int("rotation", 1)
+				node.name = name .."_t_2"
+				minetest.swap_node(top, node)
+
+				return true
+			end
+			return false
+		end,
+
+		can_dig = check_player_priv,
+	})
 
 	if def.only_redstone_can_open then
 		on_rightclick = nil
@@ -473,244 +492,74 @@ function mcl_doors:register_door(name, def)
 		end
 	end
 
-	local _t_2_def = table.copy(template_def)
-	_t_2_def.tiles = {texture_top_toppart_mirrored, "blank.png", texture_top_side, texture_top_side, texture_top, texture_top_mirrored}
-	_t_2_def.after_destruct = function(top, oldnode)
-		local meta_top = minetest_get_meta(top)
-		if meta_top:get_int("rotation") == 1 then
-			meta_top:set_int("rotation", 0)
-		else
-			local bottom = { x = top.x, y = top.y - 1, z = top.z }
-			if minetest.get_node(top).name ~= name.."_t_1" and minetest.get_node(bottom).name == name.."_b_2" and oldnode.name == name.."_t_2" then
-				minetest.dig_node(bottom)
+	minetest.register_node(":"..name.."_t_2", {
+		tiles = {tt[2].."^[transformR90", "blank.png", tt[2].."^[transformI", tt[2].."^[transformFX", tt[1].."^[transformFX", tt[1]},
+		use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "clip" or true,
+		paramtype = "light",
+		paramtype2 = "facedir",
+		sunlight_propagates = true,
+		is_ground_content = false,
+		drop = "",
+		drawtype = "nodebox",
+		node_box = {
+			type = "fixed",
+			fixed = def.node_box_top
+		},
+		selection_box = {
+			type = "fixed",
+			fixed = def.selection_box_top
+		},
+		groups = def.groups,
+		_mcl_hardness = def._mcl_hardness,
+		_mcl_blast_resistance = def._mcl_blast_resistance,
+		sounds = def.sounds,
+
+		after_destruct = function(top, oldnode)
+			local meta_top = minetest.get_meta(top)
+			if meta_top:get_int("rotation") == 1 then
+				meta_top:set_int("rotation", 0)
+			else
+				local bottom = { x = top.x, y = top.y - 1, z = top.z }
+				if minetest.get_node(top).name ~= name.."_t_1" and minetest.get_node(bottom).name == name.."_b_2" and oldnode.name == name.."_t_2" then
+					minetest.dig_node(bottom)
+				end
 			end
-		end
-	end
-	_t_2_def.on_rightclick = on_rightclick
-	_t_2_def.mesecons = { effector = {
-		action_off = on_mesecons_signal_close_top,
-		rules = mesecon.rules.flat,
-	}}
-	_t_2_def.on_rotate = function(top, node, user, mode, param2)
-		if mode == screwdriver.ROTATE_FACE then
-			local meta_top = minetest_get_meta(top)
-			meta_top:set_int("rotation", 1)
-			node.param2 = screwdriver.rotate.facedir(top, node, mode)
-			minetest.swap_node(top, node)
+		end,
 
-			local bottom = {x=top.x,y=top.y-1,z=top.z}
-			local meta_bottom = minetest_get_meta(bottom)
-			meta_bottom:set_int("rotation", 1)
-			node.name = name .."_b_2"
-			minetest.swap_node(bottom, node)
+		on_rightclick = on_rightclick,
 
-			return true
-		end
-		return false
-	end
+		mesecons = { effector = {
+			action_off = on_mesecons_signal_close_top,
+			rules = mesecon.rules.flat,
+		}},
 
-	minetest.register_node(name.."_t_2", _t_2_def)
+		on_rotate = function(top, node, user, mode, param2)
+			if mode == screwdriver.ROTATE_FACE then
+				local meta_top = minetest.get_meta(top)
+				meta_top:set_int("rotation", 1)
+				node.param2 = screwdriver.rotate.facedir(top, node, mode)
+				minetest.swap_node(top, node)
 
-	if not def.only_redstone_can_open then
-		on_rightclick = function(pos, node, clicker)
-			if check_player_priv(pos, clicker) then
-				on_open_close(pos, 1, name.."_t_3", name.."_b_4", name.."_t_4")
+				local bottom = {x=top.x,y=top.y-1,z=top.z}
+				local meta_bottom = minetest.get_meta(bottom)
+				meta_bottom:set_int("rotation", 1)
+				node.name = name .."_b_2"
+				minetest.swap_node(bottom, node)
+
+				return true
 			end
-		end
-	end
+			return false
+		end,
 
-	local _b_3_def = table.copy(template_def)
-	_b_3_def.tiles = {"blank.png", texture_bottom_mirrored .. "^[transformFY", texture_bottom_side, texture_bottom_side_mirrored, texture_bottom, texture_bottom_mirrored}
-	_b_3_def.after_destruct = function(bottom, oldnode)
-		local meta_bottom = minetest_get_meta(bottom)
-		if meta_bottom:get_int("rotation") == 1 then
-			meta_bottom:set_int("rotation", 0)
-		else
-			minetest.add_item(bottom, name)
-			local top = { x = bottom.x, y = bottom.y + 1, z = bottom.z }
-			if minetest.get_node(bottom).name ~= name.."_b_4" and minetest.get_node(top).name == name.."_t_3" then
-				minetest.remove_node(top)
-			end
-		end
-	end
-	_b_3_def.on_rightclick = on_rightclick
-	_b_3_def.mesecons = { effector = {
-		action_on = on_mesecons_signal_open,
-	}}
-	_b_3_def.on_rotate = function(bottom, node, user, mode, param2)
-		if mode == screwdriver.ROTATE_FACE then
-			local meta_bottom = minetest_get_meta(bottom)
-			meta_bottom:set_int("rotation", 1)
-			node.param2 = screwdriver.rotate.facedir(bottom, node, mode)
-			minetest.swap_node(bottom, node)
-
-			local top = {x=bottom.x,y=bottom.y+1,z=bottom.z}
-			local meta_top = minetest_get_meta(top)
-			meta_top:set_int("rotation", 1)
-			node.name = name .."_t_3"
-			minetest.swap_node(top, node)
-
-			return true
-		end
-		return false
-	end
-
-	minetest.register_node(name.."_b_3", _b_3_def)
-
-	if def.only_redstone_can_open then
-		on_rightclick = nil
-	else
-		on_rightclick = function(pos, node, clicker)
-			if check_player_priv(pos, clicker) then
-				on_open_close(pos, -1, name.."_b_3", name.."_t_4", name.."_b_4")
-			end
-		end
-	end
-
-	local _t_3_def = table.copy(template_def)
-	_t_3_def.tiles = {texture_top_toppart_mirrored .. "^[transformFY", "blank.png", texture_top_side, texture_top_side_mirrored, texture_top, texture_top_mirrored}
-	_t_3_def.after_destruct = function(top, oldnode)
-		local meta_top = minetest_get_meta(top)
-		if meta_top:get_int("rotation") == 1 then
-			meta_top:set_int("rotation", 0)
-		else
-			local bottom = { x = top.x, y = top.y - 1, z = top.z }
-			if minetest.get_node(top).name ~= name.."_t_4" and minetest.get_node(bottom).name == name.."_b_3" and oldnode.name == name.."_t_3" then
-				minetest.dig_node(bottom)
-			end
-		end
-	end
-	_t_3_def.on_rightclick = on_rightclick
-	_t_3_def.mesecons = { effector = {
-		action_on = on_mesecons_signal_open_top,
-		rules = mesecon.rules.flat,
-	}}
-	_t_3_def.on_rotate = function(top, node, user, mode, param2)
-		if mode == screwdriver.ROTATE_FACE then
-			local meta_top = minetest_get_meta(top)
-			meta_top:set_int("rotation", 1)
-			node.param2 = screwdriver.rotate.facedir(top, node, mode)
-			minetest.swap_node(top, node)
-
-			local bottom = {x=top.x,y=top.y-1,z=top.z}
-			local meta_bottom = minetest_get_meta(bottom)
-			meta_bottom:set_int("rotation", 1)
-			node.name = name .."_b_3"
-			minetest.swap_node(bottom, node)
-
-			return true
-		end
-		return false
-	end
-
-	minetest.register_node(name.."_t_3", _t_3_def)
-
-	if def.only_redstone_can_open then
-		on_rightclick = nil
-	else
-		on_rightclick = function(pos, node, clicker)
-			if check_player_priv(pos, clicker) then
-				on_open_close(pos, 1, name.."_t_4", name.."_b_3", name.."_t_3")
-			end
-		end
-	end
-
-	local _b_4_def = table.copy(template_def)
-	_b_4_def.tiles = {"blank.png", texture_bottom_bottompart, texture_bottom_side_mirrored, texture_bottom_side_mirrored, texture_bottom_mirrored, texture_bottom}
-	_b_4_def.after_destruct = function(bottom, oldnode)
-		local meta_bottom = minetest_get_meta(bottom)
-		if meta_bottom:get_int("rotation") == 1 then
-			meta_bottom:set_int("rotation", 0)
-		else
-			local top = { x = bottom.x, y = bottom.y + 1, z = bottom.z }
-			minetest.add_item(bottom, name)
-			if minetest.get_node(bottom).name ~= name.."_b_3" and minetest.get_node(top).name == name.."_t_4" then
-				minetest.remove_node(top)
-			end
-		end
-	end
-	_b_4_def.on_rightclick = on_rightclick
-	_b_4_def.mesecons = { effector = {
-		action_off = on_mesecons_signal_close,
-	}}
-	_b_4_def.on_rotate = function(bottom, node, user, mode, param2)
-		if mode == screwdriver.ROTATE_FACE then
-			local meta_bottom = minetest_get_meta(bottom)
-			meta_bottom:set_int("rotation", 1)
-			node.param2 = screwdriver.rotate.facedir(bottom, node, mode)
-			minetest.swap_node(bottom, node)
-
-			local top = {x=bottom.x,y=bottom.y+1,z=bottom.z}
-			local meta_top = minetest_get_meta(top)
-			meta_top:set_int("rotation", 1)
-			node.name = name .."_t_4"
-			minetest.swap_node(top, node)
-
-			return true
-		end
-		return false
-	end
-
-	minetest.register_node(name.."_b_4", _b_4_def)
-
-	if def.only_redstone_can_open then
-		on_rightclick = nil
-	else
-		on_rightclick = function(pos, node, clicker)
-			if check_player_priv(pos, clicker) then
-				on_open_close(pos, -1, name.."_b_4", name.."_t_3", name.."_b_3")
-			end
-		end
-	end
-
-	local _t_4_def = table.copy(template_def)
-	_t_4_def.tiles = {texture_top_toppart, "blank.png", texture_top_side_mirrored, texture_top_side_mirrored, texture_top_mirrored, texture_top}
-	_t_4_def.after_destruct = function(top, oldnode)
-		local meta_top = minetest_get_meta(top)
-		if meta_top:get_int("rotation") == 1 then
-			meta_top:set_int("rotation", 0)
-		else
-			local bottom = { x = top.x, y = top.y - 1, z = top.z }
-			if minetest.get_node(top).name ~= name.."_t_3" and minetest.get_node(bottom).name == name.."_b_4" and oldnode.name == name.."_t_4" then
-				minetest.dig_node(bottom)
-			end
-		end
-	end
-	_t_4_def.on_rightclick = on_rightclick
-	_t_4_def.mesecons = { effector = {
-		action_off = on_mesecons_signal_close_top,
-		rules = mesecon.rules.flat,
-	}}
-	_t_4_def.on_rotate = function(top, node, user, mode, param2)
-		if mode == screwdriver.ROTATE_FACE then
-			local meta_top = minetest_get_meta(top)
-			meta_top:set_int("rotation", 1)
-			node.param2 = screwdriver.rotate.facedir(top, node, mode)
-			minetest.swap_node(top, node)
-
-			local bottom = {x=top.x,y=top.y-1,z=top.z}
-			local meta_bottom = minetest_get_meta(bottom)
-			meta_bottom:set_int("rotation", 1)
-			node.name = name .."_b_4"
-			minetest.swap_node(bottom, node)
-
-			return true
-		end
-		return false
-	end
-
-	minetest.register_node(name.."_t_4", _t_4_def)
-
+		can_dig = check_player_priv,
+	})
 
 	-- Add entry aliases for the Help
 	if minetest.get_modpath("doc") then
 		doc.add_entry_alias("craftitems", name, "nodes", name.."_b_1")
 		doc.add_entry_alias("craftitems", name, "nodes", name.."_b_2")
-		doc.add_entry_alias("craftitems", name, "nodes", name.."_b_3")
-		doc.add_entry_alias("craftitems", name, "nodes", name.."_b_4")
 		doc.add_entry_alias("craftitems", name, "nodes", name.."_t_1")
 		doc.add_entry_alias("craftitems", name, "nodes", name.."_t_2")
-		doc.add_entry_alias("craftitems", name, "nodes", name.."_t_3")
-		doc.add_entry_alias("craftitems", name, "nodes", name.."_t_4")
 	end
+
 end

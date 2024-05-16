@@ -1,7 +1,6 @@
 local modname = minetest.get_current_modname()
 local modpath = minetest.get_modpath(modname)
 local S = minetest.get_translator(modname)
-local N = function(s) return s end
 
 local mod_mcl_core = minetest.get_modpath("mcl_core")
 local mod_doc = minetest.get_modpath("doc")
@@ -10,6 +9,7 @@ local node_sounds
 if minetest.get_modpath("mcl_sounds") then
 	node_sounds = mcl_sounds.node_sound_wood_defaults()
 end
+dofile(modpath.."/items.lua")
 
 -- Helper function
 local function round(num, idp)
@@ -22,22 +22,26 @@ mcl_banners = {}
 mcl_banners.colors = {
 	-- Format:
 	-- [ID] = { banner description, wool, unified dyes color group, overlay color, dye, color name for emblazonings }
-	["unicolor_white"] =      {"white",      S("White Banner"),      "mcl_wool:white", "#C8C8C8", "mcl_dye:white", N("White") },
-	["unicolor_darkgrey"] =   {"grey",       S("Grey Banner"),       "mcl_wool:grey", "#303030", "mcl_dye:dark_grey", N("Grey") },
-	["unicolor_grey"] =       {"silver",     S("Light Grey Banner"), "mcl_wool:silver", "#5B5B5B", "mcl_dye:grey", N("Light Grey") },
-	["unicolor_black"] =      {"black",      S("Black Banner"),      "mcl_wool:black", "#000000", "mcl_dye:black", N("Black") },
-	["unicolor_red"] =        {"red",        S("Red Banner"),        "mcl_wool:red", "#760F15", "mcl_dye:red", N("Red") },
-	["unicolor_yellow"] =     {"yellow",     S("Yellow Banner"),     "mcl_wool:yellow", "#E2b43E", "mcl_dye:yellow", N("Yellow") },
-	["unicolor_dark_green"] = {"green",      S("Green Banner"),      "mcl_wool:green", "#385833", "mcl_dye:dark_green", N("Green") },
-	["unicolor_cyan"] =       {"cyan",       S("Cyan Banner"),       "mcl_wool:cyan", "#114C56", "mcl_dye:cyan", N("Cyan") },
-	["unicolor_blue"] =       {"blue",       S("Blue Banner"),       "mcl_wool:blue", "#20336B", "mcl_dye:blue", N("Blue") },
-	["unicolor_red_violet"] = {"magenta",    S("Magenta Banner"),    "mcl_wool:magenta", "#B36897", "mcl_dye:magenta", N("Magenta")},
-	["unicolor_orange"] =     {"orange",     S("Orange Banner"),     "mcl_wool:orange", "#B35E2E", "mcl_dye:orange", N("Orange") },
-	["unicolor_violet"] =     {"purple",     S("Purple Banner"),     "mcl_wool:purple", "#764F91", "mcl_dye:violet", N("Violet") },
-	["unicolor_brown"] =      {"brown",      S("Brown Banner"),      "mcl_wool:brown", "#46251A", "mcl_dye:brown", N("Brown") },
-	["unicolor_pink"] =       {"pink",       S("Pink Banner"),       "mcl_wool:pink", "#C98196", "mcl_dye:pink", N("Pink") },
-	["unicolor_lime"] =       {"lime",       S("Lime Banner"),       "mcl_wool:lime", "#7DA553", "mcl_dye:green", N("Lime") },
-	["unicolor_light_blue"] = {"light_blue", S("Light Blue Banner"), "mcl_wool:light_blue", "#5176B2", "mcl_dye:lightblue", N("Light Blue") },
+	["unicolor_white"] =      {"white",      S("White Banner"),      "mcl_wool:white", mcl_dyes.colors.white.rgb, "mcl_dyes:white", S("White") },
+	["unicolor_darkgrey"] =   {"grey",       S("Grey Banner"),       "mcl_wool:grey", mcl_dyes.colors.grey.rgb, "mcl_dyes:dark_grey", S("Grey") },
+	["unicolor_grey"] =       {"silver",     S("Light Grey Banner"), "mcl_wool:silver", mcl_dyes.colors.silver.rgb, "mcl_dyes:grey", S("Light Grey") },
+	["unicolor_black"] =      {"black",      S("Black Banner"),      "mcl_wool:black", mcl_dyes.colors.black.rgb, "mcl_dyes:black", S("Black") },
+	["unicolor_red"] =        {"red",        S("Red Banner"),        "mcl_wool:red", mcl_dyes.colors.red.rgb, "mcl_dyes:red", S("Red") },
+	["unicolor_yellow"] =     {"yellow",     S("Yellow Banner"),     "mcl_wool:yellow", mcl_dyes.colors.yellow.rgb, "mcl_dyes:yellow", S("Yellow") },
+	["unicolor_dark_green"] = {"green",      S("Green Banner"),      "mcl_wool:green", mcl_dyes.colors.green.rgb, "mcl_dyes:dark_green", S("Green") },
+	["unicolor_cyan"] =       {"cyan",       S("Cyan Banner"),       "mcl_wool:cyan", mcl_dyes.colors.cyan.rgb, "mcl_dyes:cyan", S("Cyan") },
+	["unicolor_blue"] =       {"blue",       S("Blue Banner"),       "mcl_wool:blue", mcl_dyes.colors.blue.rgb, "mcl_dyes:blue", S("Blue") },
+	["unicolor_red_violet"] = {"magenta",    S("Magenta Banner"),    "mcl_wool:magenta", mcl_dyes.colors.magenta.rgb, "mcl_dyes:magenta", S("Magenta")},
+	["unicolor_orange"] =     {"orange",     S("Orange Banner"),     "mcl_wool:orange", mcl_dyes.colors.orange.rgb, "mcl_dyes:orange", S("Orange") },
+	["unicolor_violet"] =     {"purple",     S("Purple Banner"),     "mcl_wool:purple", mcl_dyes.colors.purple.rgb, "mcl_dyes:violet", S("Violet") },
+	["unicolor_brown"] =      {"brown",      S("Brown Banner"),      "mcl_wool:brown", mcl_dyes.colors.brown.rgb, "mcl_dyes:brown", S("Brown") },
+	["unicolor_dark_orange"] ={"brown",      S("Brown Banner"),      "mcl_wool:brown", mcl_dyes.colors.brown.rgb, "mcl_dyes:brown", S("Brown") },
+	["unicolor_pink"] =       {"pink",       S("Pink Banner"),       "mcl_wool:pink", mcl_dyes.colors.pink.rgb, "mcl_dyes:pink", S("Pink") },
+	["unicolor_light_red"] =  {"pink",       S("Pink Banner"),       "mcl_wool:pink", mcl_dyes.colors.pink.rgb, "mcl_dyes:pink", S("Pink") },
+	["unicolor_lime"] =       {"lime",       S("Lime Banner"),       "mcl_wool:lime", mcl_dyes.colors.lime.rgb, "mcl_dyes:green", S("Lime") },
+	["unicolor_green"] =      {"lime",       S("Lime Banner"),       "mcl_wool:lime", mcl_dyes.colors.lime.rgb, "mcl_dyes:green", S("Lime") },
+	--the duplicate lines for brown/dark_orange, lime/green and pink/light_red are needed because mcl_banners previously used the wrong unicolor color names
+	["unicolor_light_blue"] = {"light_blue", S("Light Blue Banner"), "mcl_wool:light_blue", mcl_dyes.colors.light_blue.rgb, "mcl_dyes:lightblue", S("Light Blue") },
 }
 
 
@@ -81,6 +85,8 @@ local pattern_names = {
       "triangle_top",
       "triangles_bottom",
       "triangles_top",
+      "globe",
+      "piglin",
 }
 
 local colors_reverse = {}
@@ -96,8 +102,8 @@ end
 dofile(modpath.."/patterncraft.lua")
 
 -- Overlay ratios (0-255)
-local base_color_ratio = 225
-local layer_ratio = 225
+local base_color_ratio = 224
+local layer_ratio = 255
 
 local standing_banner_entity_offset = { x=0, y=-0.499, z=0 }
 local hanging_banner_entity_offset = { x=0, y=-1.7, z=0 }
@@ -177,13 +183,15 @@ function mcl_banners.make_banner_texture(base_color, layers)
 			local finished_banner = base
 			for l=1, #layers do
 				local layerinfo = layers[l]
-				local pattern = "mcl_banners_" .. layerinfo.pattern .. ".png"
-				local color = mcl_banners.colors[layerinfo.color][4]
+				if layerinfo and layerinfo.pattern and layerinfo.color and mcl_banners.colors[layerinfo.color] then
+					local pattern = "mcl_banners_" .. layerinfo.pattern .. ".png"
+					local color = mcl_banners.colors[layerinfo.color][4]
 
-				-- Generate layer texture
-				local layer = "((mcl_banners_banner_base.png^[colorize:"..color..":"..layer_ratio..")^[mask:"..pattern..")"
+					-- Generate layer texture
+					local layer = "(("..pattern.."^[colorize:"..color..":"..layer_ratio..")^[mask:"..pattern..")"
 
-				finished_banner = finished_banner .. "^" .. layer
+					finished_banner = finished_banner .. "^" .. layer
+				end
 			end
 			return finished_banner
 		end
@@ -281,7 +289,7 @@ S("You can copy the pattern of a banner by placing two banners of the same color
 	wield_image = "mcl_banners_item_base.png",
 
 	selection_box = {type = "fixed", fixed= {-0.3, -0.5, -0.3, 0.3, 0.5, 0.3} },
-	groups = {axey=1,handy=1, attached_node = 1, not_in_creative_inventory = 1, not_in_craft_guide = 1, material_wood=1, dig_by_piston=1, flammable=-1 },
+	groups = {axey=1,handy=1, attached_node = 1, not_in_creative_inventory = 1, banner = 1, not_in_craft_guide = 1, material_wood=1, dig_by_piston=1, flammable=-1 },
 	stack_max = 16,
 	sounds = node_sounds,
 	drop = "", -- Item drops are handled in entity code
@@ -325,7 +333,7 @@ minetest.register_node("mcl_banners:hanging_banner", {
 		wall_bottom = { -0.49, -0.49, -0.49, -0.41, -0.41, 0.49 },
 	},
 	selection_box = {type = "wallmounted", wall_side = {-0.5, -0.5, -0.5, -4/16, 0.5, 0.5} },
-	groups = {axey=1,handy=1, attached_node = 1, not_in_creative_inventory = 1, not_in_craft_guide = 1, material_wood=1, flammable=-1 },
+	groups = {axey=1,handy=1, attached_node = 1, not_in_creative_inventory = 1, banner = 1, not_in_craft_guide = 1, material_wood=1, flammable=-1 },
 	stack_max = 16,
 	sounds = node_sounds,
 	drop = "", -- Item drops are handled in entity code
@@ -366,7 +374,7 @@ minetest.register_node("mcl_banners:hanging_banner", {
 for colorid, colortab in pairs(mcl_banners.colors) do
     for i, pattern_name in ipairs(pattern_names) do
 	local itemid = colortab[1]
-	local desc = colortab[2]
+	local desc = S("@1 Banner", mcl_dyes.colors[itemid].readable_name)
 	local wool = colortab[3]
 	local colorize = colortab[4]
 
@@ -445,10 +453,8 @@ for colorid, colortab in pairs(mcl_banners.colors) do
 
 			local node_under = minetest.get_node(under)
 			if placer and not placer:get_player_control().sneak then
-				-- Use pointed node's on_rightclick function first, if present
-				if minetest.registered_nodes[node_under.name] and minetest.registered_nodes[node_under.name].on_rightclick then
-					return minetest.registered_nodes[node_under.name].on_rightclick(under, node_under, placer, itemstack) or itemstack
-				end
+				local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+				if rc then return rc end
 
 				if minetest.get_modpath("mcl_cauldrons") then
 					-- Use banner on cauldron to remove the top-most layer. This reduces the water level by 1.
@@ -483,7 +489,7 @@ for colorid, colortab in pairs(mcl_banners.colors) do
 
 						-- Washing off reduces the water level by 1.
 						-- (It is possible to waste water if the banner had 0 layers.)
-						minetest.set_node(pointed_thing.under, {name=new_node})
+						minetest.swap_node(pointed_thing.under, {name=new_node})
 
 						-- Play sound (from mcl_potions mod)
 						minetest.sound_play("mcl_potions_bottle_pour", {pos=pointed_thing.under, gain=0.5, max_hear_range=16}, true)
@@ -491,6 +497,16 @@ for colorid, colortab in pairs(mcl_banners.colors) do
 						return itemstack
 					end
 				end
+			end
+
+			-- Update old pre 0.84.0 Ominous Banners with correct description.
+			local stackmeta = itemstack:get_meta()
+			if stackmeta:get_string("name"):find("Ominous Banner") then
+				local oban_layers = minetest.deserialize(stackmeta:get_string("layers"))
+				local banner_description = string.gsub(itemstack:get_definition().description, "White Banner", "Ominous Banner")
+				local description = mcl_banners.make_advanced_banner_description(banner_description, oban_layers)
+				stackmeta:set_string("description", description)
+				stackmeta:set_string("name", "")
 			end
 
 			-- Place the node!
@@ -510,7 +526,8 @@ for colorid, colortab in pairs(mcl_banners.colors) do
 				hanging = true
 			end
 			local place_pos
-			if minetest.registered_nodes[node_under.name].buildable_to then
+			local def_under = minetest.registered_nodes[node_under.name]
+			if def_under and def_under.buildable_to then
 				place_pos = under
 			else
 				place_pos = above
@@ -613,13 +630,15 @@ end
 
 -- Banner entities.
 local entity_standing = {
-	physical = false,
-	collide_with_objects = false,
-	visual = "mesh",
-	mesh = "amc_banner.b3d",
-	visual_size = { x=2.499, y=2.499 },
-	textures = {mcl_banners.make_banner_texture()},
-	pointable = false,
+	initial_properties = {
+		physical = false,
+		collide_with_objects = false,
+		visual = "mesh",
+		mesh = "amc_banner.b3d",
+		visual_size = { x=2.499, y=2.499 },
+		textures = {mcl_banners.make_banner_texture()},
+		pointable = false,
+	},
 
 	_base_color = nil, -- base color of banner
 	_layers = nil, -- table of layers painted over the base color.

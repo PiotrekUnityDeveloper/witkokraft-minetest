@@ -1,10 +1,6 @@
----@diagnostic disable lowercase-global
-
 local S = minetest.get_translator(minetest.get_current_modname())
 local F = minetest.formspec_escape
 local C = minetest.colorize
-local show_formspec = minetest.show_formspec
-
 mcl_crafting_table = {}
 
 mcl_crafting_table.formspec = table.concat({
@@ -35,17 +31,28 @@ mcl_crafting_table.formspec = table.concat({
 	--Crafting guide button
 	"image_button[0.325,1.95;1.1,1.1;craftguide_book.png;__mcl_craftguide;]",
 	"tooltip[__mcl_craftguide;" .. F(S("Recipe book")) .. "]",
+
+	"image_button[6.025,3.175;1,1;mcl_crafting_table_inv_fill.png;__mcl_crafting_fillgrid;]",
+	"tooltip[__mcl_crafting_fillgrid;" .. F(S("Fill Craft Grid")) .. "]",
 })
 
----@param player ObjectRef
+function mcl_crafting_table.has_crafting_table(player)
+	local wdef = player:get_wielded_item():get_definition()
+	local range = wdef and wdef.range or ItemStack():get_definition().range or tonumber(minetest.settings:get("mcl_hand_range")) or 4.5
+	return minetest.is_creative_enabled(player:get_player_name()) or minetest.find_node_near(player:get_pos(), range, { "mcl_crafting_table:crafting_table" })
+end
+
 function mcl_crafting_table.show_crafting_form(player)
+	if not mcl_crafting_table.has_crafting_table(player) then
+		return
+	end
 	local inv = player:get_inventory()
 	if inv then
 		inv:set_width("craft", 3)
 		inv:set_size("craft", 9)
 	end
 
-	show_formspec(player:get_player_name(), "main", mcl_crafting_table.formspec)
+	minetest.show_formspec(player:get_player_name(), "main", mcl_crafting_table.formspec)
 end
 
 minetest.register_node("mcl_crafting_table:crafting_table", {

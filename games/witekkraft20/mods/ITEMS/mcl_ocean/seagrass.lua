@@ -20,13 +20,10 @@ local function seagrass_on_place(itemstack, placer, pointed_thing)
 	local pos_above = pointed_thing.above
 	local node_under = minetest.get_node(pos_under)
 	local node_above = minetest.get_node(pos_above)
-	local def_under = minetest.registered_nodes[node_under.name]
 	local def_above = minetest.registered_nodes[node_above.name]
 
-	if def_under and def_under.on_rightclick and not placer:get_player_control().sneak then
-		return def_under.on_rightclick(pos_under, node_under,
-				placer, itemstack, pointed_thing) or itemstack
-	end
+	local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+	if rc then return rc end
 
 	if pos_under.y >= pos_above.y then
 		return itemstack
@@ -39,7 +36,13 @@ local function seagrass_on_place(itemstack, placer, pointed_thing)
 		return itemstack
 	end
 
-	if mcl_util.check_area_protection(pos_under, pos_above, placer) then
+	if minetest.is_protected(pos_under, player_name) or
+			minetest.is_protected(pos_above, player_name) then
+		minetest.log("action", player_name
+			.. " tried to place " .. itemstack:get_name()
+			.. " at protected position "
+			.. minetest.pos_to_string(pos_under))
+		minetest.record_protection_violation(pos_under, player_name)
 		return itemstack
 	end
 
@@ -112,7 +115,7 @@ for s=1, #surfaces do
 		drawtype = "plantlike_rooted",
 		paramtype = "light",
 		paramtype2 = "meshoptions",
-		param2 = 3,
+		place_param2 = 3,
 		tiles = def.tiles,
 		special_tiles = {
 			{
@@ -149,3 +152,16 @@ end
 if mod_doc then
 	doc.add_entry_alias("nodes", "mcl_ocean:seagrass_dirt", "craftitems", "mcl_ocean:seagrass")
 end
+
+minetest.register_lbm({
+	label = "Fix incorrect seagrass",
+	name = "mcl_ocean:fix_incorrect_seagrass",
+	nodenames = {"group:seagrass"},
+	run_at_every_load = false,
+	action = function(pos, node)
+		if node.param2 ~= 3 then
+			node.param2 = 3
+			minetest.set_node(pos, node)
+		end
+	end
+})

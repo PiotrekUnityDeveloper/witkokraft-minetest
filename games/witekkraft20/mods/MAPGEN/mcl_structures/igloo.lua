@@ -1,5 +1,4 @@
 local modname = minetest.get_current_modname()
-local S = minetest.get_translator(modname)
 local modpath = minetest.get_modpath(modname)
 
 function mcl_structures.generate_igloo_top(pos, pr)
@@ -26,9 +25,11 @@ local function spawn_mobs(p1,p2,vi,zv)
 		elseif zv and vi then
 			return
 		end
-		vi = minetest.add_entity(vector.offset(mc[1],0,1,0),"mobs_mc:villager")
-		zv = minetest.add_entity(vector.offset(mc[2],0,1,0),"mobs_mc:villager_zombie")
-		minetest.after(1,spawn_mobs,p1,p2,vi,zv)
+		vi = minetest.add_entity(vector.offset(vp,0,1,0),"mobs_mc:villager")
+		zv = minetest.add_entity(vector.offset(zp,0,1,0),"mobs_mc:villager_zombie")
+		if vi and vi:get_pos() and zv and zv:get_pos() then
+			minetest.after(1,spawn_mobs,p1,p2,vi,zv)
+		end
 	end
 end
 

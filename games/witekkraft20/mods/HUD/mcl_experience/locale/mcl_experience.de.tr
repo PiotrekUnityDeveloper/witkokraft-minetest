@@ -1,4 +1,5 @@
 # textdomain: mcl_experience
+Bottle o' Enchanting=
 [[<player>] <xp>]=[[<Spieler>] <EP>]
 Gives a player some XP=Gibt einen Spieler ein paar EP
 Error: Too many parameters!=Fehler: Zu viele Parameter!

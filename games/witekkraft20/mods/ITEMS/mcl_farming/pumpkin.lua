@@ -7,13 +7,35 @@ if mod_screwdriver then
 	on_rotate = screwdriver.rotate_simple
 end
 
+local function on_bone_meal(itemstack,placer,pointed_thing,pos,node)
+	return mcl_farming.on_bone_meal(itemstack,placer,pointed_thing,pos,node,"plant_pumpkin_stem")
+end
+
+local function carve_pumpkin(itemstack, placer, pointed_thing)
+	-- Only carve pumpkin if used on side
+	if pointed_thing.above.y ~= pointed_thing.under.y then
+		return
+	end
+	if not minetest.is_creative_enabled(placer:get_player_name()) then
+		-- Add wear (as if digging a shearsy node)
+		local toolname = itemstack:get_name()
+		local wear = mcl_autogroup.get_wear(toolname, "shearsy")
+		itemstack:add_wear(wear)
+	end
+	minetest.sound_play({name="default_grass_footstep", gain=1}, {pos = pointed_thing.above}, true)
+	local dir = vector.subtract(pointed_thing.under, pointed_thing.above)
+	local param2 = minetest.dir_to_facedir(dir)
+	minetest.set_node(pointed_thing.under, {name="mcl_farming:pumpkin_face", param2 = param2})
+	minetest.add_item(pointed_thing.above, "mcl_farming:pumpkin_seeds 4")
+	return itemstack, true
+end
+
 -- Seeds
 minetest.register_craftitem("mcl_farming:pumpkin_seeds", {
 	description = S("Pumpkin Seeds"),
 	_tt_help = S("Grows on farmland"),
 	_doc_items_longdesc = S("Grows into a pumpkin stem which in turn grows pumpkins. Chickens like pumpkin seeds."),
 	_doc_items_usagehelp = S("Place the pumpkin seeds on farmland (which can be created with a hoe) to plant a pumpkin stem. Pumpkin stems grow in sunlight and grow faster on hydrated farmland. When mature, the stem attempts to grow a pumpkin next to it. Rightclick an animal to feed it pumpkin seeds."),
-	stack_max = 64,
 	inventory_image = "mcl_farming_pumpkin_seeds.png",
 	groups = {craftitem=1, compostability = 30},
 	on_place = function(itemstack, placer, pointed_thing)
@@ -38,7 +60,7 @@ local stem_drop = {
 		{ items = {"mcl_farming:pumpkin_seeds 2"}, rarity = 31 },
 
 		-- 3 seeds: 1/125 chance
-		{ items = {"mcl_farming:pumkin_seeds 3"}, rarity = 125 },
+		{ items = {"mcl_farming:pumpkin_seeds 3"}, rarity = 125 },
 	},
 }
 
@@ -79,6 +101,7 @@ for s=1,7 do
 		groups = {dig_immediate=3, not_in_creative_inventory=1, plant=1,attached_node=1, dig_by_water=1,destroy_by_lava_flow=1,},
 		sounds = mcl_sounds.node_sound_leaves_defaults(),
 		_mcl_blast_resistance = 0,
+		_on_bone_meal = on_bone_meal,
 	})
 end
 
@@ -96,15 +119,15 @@ local pumpkin_base_def = {
 	description = S("Faceless Pumpkin"),
 	_doc_items_longdesc = S("A faceless pumpkin is a decorative block. It can be carved with shears to obtain pumpkin seeds."),
 	_doc_items_usagehelp = S("To carve a face into the pumpkin, use the shears on the side you want to carve."),
-	stack_max = 64,
 	paramtype2 = "facedir",
 	tiles = {"farming_pumpkin_top.png", "farming_pumpkin_top.png", "farming_pumpkin_side.png"},
 	groups = {
-		handy = 1, axey = 1, plant = 1, building_block = 1, dig_by_piston = 1, dig_immediate_piston = 1,
+		handy = 1, axey = 1, plant = 1, building_block = 1, dig_by_piston = 1,
 		pumpkin = 1, enderman_takable = 1, compostability = 65
 	},
 	sounds = mcl_sounds.node_sound_wood_defaults(),
 	on_rotate = on_rotate,
+	_on_shears_place = carve_pumpkin,
 	_mcl_blast_resistance = 1,
 	_mcl_hardness = 1,
 }
@@ -123,11 +146,18 @@ pumpkin_face_base_def._mcl_armor_mob_range_mob = "mobs_mc:enderman"
 
 pumpkin_face_base_def._mcl_armor_element = "head"
 pumpkin_face_base_def._mcl_armor_texture = "mcl_farming_pumpkin_face.png"
+pumpkin_face_base_def._on_shears_place = nil
 
-pumpkin_face_base_def.on_construct = function(pos)
+pumpkin_face_base_def.after_place_node = function(pos, placer, itemstack, pointed_thing)
 	-- Attempt to spawn iron golem or snow golem
-	mobs_mc.check_iron_golem_summon(pos)
-	mobs_mc.check_snow_golem_summon(pos)
+	mobs_mc.check_iron_golem_summon(pos, placer)
+	mobs_mc.check_snow_golem_summon(pos, placer)
+end
+
+-- TODO: when < minetest 5.9 isn't supported anymore, remove this variable check and replace all occurences of [hud_elem_type_field] with type
+local hud_elem_type_field = "type"
+if not minetest.features.hud_def_type_field then
+	hud_elem_type_field = "hud_elem_type"
 end
 
 if minetest.get_modpath("mcl_armor") then
@@ -135,7 +165,7 @@ if minetest.get_modpath("mcl_armor") then
 	local function add_pumpkin_hud(player)
 		pumpkin_hud[player] = {
 			pumpkin_blur = player:hud_add({
-				hud_elem_type = "image",
+				[hud_elem_type_field] = "image",
 				position = {x = 0.5, y = 0.5},
 				scale = {x = -101, y = -101},
 				text = "mcl_farming_pumpkin_hud.png",
@@ -144,7 +174,7 @@ if minetest.get_modpath("mcl_armor") then
 			--this is a fake crosshair, because hotbar and crosshair doesn't support z_index
 			--TODO: remove this and add correct z_index values
 			fake_crosshair = player:hud_add({
-				hud_elem_type = "image",
+				[hud_elem_type_field] = "image",
 				position = {x = 0.5, y = 0.5},
 				scale = {x = 1, y = 1},
 				text = "crosshair.png",
@@ -194,7 +224,6 @@ minetest.register_node("mcl_farming:pumpkin_face_light", {
 	description = S("Jack o'Lantern"),
 	_doc_items_longdesc = S("A jack o'lantern is a traditional Halloween decoration made from a pumpkin. It glows brightly."),
 	is_ground_content = false,
-	stack_max = 64,
 	paramtype = "light",
 	paramtype2 = "facedir",
 	light_source = minetest.LIGHT_MAX,
@@ -227,7 +256,6 @@ minetest.register_craft({
 minetest.register_craftitem("mcl_farming:pumpkin_pie", {
 	description = S("Pumpkin Pie"),
 	_doc_items_longdesc = S("A pumpkin pie is a tasty food item which can be eaten."),
-	stack_max = 64,
 	inventory_image = "mcl_farming_pumpkin_pie.png",
 	wield_image = "mcl_farming_pumpkin_pie.png",
 	on_place = minetest.item_eat(8),

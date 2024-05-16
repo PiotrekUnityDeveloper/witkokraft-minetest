@@ -1,5 +1,4 @@
-# textdomain:doc_items
-Using it as fuel turns it into: @1.=
+# textdomain: doc_items
 @1 seconds=
 # Item count times item name
 @1×@2=
@@ -31,7 +30,6 @@ Item reference of blocks and other things which are capable of occupying space=
 Item reference of items which are neither blocks, tools or weapons (esp. crafting items)=
 Liquids can flow into this block and destroy it.=
 Maximum stack size: @1=
-Mining level: @1=
 Mining ratings:=
 • @1, rating @2: @3 s - @4 s=
 • @1, rating @2: @3 s=
@@ -49,10 +47,6 @@ Range: @1=
 # Range: <Hand> (<Range>)
 Range: @1 (@2)=
 Range: 4=
-# Rating used for digging times
-Rating @1=
-# @1 is minimal rating, @2 is maximum rating
-Rating @1-@2=
 The fall damage on this block is increased by @1%.=
 The fall damage on this block is reduced by @1%.=
 This block allows light to propagate with a small loss of brightness, and sunlight can even go through losslessly.=
@@ -93,7 +87,6 @@ This block will drop as an item when no collidable block is below it.=
 This block will drop the following items when mined: @1.=
 This block will drop the following when mined: @1×@2.=
 This block will drop the following when mined: @1.=
-This block will drop the following when mined: @1.=
 This block will make you bounce off with an elasticity of @1%.=
 This block will randomly drop one of the following when mined: @1.=
 This block will randomly drop up to @1 drops of the following possible drops when mined: @2.=
@@ -119,14 +112,10 @@ Walking on this block is completely silent.=
 Whenever you are not wielding any item, you use the hand which acts as a tool with its own capabilities. When you are wielding an item which is not a mining tool or a weapon it will behave as if it would be the hand.=
 Yes=
 You can not jump while standing on this block.=
-any level=
-level 0=
-level 0-@1=
 unknown=
 Unknown item (@1)=
 • @1: @2=
 • @1: @2 HP=
-• @1: @2, @3=
 • Flowing range: @1=
 • No flowing=
 • Not renewable=
@@ -141,3 +130,15 @@ Mining durability:=
 This block's rotation is affected by the way you place it: Place it on the floor or ceiling for a vertical orientation; place it at the side for a horizontal orientation. Sneaking while placing it leads to a perpendicular orientation instead.=
 Toughness level: @1=
 This block is slippery.=
+ Using it as fuel turns it into: @1.=
+##### not used anymore #####
+Using it as fuel turns it into: @1.=
+Mining level: @1=
+# Rating used for digging times
+Rating @1=
+# @1 is minimal rating, @2 is maximum rating
+Rating @1-@2=
+any level=
+level 0=
+level 0-@1=
+• @1: @2, @3=

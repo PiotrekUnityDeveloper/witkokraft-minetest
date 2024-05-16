@@ -9,8 +9,6 @@ local S = minetest.get_translator("mobs_mc")
 --################### OCELOT AND CAT
 --###################
 
-local pr = PseudoRandom(os.time()*12)
-
 local default_walk_chance = 70
 
 local follow = {
@@ -29,6 +27,7 @@ local ocelot = {
 	description = S("Ocelot"),
 	type = "animal",
 	spawn_class = "passive",
+	passive = false,
 	can_despawn = true,
 	spawn_in_group = 3,
 	spawn_in_group_min = 1,
@@ -75,7 +74,6 @@ local ocelot = {
 	},
 	follow = follow,
 	view_range = 12,
-	passive = true,
 	attack_type = "dogfight",
 	pathfinding = 1,
 	damage = 2,
@@ -92,15 +90,17 @@ local ocelot = {
 				clicker:set_wielded_item(item)
 			end
 			-- 1/3 chance of getting tamed
-			if pr:next(1, 3) == 1 then
-				local yaw = self.object:get_yaw()
-				local cat = minetest.add_entity(self.object:get_pos(), "mobs_mc:cat")
-				cat:set_yaw(yaw)
-				local ent = cat:get_luaentity()
-				ent.owner = clicker:get_player_name()
-				ent.tamed = true
-				self.object:remove()
-				return
+			if math.random(3) == 1 then
+				local cat = mcl_util.replace_mob(self.object, "mobs_mc:cat")
+				if cat and cat:get_pos() then
+					local ent = cat:get_luaentity()
+					ent.owner = clicker:get_player_name()
+					ent.tamed = true
+					ent.jump = false
+					ent.state = "stand"
+					ent.health = self.health
+					return
+				end
 			end
 		end
 
@@ -111,142 +111,81 @@ mcl_mobs.register_mob("mobs_mc:ocelot", ocelot)
 
 -- Cat
 local cat = table.copy(ocelot)
-cat.description = S("Cat")
-cat.textures = {{"mobs_mc_cat_black.png"}, {"mobs_mc_cat_red.png"}, {"mobs_mc_cat_siamese.png"}}
-cat.can_despawn = false
-cat.owner = ""
-cat.order = "roam" -- "sit" or "roam"
-cat.owner_loyal = true
-cat.tamed = true
-cat.runaway = false
-cat.follow_velocity = 2.4
--- Automatically teleport cat to owner
-cat.do_custom = mobs_mc.make_owner_teleport_function(12)
-cat.sounds = {
-	random = "mobs_mc_cat_idle",
-	damage = "mobs_mc_cat_hiss",
-	death = "mobs_mc_ocelot_hurt",
-	eat = "mobs_mc_animal_eat_generic",
-	distance = 16,
-}
-cat.on_rightclick = function(self, clicker)
-	if self:feed_tame(clicker, 1, true, false) then return end
-	if mcl_mobs:capture_mob(self, clicker, 0, 60, 5, false, nil) then return end
-	if mcl_mobs:protect(self, clicker) then return end
+table.update(cat,{
+	description = S("Cat"),
+	textures = {{"mobs_mc_cat_black.png"}, {"mobs_mc_cat_red.png"}, {"mobs_mc_cat_siamese.png"}},
+	can_despawn = false,
+	owner = "",
+	order = "roam", -- "sit" or "roam"
+	owner_loyal = true,
+	tamed = false,
+	runaway = false,
+	follow_velocity = 2.4,
+	visual_size = { x = 0.8, y = 0.8 },
+	-- Automatically teleport cat to owner
+	do_custom = mobs_mc.make_owner_teleport_function(12),
+	sounds = {
+		random = "mobs_mc_cat_idle",
+		damage = "mobs_mc_cat_hiss",
+		death = "mobs_mc_ocelot_hurt",
+		eat = "mobs_mc_animal_eat_generic",
+		distance = 16,
+	},
+	on_rightclick = function(self, clicker)
+		if self:feed_tame(clicker, 1, true, false) then return end
+		if mcl_mobs.capture_mob(self, clicker, 0, 60, 5, false, nil) then return end
+		if mcl_mobs.protect(self, clicker) then return end
 
-	if self.child then return end
+		if self.child then return end
 
-	-- Toggle sitting order
+		-- Toggle sitting order
 
-	if not self.owner or self.owner == "" then
-		-- Huh? This cat has no owner? Let's fix this! This should never happen.
-		self.owner = clicker:get_player_name()
+		if not self.owner or self.owner == "" then
+			-- Huh? This cat has no owner? Let's fix this! This should never happen.
+			self.owner = clicker:get_player_name()
+		end
+
+		if not self.order or self.order == "" or self.order == "sit" then
+			self.order = "roam"
+			self.walk_chance = default_walk_chance
+			self.jump = true
+		else
+			-- “Sit!”
+			-- TODO: Add sitting model
+			self.order = "sit"
+			self.walk_chance = 0
+			self.jump = false
+		end
+	end,
+	on_spawn  = function(self)
+		if self.owner == "!witch!" then
+			self._texture = {"mobs_mc_cat_black.png"}
+		end
+		if not self._texture then
+			self._texture = cat.textures[math.random(#cat.textures)]
+		end
+		self.object:set_properties({textures = self._texture})
 	end
-
-	if not self.order or self.order == "" or self.order == "sit" then
-		self.order = "roam"
-		self.walk_chance = default_walk_chance
-		self.jump = true
-	else
-		-- “Sit!”
-		-- TODO: Add sitting model
-		self.order = "sit"
-		self.walk_chance = 0
-		self.jump = false
-	end
-
-end
-
-cat.on_spawn  = function(self)
-	if self.owner == "!witch!" then
-		self._texture = {"mobs_mc_cat_black.png"}
-	end
-	if not self._texture then
-		self._texture = cat.textures[math.random(#cat.textures)]
-	end
-	self.object:set_properties({textures = self._texture})
-end
+})
 
 mcl_mobs.register_mob("mobs_mc:cat", cat)
 
-local base_spawn_chance = 5000
-
--- Spawn ocelot
---they get the same as the llama because I'm trying to rework so much of this code right now -j4i
-mcl_mobs:spawn_specific(
-"mobs_mc:ocelot",
-"overworld",
-"ground",
-{
-"Jungle",
-"JungleEdgeM",
-"JungleM",
-"JungleEdge",
-},
-0,
-minetest.LIGHT_MAX+1,
-30,
-15000,
-5,
-mobs_mc.water_level+15,
-mcl_vars.mg_overworld_max)
---[[
-mobs:spawn({
+mcl_mobs.spawn_setup({
 	name = "mobs_mc:ocelot",
-	nodes = { "mcl_core:jungletree", "mcl_core:jungleleaves", "mcl_flowers:fern", "mcl_core:vine" },
-	neighbors = {"air"},
-	light_max = minetest.LIGHT_MAX+1,
-	light_min = 0,
-	chance = math.ceil(base_spawn_chance * 1.5), -- emulates 1/3 spawn failure rate
-	active_object_count = 12,
-	min_height = mobs_mc.water_level+1, -- Right above ocean level
-	max_height = mcl_vars.mg_overworld_max,
-	on_spawn = function(self, pos)
-		 Note: Minecraft has a 1/3 spawn failure rate.
-		In this mod it is emulated by reducing the spawn rate accordingly (see above).
-
-		-- 1/7 chance to spawn 2 ocelot kittens
-		if pr:next(1,7) == 1 then
-			-- Turn object into a child
-			local make_child = function(object)
-				local ent = object:get_luaentity()
-				object:set_properties({
-					visual_size = { x = ent.base_size.x/2, y = ent.base_size.y/2 },
-					collisionbox = {
-						ent.base_colbox[1]/2,
-						ent.base_colbox[2]/2,
-						ent.base_colbox[3]/2,
-						ent.base_colbox[4]/2,
-						ent.base_colbox[5]/2,
-						ent.base_colbox[6]/2,
-					}
-				})
-				ent.child = true
-			end
-
-			-- Possible spawn offsets, two of these will get selected
-			local k = 0.7
-			local offsets = {
-				{ x=k, y=0, z=0 },
-				{ x=-k, y=0, z=0 },
-				{ x=0, y=0, z=k },
-				{ x=0, y=0, z=-k },
-				{ x=k, y=0, z=k },
-				{ x=k, y=0, z=-k },
-				{ x=-k, y=0, z=k },
-				{ x=-k, y=0, z=-k },
-			}
-			for i=1, 2 do
-				local o = pr:next(1, #offsets)
-				local offset = offsets[o]
-				local child_pos = vector.add(pos, offsets[o])
-				table.remove(offsets, o)
-				make_child(minetest.add_entity(child_pos, "mobs_mc:ocelot"))
-			end
-		end
-	end,
+	type_of_spawning = "ground",
+	dimension = "overworld",
+	aoc = 5,
+	min_height = mobs_mc.water_level+15,
+	biomes = {
+		"Jungle",
+		"JungleEdgeM",
+		"JungleM",
+		"JungleEdge",
+		"BambooJungle",
+	},
+	chance = 300,
 })
-]]--
 
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:ocelot", S("Ocelot"), "#efde7d", "#564434", 0)
+mcl_mobs.register_egg("mobs_mc:cat", S("Cat"), "#AA8755", "#505438", 0)

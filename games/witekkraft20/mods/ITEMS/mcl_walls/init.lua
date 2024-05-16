@@ -20,7 +20,7 @@ local function connectable(itemstring)
 	return (minetest.get_item_group(itemstring, "wall") == 1) or (minetest.get_item_group(itemstring, "solid") == 1)
 end
 
-local function update_wall(pos)
+function mcl_walls.update_wall(pos)
 	local thisnode = minetest.get_node(pos)
 
 	if minetest.get_item_group(thisnode.name, "wall") == 0 then
@@ -71,7 +71,7 @@ end
 local function update_wall_global(pos)
 	for i = 1,5 do
 		local dir = directions[i]
-		update_wall({x = pos.x + dir.x, y = pos.y + dir.y, z = pos.z + dir.z})
+		mcl_walls.update_wall({x = pos.x + dir.x, y = pos.y + dir.y, z = pos.z + dir.z})
 	end
 end
 
@@ -97,10 +97,8 @@ local full_blocks = {
 * inventory_image: Inventory image (optional)
 * groups: Base group memberships (optional, default is {pickaxey=1})
 * sounds: Sound table (optional, default is stone)
-* hardness: Hardness of node (optional, default matches `source` node or fallback value 2)
-* blast_resistance: Blast resistance of node (optional, default matches `source` node or fallback value 6)
 ]]
-function mcl_walls.register_wall(nodename, description, source, tiles, inventory_image, groups, sounds, hardness, blast_resistance)
+function mcl_walls.register_wall(nodename, description, source, tiles, inventory_image, groups, sounds, overrides)
 
 	local base_groups = groups
 	if not base_groups then
@@ -114,29 +112,15 @@ function mcl_walls.register_wall(nodename, description, source, tiles, inventory
 	local main_node_groups = table.copy(base_groups)
 	main_node_groups.deco_block = 1
 
-	if source then
-		-- Default values from `source` node
-		if not hardness then
-			hardness = minetest.registered_nodes[source]._mcl_hardness
-		end
-		if not blast_resistance then
-			blast_resistance = minetest.registered_nodes[source]._mcl_blast_resistance
-		end
-		if not sounds then
-			sounds = minetest.registered_nodes[source].sounds
-		end
-		if not tiles then
-			if minetest.registered_nodes[source] then
-				tiles = minetest.registered_nodes[source].tiles
-			end
-		end
-	else
-		-- Fallback in case no `source` given
-		if not hardness then
-			hardness = 2
-		end
-		if not blast_resistance then
-			blast_resistance = 6
+	-- TODO: Stop hardcoding blast resistance
+
+	if not sounds then
+		sounds = mcl_sounds.node_sound_stone_defaults()
+	end
+
+	if (not tiles) and source then
+		if minetest.registered_nodes[source] then
+			tiles = minetest.registered_nodes[source].tiles
 		end
 	end
 
@@ -167,7 +151,7 @@ function mcl_walls.register_wall(nodename, description, source, tiles, inventory
 		if i == 15 or i == 0 then need_pillar = true end
 		if need_pillar then table.insert(take, pillar) end
 
-		minetest.register_node(nodename.."_"..i, {
+		minetest.register_node(nodename.."_"..i, table.merge({
 			collision_box = {
 				type = "fixed",
 				fixed = {-4/16, -0.5, -4/16, 4/16, 1, 4/16}
@@ -185,9 +169,10 @@ function mcl_walls.register_wall(nodename, description, source, tiles, inventory
 				fixed = take
 			},
 			sounds = sounds,
-			_mcl_blast_resistance = blast_resistance,
-			_mcl_hardness = hardness,
-		})
+			_mcl_blast_resistance = 6,
+			_mcl_hardness = 2,
+			_mcl_stonecutter_recipes = {source},
+		}, overrides or {}))
 
 		-- Add entry alias for the Help
 		if minetest.get_modpath("doc") then
@@ -195,7 +180,7 @@ function mcl_walls.register_wall(nodename, description, source, tiles, inventory
 		end
 	end
 
-	minetest.register_node(nodename.."_16", {
+	minetest.register_node(nodename.."_16", table.merge({
 		drawtype = "nodebox",
 		collision_box = {
 				type = "fixed",
@@ -213,15 +198,16 @@ function mcl_walls.register_wall(nodename, description, source, tiles, inventory
 			fixed = {pillar, full_blocks[1]}
 		},
 		sounds = sounds,
-		_mcl_blast_resistance = blast_resistance,
-		_mcl_hardness = hardness,
-	})
+		_mcl_blast_resistance = 6,
+		_mcl_hardness = 2,
+		_mcl_stonecutter_recipes = {source},
+	}, overrides or {}))
 	-- Add entry alias for the Help
 	if minetest.get_modpath("doc") then
 		doc.add_entry_alias("nodes", nodename, "nodes", nodename.."_16")
 	end
 
-	minetest.register_node(nodename.."_21", {
+	minetest.register_node(nodename.."_21", table.merge({
 		drawtype = "nodebox",
 		collision_box = {
 				type = "fixed",
@@ -239,16 +225,17 @@ function mcl_walls.register_wall(nodename, description, source, tiles, inventory
 			fixed = {pillar, full_blocks[2]}
 		},
 		sounds = sounds,
-		_mcl_blast_resistance = blast_resistance,
-		_mcl_hardness = hardness,
-	})
+		_mcl_blast_resistance = 6,
+		_mcl_hardness = 2,
+		--_mcl_base_node = source,
+	}, overrides or {}))
 	-- Add entry alias for the Help
 	if minetest.get_modpath("doc") then
 		doc.add_entry_alias("nodes", nodename, "nodes", nodename.."_21")
 	end
 
 	-- Inventory item
-	minetest.register_node(nodename, {
+	minetest.register_node(nodename, table.merge({
 		description = description,
 		_doc_items_longdesc = S("A piece of wall. It cannot be jumped over with a simple jump. When multiple of these are placed to next to each other, they will automatically build a nice wall structure."),
 		paramtype = "light",
@@ -258,7 +245,6 @@ function mcl_walls.register_wall(nodename, description, source, tiles, inventory
 		tiles = tiles,
 		use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "opaque" or false,
 		inventory_image = inventory_image,
-		stack_max = 64,
 		drawtype = "nodebox",
 		node_box = {
 			type = "fixed",
@@ -269,11 +255,11 @@ function mcl_walls.register_wall(nodename, description, source, tiles, inventory
 				fixed = {-4/16, -0.5, -4/16, 4/16, 1, 4/16}
 		},
 		collisionbox = {-0.2, 0, -0.2, 0.2, 1.4, 0.2},
-		on_construct = update_wall,
+		on_construct = mcl_walls.update_wall,
 		sounds = sounds,
-		_mcl_blast_resistance = blast_resistance,
-		_mcl_hardness = hardness,
-	})
+		_mcl_blast_resistance = 6,
+		_mcl_hardness = 2,
+	}, overrides or {}))
 	if source then
 		minetest.register_craft({
 			output = nodename .. " 6",
@@ -282,9 +268,13 @@ function mcl_walls.register_wall(nodename, description, source, tiles, inventory
 				{source, source, source},
 			}
 		})
-
-		mcl_stonecutter.register_recipe(source, nodename)
 	end
+end
+
+function mcl_walls.register_wall_def(name,def)
+	local source = def.source
+	def.source = nil
+	mcl_walls.register_wall(name, nil, source, nil, nil, nil, nil, def)
 end
 
 dofile(modpath.."/register.lua")

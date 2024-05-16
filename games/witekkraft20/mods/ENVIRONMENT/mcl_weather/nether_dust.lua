@@ -1,7 +1,8 @@
 mcl_weather.nether_dust = {}
 mcl_weather.nether_dust.particlespawners = {}
 
-local PARTICLES_COUNT_NETHER_DUST = tonumber(minetest.settings:get("mcl_weather_dust_particles")) or 150
+local enable_nether_dust = minetest.settings:get_bool("mcl_nether_dust", true)
+local PARTICLES_COUNT_NETHER_DUST = 150
 
 local psdef= {
 	amount = PARTICLES_COUNT_NETHER_DUST,
@@ -22,14 +23,11 @@ local psdef= {
 	vertical = false
 }
 
-local function check_player(player)
-	local name=player:get_player_name()
-	if mcl_worlds.has_dust(player:get_pos()) and not mcl_weather.nether_dust.particlespawners[name] then
-		return true
-	end
-end
-
 mcl_weather.nether_dust.add_particlespawners = function(player)
+	if not enable_nether_dust then
+		return
+	end
+
 	local name=player:get_player_name()
 	mcl_weather.nether_dust.particlespawners[name]={}
 	psdef.playername = name
@@ -51,18 +49,17 @@ mcl_weather.nether_dust.delete_particlespawners = function(player)
 	end
 end
 
-mcl_worlds.register_on_dimension_change(function(player, dimension)
-	if check_player(player) then
-		return mcl_weather.nether_dust.add_particlespawners(player)
-	end
-	mcl_weather.nether_dust.delete_particlespawners(player)
-end)
-
-minetest.register_on_joinplayer(function(player)
-	if check_player(player) then
+local function update_player_particles(player)
+	if not mcl_worlds.has_dust(player:get_pos()) then
+		mcl_weather.nether_dust.delete_particlespawners(player)
+	elseif not mcl_weather.nether_dust.particlespawners[player:get_player_name()] then
 		mcl_weather.nether_dust.add_particlespawners(player)
 	end
-end)
+end
+
+mcl_worlds.register_on_dimension_change(update_player_particles)
+minetest.register_on_joinplayer(update_player_particles)
+
 minetest.register_on_leaveplayer(function(player)
 	mcl_weather.nether_dust.delete_particlespawners(player)
 end)

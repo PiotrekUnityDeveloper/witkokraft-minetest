@@ -2,6 +2,12 @@ mcl_experience = {
 	on_add_xp = {},
 }
 
+-- TODO: when < minetest 5.9 isn't supported anymore, remove this variable check and replace all occurences of [hud_elem_type_field] with type
+local hud_elem_type_field = "type"
+if not minetest.features.hud_def_type_field then
+	hud_elem_type_field = "hud_elem_type"
+end
+
 local modpath = minetest.get_modpath(minetest.get_current_modname())
 
 dofile(modpath .. "/command.lua")
@@ -147,13 +153,13 @@ function mcl_experience.throw_xp(pos, total_xp)
 
 		obj:set_velocity(vector.new(
 			math.random(-2, 2) * math.random(),
-			math.random(2, 5),
+			math.random( 2, 5),
 			math.random(-2, 2) * math.random()
 		))
 
 		i = i + xp
 		j = j + 1
-		table.insert(obs, obj)
+		table.insert(obs,obj)
 	end
 	return obs
 end
@@ -178,19 +184,19 @@ function mcl_experience.setup_hud(player)
 
 	if not minetest.is_creative_enabled(player:get_player_name()) then
 		hud_bars[player] = player:hud_add({
-			hud_elem_type = "image",
-			position = { x = 0.5, y = 1 },
-			offset = { x = (-9 * 28) - 3, y = -(48 + 24 + 16 - 5) },
-			scale = { x = 0.35, y = 0.375 },
-			alignment = { x = 1, y = 1 },
+			[hud_elem_type_field] = "image",
+			position = {x = 0.5, y = 1},
+			offset = {x = (-9 * 28) - 3, y = -(48 + 24 + 16 - 5)},
+			scale = {x = 0.35, y = 0.375},
+			alignment = {x = 1, y = 1},
 			z_index = 11,
 		})
 
 		hud_levels[player] = player:hud_add({
-			hud_elem_type = "text",
-			position = { x = 0.5, y = 1 },
+			[hud_elem_type_field] = "text",
+			position = {x = 0.5, y = 1},
 			number = 0x80FF20,
-			offset = { x = 0, y = -(48 + 24 + 24) },
+			offset = {x = 0, y = -(48 + 24 + 24)},
 			z_index = 12,
 		})
 	end
@@ -221,7 +227,7 @@ function mcl_experience.update(player)
 end
 
 function mcl_experience.register_on_add_xp(func, priority)
-	table.insert(mcl_experience.on_add_xp, { func = func, priority = priority or 0 })
+	table.insert(mcl_experience.on_add_xp, {func = func, priority = priority or 0})
 end
 
 -- callbacks
@@ -232,9 +238,9 @@ minetest.register_on_joinplayer(function(player)
 end)
 
 minetest.register_on_leaveplayer(function(player)
-	hud_bars[player] = nil
-	hud_levels[player] = nil
-	caches[player] = nil
+    hud_bars[player] = nil
+    hud_levels[player] = nil
+    caches[player] = nil
 end)
 
 minetest.register_on_dieplayer(function(player)
@@ -248,11 +254,26 @@ minetest.register_on_mods_loaded(function()
 	table.sort(mcl_experience.on_add_xp, function(a, b) return a.priority < b.priority end)
 end)
 
-mcl_gamemode.register_on_gamemode_change(function(player, old_gamemode, new_gamemode)
-	if new_gamemode == "survival" then
-		mcl_experience.setup_hud(player)
-		mcl_experience.update(player)
-	elseif new_gamemode == "creative" then
-		mcl_experience.remove_hud(player)
+mcl_gamemode.register_on_gamemode_change(function(p, old_gm, gm)
+	if gm == "survival" then
+		 mcl_experience.setup_hud(p)
+		 mcl_experience.update(p)
+	elseif gm == "creative" then
+		 mcl_experience.remove_hud(p)
 	end
 end)
+
+minetest.register_chatcommand("set_xp", {
+	privs = { debug = true },
+	description = "Set experience of current player",
+	params = "<xp>",
+	func = function(pn,param)
+		local player = minetest.get_player_by_name(pn)
+		local num = tonumber(param)
+		local rt = false
+		if num then
+			mcl_experience.set_xp(player, num)
+		end
+		return rt, "XP for player "..pn..": "..tostring(mcl_experience.get_xp(player))
+	end,
+})

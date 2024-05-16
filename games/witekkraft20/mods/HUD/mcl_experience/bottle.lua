@@ -3,11 +3,13 @@ local S = minetest.get_translator(minetest.get_current_modname())
 local mod_target = minetest.get_modpath("mcl_target")
 
 minetest.register_entity("mcl_experience:bottle",{
-	textures = {"mcl_experience_bottle.png"},
-	hp_max = 1,
-	visual_size = {x = 0.35, y = 0.35},
-	collisionbox = {-0.1, -0.1, -0.1, 0.1, 0.1, 0.1},
-	pointable = false,
+	initial_properties = {
+		textures = {"mcl_experience_bottle.png"},
+		hp_max = 1,
+		visual_size = {x = 0.35, y = 0.35},
+		collisionbox = {-0.1, -0.1, -0.1, 0.1, 0.1, 0.1},
+		pointable = false,
+	},
 	on_step = function(self, dtime)
 		local pos = self.object:get_pos()
 		local node = minetest.get_node(pos)
@@ -43,6 +45,7 @@ minetest.register_entity("mcl_experience:bottle",{
 local function throw_xp_bottle(pos, dir, velocity)
 	minetest.sound_play("mcl_throwing_throw", {pos = pos, gain = 0.4, max_hear_distance = 16}, true)
 	local obj = minetest.add_entity(pos, "mcl_experience:bottle")
+	if not obj or not obj:get_pos() then return end
 	obj:set_velocity(vector.multiply(dir, velocity))
 	local acceleration = vector.multiply(dir, -3)
 	acceleration.y = -9.81
@@ -53,7 +56,6 @@ minetest.register_craftitem("mcl_experience:bottle", {
 	description = S("Bottle o' Enchanting"),
 	inventory_image = "mcl_experience_bottle.png",
 	wield_image = "mcl_experience_bottle.png",
-	stack_max = 64,
 	on_use = function(itemstack, placer, pointed_thing)
 		throw_xp_bottle(vector.add(placer:get_pos(), vector.new(0, 1.5, 0)), placer:get_look_dir(), 10)
 		if not minetest.is_creative_enabled(placer:get_player_name()) then

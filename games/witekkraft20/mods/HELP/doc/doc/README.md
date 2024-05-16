@@ -4,7 +4,7 @@ can access help pages about various things and the modder can add those pages.
 The mod itself does not provide any help texts, just the framework.
 It is the heart of the Help modpack, on which the other Help mods depend.
 
-Current version: 1.2.1
+Current version: 1.3.0
 
 ## For players 
 ### Accessing the help
@@ -52,6 +52,7 @@ For custom entities, you may also want to add support for `doc_identifier`.
 MIT License
 
 ## Translation credits
-French: Karamel
-German: Wuzzy
-Portuguese: BrunoMine
+
+* French: Karamel
+* German: Wuzzy
+* Portuguese: BrunoMine

@@ -21,6 +21,7 @@ mcl_mobs.register_mob("mobs_mc:ghast", {
 	xp_min = 5,
 	xp_max = 5,
 	collisionbox = {-2, 5, -2, 2, 9, 2},
+	doll_size_override = { x = 1.05, y = 1.05 },
 	visual = "mesh",
 	mesh = "mobs_mc_ghast.b3d",
 	spawn_in_group = 1,
@@ -33,12 +34,12 @@ mcl_mobs.register_mob("mobs_mc:ghast", {
 		death = "mobs_mc_zombie_death",
 		attack = "mobs_fireball",
 		random = "mobs_eerie",
-		distance = 16,
+		distance = 80,
 		-- TODO: damage
 		-- TODO: better death
 	},
 	walk_velocity = 1.6,
-	run_velocity = 3.2,
+	run_velocity = 3, -- (was 3.2) since player can run, this is ok for a flying mob
 	drops = {
 		{name = "mcl_mobitems:gunpowder", chance = 1, min = 0, max = 2, looting = "common"},
 		{name = "mcl_mobitems:ghast_tear", chance = 10/6, min = 0, max = 1, looting = "common", looting_ignore_chance = true},
@@ -50,10 +51,10 @@ mcl_mobs.register_mob("mobs_mc:ghast", {
 		run_start = 0,		run_end = 40,
 	},
 	fall_damage = 0,
-	view_range = 100,
+	view_range = 64,
 	attack_type = "dogshoot",
 	arrow = "mobs_mc:fireball",
-	shoot_interval = 3.5,
+	shoot_interval = 3,
 	shoot_offset = -5,
 	dogshoot_switch = 1,
 	dogshoot_count_max =1,
@@ -65,6 +66,7 @@ mcl_mobs.register_mob("mobs_mc:ghast", {
 	makes_footstep_sound = false,
 	instant_death = true,
 	fire_resistant = true,
+	does_not_prevent_sleep = true,
 	can_spawn = function(pos)
 		if not minetest.get_item_group(minetest.get_node(pos).name,"solid") then return false end
 		local p1=vector.offset(pos,-2,1,-2)
@@ -85,37 +87,34 @@ mcl_mobs.register_mob("mobs_mc:ghast", {
 })
 
 
-mcl_mobs:spawn_specific(
-"mobs_mc:ghast",
-"nether",
-"ground",
-{
-"Nether",
-"SoulsandValley",
-"BasaltDelta",
-},
-0,
-7,
-30,
-72000,
-2,
-mcl_vars.mg_nether_min,
-mcl_vars.mg_nether_max)
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:ghast",
+	type_of_spawning = "ground",
+	dimension = "nether",
+	min_light = 0,
+	max_light = 7,
+	aoc = 2,
+	biomes = {
+		"Nether",
+		"SoulsandValley",
+		"BasaltDelta",
+	},
+	chance = 400,
+})
 
 -- fireball (projectile)
 mcl_mobs.register_arrow("mobs_mc:fireball", {
+	description = S("Ghast Fireball"),
 	visual = "sprite",
 	visual_size = {x = 1, y = 1},
 	textures = {"mcl_fire_fire_charge.png"},
-	velocity = 15,
+	velocity = 5,
 	collisionbox = {-.5, -.5, -.5, .5, .5, .5},
 	_is_fireball = true,
-
+	_mcl_fishing_hookable = true,
+	_mcl_fishing_reelable = true,
 	hit_player = function(self, player)
-		player:punch(self.object, 1.0, {
-			full_punch_interval = 1.0,
-			damage_groups = {fleshy = 6},
-		}, nil)
+		mcl_mobs.get_arrow_damage_func(6, "fireball")(self, player)
 		local p = self.object:get_pos()
 		if p then
 			mcl_mobs.mob_class.boom(self,p, 1, true)
@@ -125,10 +124,7 @@ mcl_mobs.register_arrow("mobs_mc:fireball", {
 	end,
 
 	hit_mob = function(self, mob)
-		mob:punch(self.object, 1.0, {
-			full_punch_interval = 1.0,
-			damage_groups = {fleshy = 6},
-		}, nil)
+		mcl_mobs.get_arrow_damage_func(6, "fireball")(self, mob)
 		mcl_mobs.mob_class.boom(self,self.object:get_pos(), 1, true)
 	end,
 
@@ -139,6 +135,6 @@ mcl_mobs.register_arrow("mobs_mc:fireball", {
 
 
 
-mcl_mobs:non_spawn_specific("mobs_mc:ghast","overworld","0","7")
+
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:ghast", S("Ghast"), "#f9f9f9", "#bcbcbc", 0)

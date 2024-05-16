@@ -34,9 +34,8 @@ mcl_mobs.register_mob("mobs_mc:vex", {
 	damage = 9,
 	reach = 2,
 	view_range = 16,
-	walk_velocity = 3.2,
-	run_velocity = 5.9,
-	attack_type = "dogfight",
+	walk_velocity = 2,
+	run_velocity = 3,
 	sounds = {
 		-- TODO: random
 		death = "mobs_mc_vex_death",
@@ -63,10 +62,13 @@ mcl_mobs.register_mob("mobs_mc:vex", {
 				self.object:set_properties({textures=self.base_texture})
 			end
 		else
+			if self.base_texture[2] == "mobs_mc_vex_charging.png" then
+				self.base_texture[2] = "mobs_mc_vex.png"
+			end
 			if self.base_texture[1] ~= "default_tool_steelsword.png" then
 				self.base_texture[1] = "default_tool_steelsword.png"
-				self.object:set_properties({textures=self.base_texture})
 			end
+			self.object:set_properties({textures=self.base_texture})
 		end
 
 		-- Take constant damage if the vex' life clock ran out
@@ -95,4 +97,3 @@ mcl_mobs.register_mob("mobs_mc:vex", {
 
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:vex", S("Vex"), "#7a90a4", "#e8edf1", 0)
-mcl_mobs:non_spawn_specific("mobs_mc:vex","overworld",0,7)

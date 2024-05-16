@@ -30,3 +30,20 @@ function mcl_mobs.register_mob(self,name,def)
 	end
 	return oldregarrow(name,def)
 end
+
+function mcl_mobs.spawn_specific(name, dimension, type_of_spawning, biomes, min_light, max_light, interval, chance, aoc, min_height, max_height, day_toggle, on_spawn)
+	mcl_mobs.spawn_setup({
+		name             = name,
+		dimension        = dimension,
+		type_of_spawning = type_of_spawning,
+		biomes           = biomes,
+		min_light        = min_light,
+		max_light        = max_light,
+		chance           = chance,
+		aoc              = aoc,
+		min_height       = min_height,
+		max_height       = max_height,
+		day_toggle       = day_toggle,
+		on_spawn         = on_spawn,
+	})
+end

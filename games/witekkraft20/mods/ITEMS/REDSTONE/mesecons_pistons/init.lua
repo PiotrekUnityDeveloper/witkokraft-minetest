@@ -140,10 +140,10 @@ end
 local function piston_orientate(pos, placer)
 	-- not placed by player
 	if not placer then return end
-	
+
 	-- placer pitch in degrees
 	local pitch = placer:get_look_vertical() * (180 / math.pi)
-	
+
 	local node = minetest.get_node(pos)
 	local pistonspec = minetest.registered_nodes[node.name].mesecons_piston
 	if pitch > 55 then

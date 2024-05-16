@@ -9,6 +9,7 @@ local S = minetest.get_translator("mobs_mc")
 --################### ZOMBIE VILLAGER
 --###################
 
+--[[
 local professions = {
 	farmer = "mobs_mc_villager_farmer.png",
 	fisherman = "mobs_mc_villager_farmer.png",
@@ -24,6 +25,7 @@ local professions = {
 	cleric = "mobs_mc_villager_priest.png",
 	nitwit = "mobs_mc_villager.png",
 }
+--]]
 
 mcl_mobs.register_mob("mobs_mc:villager_zombie", {
 	description = S("Zombie Villager"),
@@ -54,8 +56,8 @@ mcl_mobs.register_mob("mobs_mc:villager_zombie", {
 	makes_footstep_sound = true,
 	damage = 3,
 	reach = 2,
-	walk_velocity = 1.2,
-	run_velocity = 1.8,
+	walk_velocity = 0.8,
+	run_velocity = 1.2, -- same as zombie
 	attack_type = "dogfight",
 	group_attack = true,
 	drops = {
@@ -90,6 +92,9 @@ mcl_mobs.register_mob("mobs_mc:villager_zombie", {
 		damage = "mobs_mc_zombie_hurt",
 		distance = 16,
 	},
+	sound_params = {
+		gain = 0.3
+	},
 	animation = {
 		speed_normal = 25,
         speed_run = 50,
@@ -118,17 +123,12 @@ mcl_mobs.register_mob("mobs_mc:villager_zombie", {
 			self._curing = self._curing - dtime
 			local obj = self.object
 			if self._curing <= 0 then
-				local villager_obj = minetest.add_entity(obj:get_pos(), "mobs_mc:villager")
-				local villager = villager_obj:get_luaentity()
-				local yaw = obj:get_yaw()
-				villager_obj:set_yaw(yaw)
-				villager.target_yaw = yaw
-				villager.nametag = self.nametag
-				villager._profession = "unemployed"
-				self._curing = nil
-				mcl_burning.extinguish(obj)
-				obj:remove()
-				return false
+				local villager_obj = mcl_util.replace_mob(obj, "mobs_mc:villager")
+				if villager_obj then
+					local villager = villager_obj:get_luaentity()
+					villager._profession = "unemployed"
+					return false
+				end
 			end
 		end
 	end,
@@ -140,96 +140,17 @@ mcl_mobs.register_mob("mobs_mc:villager_zombie", {
 	attack_npcs = true,
 })
 
-mcl_mobs:spawn_specific(
-"mobs_mc:villager_zombie",
-"overworld",
-"ground",
-{
-"FlowerForest_underground",
-"JungleEdge_underground",
-"StoneBeach_underground",
-"MesaBryce_underground",
-"Mesa_underground",
-"RoofedForest_underground",
-"Jungle_underground",
-"Swampland_underground",
-"BirchForest_underground",
-"Plains_underground",
-"MesaPlateauF_underground",
-"ExtremeHills_underground",
-"MegaSpruceTaiga_underground",
-"BirchForestM_underground",
-"SavannaM_underground",
-"MesaPlateauFM_underground",
-"Desert_underground",
-"Savanna_underground",
-"Forest_underground",
-"SunflowerPlains_underground",
-"ColdTaiga_underground",
-"IcePlains_underground",
-"IcePlainsSpikes_underground",
-"MegaTaiga_underground",
-"Taiga_underground",
-"ExtremeHills+_underground",
-"JungleM_underground",
-"ExtremeHillsM_underground",
-"JungleEdgeM_underground",
-"Mesa",
-"FlowerForest",
-"Swampland",
-"Taiga",
-"ExtremeHills",
-"Jungle",
-"Savanna",
-"BirchForest",
-"MegaSpruceTaiga",
-"MegaTaiga",
-"ExtremeHills+",
-"Forest",
-"Plains",
-"Desert",
-"ColdTaiga",
-"IcePlainsSpikes",
-"SunflowerPlains",
-"IcePlains",
-"RoofedForest",
-"ExtremeHills+_snowtop",
-"MesaPlateauFM_grasstop",
-"JungleEdgeM",
-"ExtremeHillsM",
-"JungleM",
-"BirchForestM",
-"MesaPlateauF",
-"MesaPlateauFM",
-"MesaPlateauF_grasstop",
-"MesaBryce",
-"JungleEdge",
-"SavannaM",
-"FlowerForest_beach",
-"Forest_beach",
-"StoneBeach",
-"ColdTaiga_beach_water",
-"Taiga_beach",
-"Savanna_beach",
-"Plains_beach",
-"ExtremeHills_beach",
-"ColdTaiga_beach",
-"Swampland_shore",
-"JungleM_shore",
-"Jungle_shore",
-"MesaPlateauFM_sandlevel",
-"MesaPlateauF_sandlevel",
-"MesaBryce_sandlevel",
-"Mesa_sandlevel",
-},
-0,
-7,
-30,
-4090,
-4,
-mcl_vars.mg_overworld_min,
-mcl_vars.mg_overworld_max)
---mcl_mobs:spawn_specific("mobs_mc:villager_zombie", "overworld", "ground", 0, 7, 30, 60000, 4, mcl_vars.mg_overworld_min, mcl_vars.mg_overworld_max)
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:villager_zombie",
+	type_of_spawning = "ground",
+	dimension = "overworld",
+	aoc = 9,
+	biomes_except = {
+		"MushroomIslandShore",
+		"MushroomIsland",
+	},
+	chance = 50,
+})
 
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:villager_zombie", S("Zombie Villager"), "#563d33", "#799c66", 0)

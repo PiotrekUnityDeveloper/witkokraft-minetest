@@ -1,4 +1,4 @@
-# textdomain:doc_identifier
+# textdomain: doc_identifier
 Error: This node, item or object is undefined. This is always an error.=
 This can happen for the following reasons:=
 • The mod which is required for it is not enabled=

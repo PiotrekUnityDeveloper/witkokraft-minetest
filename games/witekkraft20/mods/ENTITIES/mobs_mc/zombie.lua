@@ -61,9 +61,10 @@ local zombie = {
 	breath_max = -1,
 	wears_armor = 1,
 	armor = {undead = 90, fleshy = 90},
-	collisionbox = {-0.3, -0.01, -0.3, 0.3, 1.8, 0.3},
+	collisionbox = {-0.3, -0.01, -0.3, 0.3, 1.94, 0.3},
 	visual = "mesh",
 	mesh = "mobs_mc_zombie.b3d",
+	visual_size = { x = 1, y = 1.1 },
 	textures = {
 		{
 			"mobs_mc_empty.png", -- armor
@@ -78,8 +79,11 @@ local zombie = {
 		damage = "mobs_mc_zombie_hurt",
 		distance = 16,
 	},
+	sound_params = {
+		gain = 0.3
+	},
 	walk_velocity = .8,
-	run_velocity = 1.8,
+	run_velocity = 1.2,
 	damage = 3,
 	reach = 2,
 	fear_height = 4,
@@ -107,21 +111,23 @@ mcl_mobs.register_mob("mobs_mc:zombie", zombie)
 -- Baby zombie.
 -- A smaller and more dangerous variant of the zombie
 
-local baby_zombie = table.copy(zombie)
-baby_zombie.description = S("Baby Zombie")
-baby_zombie.collisionbox = {-0.25, -0.01, -0.25, 0.25, 0.98, 0.25}
-baby_zombie.xp_min = 12
-baby_zombie.xp_max = 12
-baby_zombie.walk_velocity = 1.2
-baby_zombie.run_velocity = 2.4
-baby_zombie.child = 1
-baby_zombie.reach = 1
-baby_zombie.animation = {
-	stand_start = 100, stand_end = 109, stand_speed = 2,
-	walk_start = 60, walk_end = 99, speed_normal = 40,
-	run_start = 60, run_end = 99, speed_run = 80,
-	punch_start = 109, punch_end = 119
-}
+local baby_zombie = table.merge(zombie, {
+	description = S("Baby Zombie"),
+	visual_size = { x = 0.5, y = 0.5, z = 0.5 },
+	collisionbox = {-0.25, -0.01, -0.25, 0.25, 0.98, 0.25},
+	xp_min = 12,
+	xp_max = 12,
+	walk_velocity = 1,
+	run_velocity = 1.45,
+	child = 1,
+	reach = 1,
+	animation = {
+		stand_start = 100, stand_end = 109, stand_speed = 2,
+		walk_start = 60, walk_end = 99, speed_normal = 40,
+		run_start = 60, run_end = 99, speed_run = 80,
+		punch_start = 109, punch_end = 119
+	},
+})
 
 mcl_mobs.register_mob("mobs_mc:baby_zombie", baby_zombie)
 
@@ -157,215 +163,51 @@ baby_husk.drops = drops_common
 mcl_mobs.register_mob("mobs_mc:baby_husk", baby_husk)
 
 
--- Spawning
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:zombie",
+	type_of_spawning = "ground",
+	dimension = "overworld",
+	aoc = 9,
+	biomes_except = {
+		"MushroomIslandShore",
+		"MushroomIsland"
+	},
+	chance = 1000,
+})
 
-mcl_mobs:spawn_specific(
-"mobs_mc:zombie",
-"overworld",
-"ground",
-{
-"FlowerForest_underground",
-"JungleEdge_underground",
-"StoneBeach_underground",
-"MesaBryce_underground",
-"Mesa_underground",
-"RoofedForest_underground",
-"Jungle_underground",
-"Swampland_underground",
-"BirchForest_underground",
-"Plains_underground",
-"MesaPlateauF_underground",
-"ExtremeHills_underground",
-"MegaSpruceTaiga_underground",
-"BirchForestM_underground",
-"SavannaM_underground",
-"MesaPlateauFM_underground",
-"Desert_underground",
-"Savanna_underground",
-"Forest_underground",
-"SunflowerPlains_underground",
-"ColdTaiga_underground",
-"IcePlains_underground",
-"IcePlainsSpikes_underground",
-"MegaTaiga_underground",
-"Taiga_underground",
-"ExtremeHills+_underground",
-"JungleM_underground",
-"ExtremeHillsM_underground",
-"JungleEdgeM_underground",
-"Mesa",
-"FlowerForest",
-"Swampland",
-"Taiga",
-"ExtremeHills",
-"Jungle",
-"Savanna",
-"BirchForest",
-"MegaSpruceTaiga",
-"MegaTaiga",
-"ExtremeHills+",
-"Forest",
-"Plains",
-"ColdTaiga",
-"IcePlainsSpikes",
-"SunflowerPlains",
-"IcePlains",
-"RoofedForest",
-"ExtremeHills+_snowtop",
-"MesaPlateauFM_grasstop",
-"JungleEdgeM",
-"ExtremeHillsM",
-"JungleM",
-"BirchForestM",
-"MesaPlateauF",
-"MesaPlateauFM",
-"MesaPlateauF_grasstop",
-"MesaBryce",
-"JungleEdge",
-"SavannaM",
-"FlowerForest_beach",
-"Forest_beach",
-"StoneBeach",
-"ColdTaiga_beach_water",
-"Taiga_beach",
-"Savanna_beach",
-"Plains_beach",
-"ExtremeHills_beach",
-"ColdTaiga_beach",
-"Swampland_shore",
-"JungleM_shore",
-"Jungle_shore",
-"MesaPlateauFM_sandlevel",
-"MesaPlateauF_sandlevel",
-"MesaBryce_sandlevel",
-"Mesa_sandlevel",
-},
-0,
-7,
-30,
-6000,
-4,
-mcl_vars.mg_overworld_min,
-mcl_vars.mg_overworld_max)
--- Baby zombie is 20 times less likely than regular zombies
-mcl_mobs:spawn_specific(
-"mobs_mc:baby_zombie",
-"overworld",
-"ground",
-{
-"FlowerForest_underground",
-"JungleEdge_underground",
-"StoneBeach_underground",
-"MesaBryce_underground",
-"Mesa_underground",
-"RoofedForest_underground",
-"Jungle_underground",
-"Swampland_underground",
-"BirchForest_underground",
-"Plains_underground",
-"MesaPlateauF_underground",
-"ExtremeHills_underground",
-"MegaSpruceTaiga_underground",
-"BirchForestM_underground",
-"SavannaM_underground",
-"MesaPlateauFM_underground",
-"Desert_underground",
-"Savanna_underground",
-"Forest_underground",
-"SunflowerPlains_underground",
-"ColdTaiga_underground",
-"IcePlains_underground",
-"IcePlainsSpikes_underground",
-"MegaTaiga_underground",
-"Taiga_underground",
-"ExtremeHills+_underground",
-"JungleM_underground",
-"ExtremeHillsM_underground",
-"JungleEdgeM_underground",
-"Mesa",
-"FlowerForest",
-"Swampland",
-"Taiga",
-"ExtremeHills",
-"Jungle",
-"Savanna",
-"BirchForest",
-"MegaSpruceTaiga",
-"MegaTaiga",
-"ExtremeHills+",
-"Forest",
-"Plains",
-"ColdTaiga",
-"IcePlainsSpikes",
-"SunflowerPlains",
-"IcePlains",
-"RoofedForest",
-"ExtremeHills+_snowtop",
-"MesaPlateauFM_grasstop",
-"JungleEdgeM",
-"ExtremeHillsM",
-"JungleM",
-"BirchForestM",
-"MesaPlateauF",
-"MesaPlateauFM",
-"MesaPlateauF_grasstop",
-"MesaBryce",
-"JungleEdge",
-"SavannaM",
-"FlowerForest_beach",
-"Forest_beach",
-"StoneBeach",
-"ColdTaiga_beach_water",
-"Taiga_beach",
-"Savanna_beach",
-"Plains_beach",
-"ExtremeHills_beach",
-"ColdTaiga_beach",
-"Swampland_shore",
-"JungleM_shore",
-"Jungle_shore",
-"MesaPlateauFM_sandlevel",
-"MesaPlateauF_sandlevel",
-"MesaBryce_sandlevel",
-"Mesa_sandlevel",
-},
-0,
-7,
-30,
-60000,
-4,
-mcl_vars.mg_overworld_min,
-mcl_vars.mg_overworld_max)
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:baby_zombie",
+	type_of_spawning = "ground",
+	dimension = "overworld",
+	aoc = 9,
+	biomes_except = {
+		"MushroomIslandShore",
+		"MushroomIsland"
+	},
+	chance = 50,
+})
 
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:husk",
+	type_of_spawning = "ground",
+	dimension = "overworld",
+	aoc = 9,
+	biomes = {
+		"Desert",
+	},
+	chance = 2400,
+})
 
-mcl_mobs:spawn_specific(
-"mobs_mc:husk",
-"overworld",
-"ground",
-{
-"Desert",
-},
-0,
-7,
-30,
-6500,
-4,
-mcl_vars.mg_overworld_min,
-mcl_vars.mg_overworld_max)
-mcl_mobs:spawn_specific(
-"mobs_mc:baby_husk",
-"overworld",
-"ground",
-{
-"Desert",
-},
-0,
-7,
-30,
-65000,
-4,
-mcl_vars.mg_overworld_min,
-mcl_vars.mg_overworld_max)
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:baby_husk",
+	type_of_spawning = "ground",
+	dimension = "overworld",
+	aoc = 9,
+	biomes = {
+		"Desert",
+	},
+	chance = 20,
+})
 
 -- Spawn eggs
 mcl_mobs.register_egg("mobs_mc:husk", S("Husk"), "#777361", "#ded88f", 0)

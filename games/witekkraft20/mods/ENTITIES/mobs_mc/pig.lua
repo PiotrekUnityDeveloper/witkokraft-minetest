@@ -6,7 +6,6 @@ mcl_mobs.register_mob("mobs_mc:pig", {
 	description = S("Pig"),
 	type = "animal",
 	spawn_class = "passive",
-	passive = true,
 	runaway = true,
 	hp_min = 10,
 	hp_max = 10,
@@ -69,6 +68,7 @@ mcl_mobs.register_mob("mobs_mc:pig", {
 
 		-- set needed values if not already present
 		if not self.v3 then
+			local vsize = self.object:get_properties().visual_size
 			self.v3 = 0
 			self.max_speed_forward = 4
 			self.max_speed_reverse = 2
@@ -76,7 +76,7 @@ mcl_mobs.register_mob("mobs_mc:pig", {
 			self.terrain_type = 3
 			self.driver_attach_at = {x = 0.0, y = 6.5, z = -3.75}
 			self.driver_eye_offset = {x = 0, y = 3, z = 0}
-			self.driver_scale = {x = 1/self.visual_size.x, y = 1/self.visual_size.y}
+			self.driver_scale = {x = 1/vsize.x, y = 1/vsize.y}
 			self.base_texture = self.texture_list[1]
 			self.object:set_properties({textures = self.base_texture})
 		end
@@ -111,7 +111,7 @@ mcl_mobs.register_mob("mobs_mc:pig", {
 		if wielditem:get_name() ~= "mcl_mobitems:carrot_on_a_stick" then
 			if self:feed_tame(clicker, 1, true, false) then return end
 		end
-		if mcl_mobs:protect(self, clicker) then return end
+		if mcl_mobs.protect(self, clicker) then return end
 
 		if self.child then
 			return
@@ -176,7 +176,6 @@ mcl_mobs.register_mob("mobs_mc:pig", {
 		end]]
 
 		-- Mount or detach player
-		local name = clicker:get_player_name()
 		if self.driver and clicker == self.driver then -- and self.driver:get_wielded_item():get_name() ~= "mcl_mobitems:carrot_on_a_stick" then -- Note: This is for when the ability to make the pig go faster is implemented
 			-- Detach if already attached
 			mcl_mobs.detach(clicker, {x=1, y=0, z=0})
@@ -190,7 +189,7 @@ mcl_mobs.register_mob("mobs_mc:pig", {
 
 		-- Capture pig
 		elseif not self.driver and clicker:get_wielded_item():get_name() ~= "" then
-			mcl_mobs:capture_mob(self, clicker, 0, 5, 60, false, nil)
+			mcl_mobs.capture_mob(self, clicker, 0, 5, 60, false, nil)
 		end
 	end,
 
@@ -218,50 +217,48 @@ mcl_mobs.register_mob("mobs_mc:pig", {
 	end,
 })
 
-mcl_mobs:spawn_specific(
-"mobs_mc:pig",
-"overworld",
-"ground",
-{
-	"flat",
-	"MegaTaiga",
-	"MegaSpruceTaiga",
-	"ExtremeHills",
-	"ExtremeHills_beach",
-	"ExtremeHillsM",
-	"ExtremeHills+",
-	"StoneBeach",
-	"Plains",
-	"Plains_beach",
-	"SunflowerPlains",
-	"Taiga",
-	"Taiga_beach",
-	"Forest",
-	"Forest_beach",
-	"FlowerForest",
-	"FlowerForest_beach",
-	"BirchForest",
-	"BirchForestM",
-	"RoofedForest",
-	"Savanna",
-	"Savanna_beach",
-	"SavannaM",
-	"Jungle",
-	"Jungle_shore",
-	"JungleM",
-	"JungleM_shore",
-	"JungleEdge",
-	"JungleEdgeM",
-	"Swampland",
-	"Swampland_shore"
-},
-9,
-minetest.LIGHT_MAX+1,
-30,
-15000,
-8,
-mcl_vars.mg_overworld_min,
-mcl_vars.mg_overworld_max)
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:pig",
+	type_of_spawning = "ground",
+	dimension = "overworld",
+	aoc = 9,
+	min_height = mobs_mc.water_level + 3,
+	biomes = {
+		"flat",
+		"MegaTaiga",
+		"MegaSpruceTaiga",
+		"ExtremeHills",
+		"ExtremeHills_beach",
+		"ExtremeHillsM",
+		"ExtremeHills+",
+		"StoneBeach",
+		"Plains",
+		"Plains_beach",
+		"SunflowerPlains",
+		"Taiga",
+		"Taiga_beach",
+		"Forest",
+		"Forest_beach",
+		"FlowerForest",
+		"FlowerForest_beach",
+		"BirchForest",
+		"BirchForestM",
+		"RoofedForest",
+		"Savanna",
+		"Savanna_beach",
+		"SavannaM",
+		"Jungle",
+		"BambooJungle",
+		"Jungle_shore",
+		"JungleM",
+		"JungleM_shore",
+		"JungleEdge",
+		"JungleEdgeM",
+		"Swampland",
+		"Swampland_shore"
+	},
+	chance = 100,
+})
 
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:pig", S("Pig"), "#f0a5a2", "#db635f", 0)

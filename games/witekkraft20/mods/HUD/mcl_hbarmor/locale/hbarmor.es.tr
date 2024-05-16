@@ -1,2 +1,3 @@
-# textdomain:hbarmor
+# textdomain: mcl_hbarmor
+### init.lua ###
 Armor=Armadura

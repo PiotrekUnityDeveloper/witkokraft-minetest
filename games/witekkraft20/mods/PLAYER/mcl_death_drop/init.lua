@@ -1,7 +1,3 @@
-local random = math.random
-
-local ipairs = ipairs
-
 mcl_death_drop = {}
 
 mcl_death_drop.registered_dropped_lists = {}

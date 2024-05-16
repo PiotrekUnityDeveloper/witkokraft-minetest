@@ -1,5 +1,4 @@
 # textdomain: mcl_skins
-Skins=
 Templates=
 Arm size=
 Bases=
@@ -10,5 +9,6 @@ Bottoms=
 Tops=
 Hairs=
 Headwears=
+Skins=
 Open skin configuration screen.=
 Select=

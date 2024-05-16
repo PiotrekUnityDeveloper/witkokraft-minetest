@@ -6,9 +6,8 @@ local C = minetest.colorize
 
 local open_barrels = {}
 
-local drop_content = mcl_util.drop_items_from_meta_container("main")
+local drop_content = mcl_util.drop_items_from_meta_container({"main"})
 
----@param pos Vector
 local function on_blast(pos)
 	local node = minetest.get_node(pos)
 	drop_content(pos, node)
@@ -67,13 +66,9 @@ local function barrel_open(pos, node, clicker)
 
 	minetest.swap_node(pos, { name = "mcl_barrels:barrel_open", param2 = node.param2 })
 	open_barrels[playername] = pos
-	minetest.sound_play({name="mcl_barrels_default_barrel_open", gain=0.5}, {
-		pos = pos,
-		max_hear_distance = 16,
-	}, true)
+	minetest.sound_play({ name = "mcl_barrels_default_barrel_open" }, { pos = pos, gain = 0.5, max_hear_distance = 16 }, true)
 end
 
----@param pos Vector
 local function close_forms(pos)
 	local players = minetest.get_connected_players()
 	local formname = "mcl_barrels:barrel_" .. pos.x .. "_" .. pos.y .. "_" .. pos.z
@@ -84,21 +79,15 @@ local function close_forms(pos)
 	end
 end
 
----@param pos Vector
 local function update_after_close(pos)
 	local node = minetest.get_node_or_nil(pos)
 	if not node then return end
 	if node.name == "mcl_barrels:barrel_open" then
 		minetest.swap_node(pos, { name = "mcl_barrels:barrel_closed", param2 = node.param2 })
-		minetest.sound_play({name="mcl_barrels_default_barrel_close", gain=0.5}, {
-			pos = pos,
-			max_hear_distance = 16,
-		}, true)
-
+		minetest.sound_play({ name = "mcl_barrels_default_barrel_close" }, { pos = pos, gain = 0.5, max_hear_distance = 16 }, true)
 	end
 end
 
----@param player ObjectRef
 local function close_barrel(player)
 	local name = player:get_player_name()
 	local open = open_barrels[name]
@@ -117,15 +106,18 @@ minetest.register_node("mcl_barrels:barrel_closed", {
 	_doc_items_longdesc = S("Barrels are containers which provide 27 inventory slots."),
 	_doc_items_usagehelp = S("To access its inventory, rightclick it. When broken, the items will drop out."),
 	tiles = { "mcl_barrels_barrel_top.png^[transformR270", "mcl_barrels_barrel_bottom.png", "mcl_barrels_barrel_side.png" },
+	is_ground_content = false,
 	paramtype = "light",
 	paramtype2 = "facedir",
 	on_place = function(itemstack, placer, pointed_thing)
+		if  not placer or not placer:is_player() then
+			return itemstack
+		end
 		minetest.rotate_and_place(itemstack, placer, pointed_thing,
-			minetest.is_creative_enabled(placer:get_player_name()), {}
+			minetest.is_creative_enabled(placer and placer:get_player_name() or ""), {}
 			, false)
 		return itemstack
 	end,
-	stack_max = 64,
 	sounds = mcl_sounds.node_sound_wood_defaults(),
 	groups = { handy = 1, axey = 1, container = 2, material_wood = 1, flammable = -1, deco_block = 1 },
 	on_construct = function(pos)
@@ -166,10 +158,10 @@ minetest.register_node("mcl_barrels:barrel_open", {
 	_doc_items_usagehelp = S("To access its inventory, rightclick it. When broken, the items will drop out."),
 	_doc_items_create_entry = false,
 	tiles = { "mcl_barrels_barrel_top_open.png", "mcl_barrels_barrel_bottom.png", "mcl_barrels_barrel_side.png" },
+	is_ground_content = false,
 	paramtype = "light",
 	paramtype2 = "facedir",
 	drop = "mcl_barrels:barrel_closed",
-	stack_max = 64,
 	sounds = mcl_sounds.node_sound_wood_defaults(),
 	groups = {
 		handy = 1,

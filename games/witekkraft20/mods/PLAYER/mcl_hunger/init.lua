@@ -92,10 +92,10 @@ function mcl_hunger.update_exhaustion_hud(player, exhaustion)
 end
 
 -- register saturation hudbar
-hb.register_hudbar("hunger", 0xFFFFFF, S("Food"), { icon = "hbhunger_icon.png", bgicon = "hbhunger_bgicon.png",  bar = "hbhunger_bar.png" }, 1, 20, 20, false)
+hb.register_hudbar("hunger", 0xFFFFFF, S("Food"), { icon = "hbhunger_icon.png", bgicon = "hbhunger_bgicon.png",  bar = "hbhunger_bar.png" }, 20, 20, false, nil, nil, 1)
 if mcl_hunger.debug then
-	hb.register_hudbar("saturation", 0xFFFFFF, S("Saturation"), { icon = "mcl_hunger_icon_saturation.png", bgicon = "mcl_hunger_bgicon_saturation.png", bar = "mcl_hunger_bar_saturation.png" }, 1, mcl_hunger.SATURATION_INIT, 200, false)
-	hb.register_hudbar("exhaustion", 0xFFFFFF, S("Exhaust."), { icon = "mcl_hunger_icon_exhaustion.png", bgicon = "mcl_hunger_bgicon_exhaustion.png", bar = "mcl_hunger_bar_exhaustion.png" }, 1, 0, mcl_hunger.EXHAUST_LVL, false)
+	hb.register_hudbar("saturation", 0xFFFFFF, S("Saturation"), { icon = "mcl_hunger_icon_saturation.png", bgicon = "mcl_hunger_bgicon_saturation.png", bar = "mcl_hunger_bar_saturation.png" }, mcl_hunger.SATURATION_INIT, 200, false, nil, nil, 1)
+	hb.register_hudbar("exhaustion", 0xFFFFFF, S("Exhaust."), { icon = "mcl_hunger_icon_exhaustion.png", bgicon = "mcl_hunger_bgicon_exhaustion.png", bar = "mcl_hunger_bar_exhaustion.png" }, 0, mcl_hunger.EXHAUST_LVL, false, nil, nil, 1)
 end
 
 minetest.register_on_joinplayer(function(player)
@@ -146,9 +146,8 @@ minetest.register_globalstep(function(dtime)
 		local food_level = mcl_hunger.get_hunger(player)
 		local food_saturation_level = mcl_hunger.get_saturation(player)
 		local player_health = player:get_hp()
-		local max_tick_timer = tonumber(minetest.settings:get("mcl_health_regen_delay")) or 0.5
 
-		if food_tick_timer > 4 then
+		if food_tick_timer > 4.0 then
 			food_tick_timer = 0
 
 			-- let hunger work always
@@ -174,7 +173,7 @@ minetest.register_globalstep(function(dtime)
 				end
 			end
 
-		elseif food_tick_timer > max_tick_timer and food_level == 20 and food_saturation_level > 0 then -- fast regeneration
+		elseif food_tick_timer > 0.5 and food_level == 20 and food_saturation_level > 0 then -- fast regeneration
 			if player_health > 0 and player_health < 20 then
 				food_tick_timer = 0
 				player:set_hp(player_health+1)
@@ -186,6 +185,92 @@ minetest.register_globalstep(function(dtime)
 		food_tick_timers[player] = food_tick_timer -- update food_tick_timer table
 	end
 end)
+
+-- JUMP EXHAUSTION
+mcl_player.register_globalstep(function(player, dtime)
+	local name = player:get_player_name()
+	local node_stand, node_stand_below, node_head, node_feet, node_head_top
+
+	-- Update jump status immediately since we need this info in real time.
+	-- WARNING: This section is HACKY as hell since it is all just based on heuristics.
+
+	if mcl_player.players[player].jump_cooldown > 0 then
+		mcl_player.players[player].jump_cooldown = mcl_player.players[player].jump_cooldown - dtime
+	end
+
+	if player:get_player_control().jump and mcl_player.players[player].jump_cooldown <= 0 then
+
+		--pos = player:get_pos()
+
+		node_stand = mcl_player.players[player].nodes.stand
+		node_stand_below = mcl_player.players[player].nodes.stand_below
+		node_head = mcl_player.players[player].nodes.head
+		node_feet = mcl_player.players[player].nodes.feet
+		node_head_top = mcl_player.players[player].nodes.head_top
+		if not node_stand or not node_stand_below or not node_head or not node_feet then
+			return
+		end
+		if (not minetest.registered_nodes[node_stand]
+		or not minetest.registered_nodes[node_stand_below]
+		or not minetest.registered_nodes[node_head]
+		or not minetest.registered_nodes[node_feet]
+		or not minetest.registered_nodes[node_head_top]) then
+			return
+		end
+
+		-- Cause buggy exhaustion for jumping
+
+		--[[ Checklist we check to know the player *actually* jumped:
+			* Not on or in liquid
+			* Not on or at climbable
+			* On walkable
+			* Not on disable_jump
+		FIXME: This code is pretty hacky and it is possible to miss some jumps or detect false
+		jumps because of delays, rounding errors, etc.
+		What this code *really* needs is some kind of jumping “callback” which this engine lacks
+		as of 0.4.15.
+		]]
+
+		if minetest.get_item_group(node_feet, "liquid") == 0 and
+				minetest.get_item_group(node_stand, "liquid") == 0 and
+				not minetest.registered_nodes[node_feet].climbable and
+				not minetest.registered_nodes[node_stand].climbable and
+				(minetest.registered_nodes[node_stand].walkable or minetest.registered_nodes[node_stand_below].walkable)
+				and minetest.get_item_group(node_stand, "disable_jump") == 0
+				and minetest.get_item_group(node_stand_below, "disable_jump") == 0 then
+		-- Cause exhaustion for jumping
+		if mcl_sprint.is_sprinting(name) then
+			mcl_hunger.exhaust(name, mcl_hunger.EXHAUST_SPRINT_JUMP)
+		else
+			mcl_hunger.exhaust(name, mcl_hunger.EXHAUST_JUMP)
+		end
+
+		-- Reset cooldown timer
+			mcl_player.players[player].jump_cooldown = 0.45
+		end
+	end
+end)
+
+mcl_player.register_globalstep_slow(function(player, dtime)
+	--[[ Swimming: Cause exhaustion.
+	NOTE: As of 0.4.15, it only counts as swimming when you are with the feet inside the liquid!
+	Head alone does not count. We respect that for now. ]]
+	if not player:get_attach() and (minetest.get_item_group(mcl_player.players[player].nodes.node_feet, "liquid") ~= 0 or
+			minetest.get_item_group(mcl_player.players[player].nodes.node_stand, "liquid") ~= 0) then
+		local lastPos = mcl_player.players[player].lastPos
+		if lastPos then
+			local dist = vector.distance(lastPos, player:get_pos())
+			mcl_player.players[player].swimDistance = mcl_player.players[player].swimDistance + dist
+			if mcl_player.players[player].swimDistance >= 1 then
+				local superficial = math.floor(mcl_player.players[player].swimDistance)
+				mcl_hunger.exhaust(player:get_player_name(), mcl_hunger.EXHAUST_SWIM * superficial)
+				mcl_player.players[player].swimDistance = mcl_player.players[player].swimDistance - superficial
+			end
+		end
+
+	end
+end)
+
 
 --[[ IF HUNGER IS NOT ENABLED ]]
 else

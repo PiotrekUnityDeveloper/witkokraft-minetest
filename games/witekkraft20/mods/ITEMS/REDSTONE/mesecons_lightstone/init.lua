@@ -29,11 +29,16 @@ minetest.register_node("mesecons_lightstone:lightstone_on", {
 	light_source = light,
 	sounds = mcl_sounds.node_sound_glass_defaults(),
 	mesecons = {effector = {
-		action_off = function(pos, node)
-			minetest.swap_node(pos, {name="mesecons_lightstone:lightstone_off", param2 = node.param2})
+		action_off = function(pos)
+			local timer = minetest.get_node_timer(pos)
+			timer:start(0.2)
 		end,
 		rules = mesecon.rules.alldirs,
 	}},
+	on_timer = function (pos)
+		minetest.swap_node(pos, { name = "mesecons_lightstone:lightstone_off", param2 = minetest.get_node(pos).param2 })
+		return false
+	end,
 	_mcl_blast_resistance = 0.3,
 	_mcl_hardness = 0.3,
 })

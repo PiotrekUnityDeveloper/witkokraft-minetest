@@ -4,7 +4,6 @@
 --License for code WTFPL and otherwise stated in readmes
 
 local S = minetest.get_translator("mobs_mc")
-local allow_nav_hacks = minetest.settings:get_bool("mcl_mob_allow_nav_hacks ",false)
 
 --###################
 --################### IRON GOLEM
@@ -17,15 +16,18 @@ mcl_mobs.register_mob("mobs_mc:iron_golem", {
 	description = S("Iron Golem"),
 	type = "npc",
 	spawn_class = "passive",
-	passive = false,
+	passive = true,
+	retaliates = true,
 	hp_min = 100,
 	hp_max = 100,
 	breath_max = -1,
 	collisionbox = {-0.7, -0.01, -0.7, 0.7, 2.69, 0.7},
+	doll_size_override = { x = 0.9, y = 0.9 },
 	visual = "mesh",
 	mesh = "mobs_mc_iron_golem.b3d",
 	head_swivel = "head.control",
 	bone_eye_height = 3.38,
+	head_eye_height = 2.6,
 	curiosity = 10,
 	textures = {
 		{"mobs_mc_iron_golem.png"},
@@ -44,7 +46,7 @@ mcl_mobs.register_mob("mobs_mc:iron_golem", {
 	damage = 14,
 	knock_back = false,
 	reach = 3,
-	group_attack = { "mobs_mc:villager" },
+	group_attack = { "mobs_mc:iron_golem", "mobs_mc:villager" },
 	attacks_monsters = true,
 	attack_type = "dogfight",
 	_got_poppy = false,
@@ -83,8 +85,8 @@ mcl_mobs.register_mob("mobs_mc:iron_golem", {
 		stand_speed = 15, walk_speed = 15, run_speed = 25, punch_speed = 15,
 		stand_start = 0,		stand_end = 0,
 		walk_start = 0,		walk_end = 40,
-		run_start = 0,		run_end = 40,
-		punch_start = 40,  punch_end = 50,
+		run_start = 40,		run_end = 80,
+		punch_start = 80,  punch_end = 90,
 	},
 	jump = true,
 	do_custom = function(self, dtime)
@@ -94,7 +96,7 @@ mcl_mobs.register_mob("mobs_mc:iron_golem", {
 			self.home_timer = 0
 			if self._home and self.state ~= "attack" then
 				local dist = vector.distance(self._home,self.object:get_pos())
-				if allow_nav_hacks and dist >= tele_dist then
+				if dist >= tele_dist then
 					self.object:set_pos(self._home)
 					self.state = "stand"
 					self.order = "follow"
@@ -125,7 +127,7 @@ I = Iron block
 . = Air
 ]]
 
-function mobs_mc.check_iron_golem_summon(pos)
+function mobs_mc.check_iron_golem_summon(pos, player)
 	local checks = {
 		-- These are the possible placement patterns, with offset from the pumpkin block.
 		-- These tables include the positions of the iron blocks (1-4) and air blocks (5-8)
@@ -215,9 +217,10 @@ function mobs_mc.check_iron_golem_summon(pos)
 				place = vector.add(pos, checks[c][4])
 			end
 			place.y = place.y - 0.5
-			minetest.add_entity(place, "mobs_mc:iron_golem")
+			local o = minetest.add_entity(place, "mobs_mc:iron_golem")
+			local l = o:get_luaentity()
+			if l then l._creator = player:get_player_name() end
 			break
 		end
 	end
 end
-mcl_mobs:non_spawn_specific("mobs_mc:iron_golem","overworld",0,minetest.LIGHT_MAX+1)

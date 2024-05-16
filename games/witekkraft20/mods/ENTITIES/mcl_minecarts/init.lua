@@ -11,23 +11,15 @@ mcl_minecarts.check_float_time = 15
 dofile(mcl_minecarts.modpath.."/functions.lua")
 dofile(mcl_minecarts.modpath.."/rails.lua")
 
-local LOGGING_ON = minetest.settings:get_bool("mcl_logging_minecarts", false)
-local function mcl_log(message)
-	if LOGGING_ON then
-		mcl_util.mcl_log(message, "[Minecarts]", true)
-	end
-end
-
-
 local function detach_driver(self)
 	if not self._driver then
 		return
 	end
-	mcl_player.player_attached[self._driver] = nil
 	local player = minetest.get_player_by_name(self._driver)
 	self._driver = nil
 	self._start_pos = nil
 	if player then
+		mcl_player.players[player].attached = nil
 		player:set_detach()
 		player:set_eye_offset({x=0, y=0, z=0},{x=0, y=0, z=0})
 		mcl_player.player_set_animation(player, "stand" , 30)
@@ -65,114 +57,59 @@ local function hopper_take_item(self, dtime)
 
 	if not self or self.name ~= "mcl_minecarts:hopper_minecart" then return end
 
-	if mcl_util.check_dtime_timer(self, dtime, "hoppermc_take", 0.15) then
-		--minetest.log("The check timer was triggered: " .. dump(pos) .. ", name:" .. self.name)
-	else
-		--minetest.log("The check timer was not triggered")
-		return
-	end
-
-	--mcl_log("self.itemstring: ".. self.itemstring)
-
 	local above_pos = vector.offset(pos, 0, 0.9, 0)
-	--mcl_log("self.itemstring: ".. minetest.pos_to_string(above_pos))
-	local objs = minetest.get_objects_inside_radius(above_pos, 1.25)
 
-	if objs then
+	for k, v in pairs(minetest.get_objects_inside_radius(above_pos, 1.25)) do
+		local ent = v:get_luaentity()
+		local taken_items = false
 
-		mcl_log("there is an itemstring. Number of objs: ".. #objs)
+		if ent and not ent._removed and ent.itemstring and ent.itemstring ~= "" then
+			local inv = mcl_entity_invs.load_inv(self, 5)
+			if not inv then	return false end
 
-		for k, v in pairs(objs) do
-			local ent = v:get_luaentity()
+			local current_itemstack = ItemStack(ent.itemstring)
 
-			if ent and not ent._removed and ent.itemstring and ent.itemstring ~= "" then
-				local taken_items = false
+			if inv:room_for_item("main", current_itemstack) then
+				inv:add_item("main", current_itemstack)
+				v:get_luaentity().itemstring = ""
+				v:remove()
+				taken_items = true
+			end
 
-				mcl_log("ent.name: " .. tostring(ent.name))
-				mcl_log("ent pos: " .. tostring(ent.object:get_pos()))
+			if not taken_items then
+				local items_remaining = current_itemstack:get_count()
+				for i = 1, self._inv_size, 1 do
+					local stack = inv:get_stack("main", i)
 
-				local inv = mcl_entity_invs.load_inv(self, 5)
-				if not inv then return false end
-
-				local current_itemstack = ItemStack(ent.itemstring)
-
-				mcl_log("inv. size: " .. self._inv_size)
-				if inv:room_for_item("main", current_itemstack) then
-					mcl_log("Room")
-					inv:add_item("main", current_itemstack)
-					ent.object:get_luaentity().itemstring = ""
-					ent.object:remove()
-					taken_items = true
-				else
-					mcl_log("no Room")
-				end
-
-				if not taken_items then
-					local items_remaining = current_itemstack:get_count()
-
-					-- This will take part of a floating item stack if no slot can hold the full amount
-					for i = 1, self._inv_size, 1 do
-						local stack = inv:get_stack("main", i)
-
-						mcl_log("i: " .. tostring(i))
-						mcl_log("Items remaining: " .. items_remaining)
-						mcl_log("Name: " .. tostring(stack:get_name()))
-
-						if current_itemstack:get_name() == stack:get_name() then
-							mcl_log("We have a match. Name: " .. tostring(stack:get_name()))
-
-							local room_for = stack:get_stack_max() - stack:get_count()
-							mcl_log("Room for: " .. tostring(room_for))
-
-							if room_for == 0 then
-								-- Do nothing
-								mcl_log("No room")
-							elseif room_for < items_remaining then
-								mcl_log("We have more items remaining than space")
-
-								items_remaining = items_remaining - room_for
-								stack:set_count(stack:get_stack_max())
-								inv:set_stack("main", i, stack)
-								taken_items = true
-							else
-								local new_stack_size = stack:get_count() + items_remaining
-								stack:set_count(new_stack_size)
-								mcl_log("We have more than enough space. Now holds: " .. new_stack_size)
-
-								inv:set_stack("main", i, stack)
-								items_remaining = 0
-
-								ent.object:get_luaentity().itemstring = ""
-								ent.object:remove()
-
-								taken_items = true
-								break
-							end
-
-							mcl_log("Count: " .. tostring(stack:get_count()))
-							mcl_log("stack max: " .. tostring(stack:get_stack_max()))
-							--mcl_log("Is it empty: " .. stack:to_string())
-						end
-
-						if i == self._inv_size and taken_items then
-							mcl_log("We are on last item and still have items left. Set final stack size: " .. items_remaining)
-							current_itemstack:set_count(items_remaining)
-							--mcl_log("Itemstack2: " .. current_itemstack:to_string())
-							ent.itemstring = current_itemstack:to_string()
+					if current_itemstack:get_name() == stack:get_name() then
+						local room_for = stack:get_stack_max() - stack:get_count()
+						if room_for < items_remaining then
+							items_remaining = items_remaining - room_for
+							stack:set_count(stack:get_stack_max())
+							inv:set_stack("main", i, stack)
+							taken_items = true
+						elseif room_for ~= 0 then --do nothing if 0
+							local new_stack_size = stack:get_count() + items_remaining
+							stack:set_count(new_stack_size)
+							inv:set_stack("main", i, stack)
+							v:get_luaentity().itemstring = ""
+							v:remove()
+							taken_items = true
+							break
 						end
 					end
-				end
 
-				--Add in, and delete
-				if taken_items then
-					mcl_log("Saving")
-					mcl_entity_invs.save_inv(ent)
-					return taken_items
-				else
-					mcl_log("No need to save")
+					if i == self._inv_size and taken_items then
+						current_itemstack:set_count(items_remaining)
+						ent.itemstring = current_itemstack:to_string()
+					end
 				end
-
 			end
+		end
+
+		if taken_items then
+			mcl_entity_invs.save_inv(ent)
+			return taken_items
 		end
 	end
 
@@ -184,12 +121,14 @@ local entity_mapping = {}
 
 local function register_entity(entity_id, mesh, textures, drop, on_rightclick, on_activate_by_rail)
 	local cart = {
-		physical = false,
-		collisionbox = {-10/16., -0.5, -10/16, 10/16, 0.25, 10/16},
-		visual = "mesh",
-		mesh = mesh,
-		visual_size = {x=1, y=1},
-		textures = textures,
+		initial_properties = {
+			physical = false,
+			collisionbox = {-10/16., -0.5, -10/16, 10/16, 0.25, 10/16},
+			visual = "mesh",
+			mesh = mesh,
+			visual_size = {x=1, y=1},
+			textures = textures,
+		},
 
 		on_rightclick = on_rightclick,
 
@@ -208,6 +147,8 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 		_old_vel = {x=0, y=0, z=0},
 		_old_switch = 0,
 		_railtype = nil,
+		_mcl_fishing_hookable = true,
+		_mcl_fishing_reelable = true,
 	}
 
 	function cart:on_activate(staticdata, dtime_s)
@@ -241,9 +182,7 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 			if vector.equals(cart_dir, {x=0, y=0, z=0}) then
 				return
 			end
-			self._velocity = vector.multiply(cart_dir, 3)
-			self._old_pos = nil
-			self._punched = true
+			mcl_minecarts:set_velocity(self, cart_dir)
 			return
 		end
 
@@ -300,9 +239,7 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 		time_from_last_punch = math.min(time_from_last_punch, tool_capabilities.full_punch_interval)
 		local f = 3 * (time_from_last_punch / tool_capabilities.full_punch_interval)
 
-		self._velocity = vector.multiply(cart_dir, f)
-		self._old_pos = nil
-		self._punched = true
+		mcl_minecarts:set_velocity(self, cart_dir, f)
 	end
 
 	cart.on_activate_by_rail = on_activate_by_rail
@@ -381,15 +318,15 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 					if self._old_pos then
 						self.object:set_pos(self._old_pos)
 					end
-					mcl_player.player_attached[self._driver] = nil
+					mcl_player.players[player].attached = nil
 					player:set_detach()
 					player:set_eye_offset({x=0, y=0, z=0},{x=0, y=0, z=0})
 				end
 
 				-- Explode if already ignited
 				if self._boomtimer then
+					mcl_explosions.explode(pos, 4, {}, self.object)
 					self.object:remove()
-					mcl_explosions.explode(pos, 4, { drop_chance = 1.0 })
 					return
 				end
 
@@ -424,8 +361,8 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 			self._boomtimer = self._boomtimer - dtime
 			local pos = self.object:get_pos()
 			if self._boomtimer <= 0 then
+				mcl_explosions.explode(pos, 4, {}, self.object)
 				self.object:remove()
-				mcl_explosions.explode(pos, 4, { drop_chance = 1.0 })
 				return
 			else
 				tnt.smoke_step(pos)
@@ -470,7 +407,7 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 			return
 		end
 
-		local dir, last_switch = nil, nil
+		local dir, last_switch, restart_pos = nil, nil, nil
 		if not pos then
 			pos = self.object:get_pos()
 		end
@@ -496,6 +433,9 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 				local newnode = {name="mcl_minecarts:detector_rail_on", param2 = node.param2}
 				minetest.swap_node(rou_pos, newnode)
 				mesecon.receptor_on(rou_pos)
+			end
+			if node.name == "mcl_minecarts:golden_rail_on" then
+				restart_pos = rou_pos
 			end
 			if node_old.name == "mcl_minecarts:detector_rail_on" then
 				local newnode = {name="mcl_minecarts:detector_rail", param2 = node_old.param2}
@@ -647,6 +587,14 @@ local function register_entity(entity_id, mesh, textures, drop, on_rightclick, o
 		if update.pos then
 			self.object:set_pos(pos)
 		end
+
+		-- stopped on "mcl_minecarts:golden_rail_on"
+		if vector.equals(vel, {x=0, y=0, z=0}) and restart_pos then
+			local dir = mcl_minecarts:get_start_direction(restart_pos)
+			if dir then
+				mcl_minecarts:set_velocity(self, dir)
+			end
+		end
 	end
 
 	function cart:get_staticdata()
@@ -658,7 +606,7 @@ end
 
 -- Place a minecart at pointed_thing
 function mcl_minecarts.place_minecart(itemstack, pointed_thing, placer)
-	if not pointed_thing.type == "node" then
+	if pointed_thing.type ~= "node" then
 		return
 	end
 
@@ -682,12 +630,21 @@ function mcl_minecarts.place_minecart(itemstack, pointed_thing, placer)
 
 	local entity_id = entity_mapping[itemstack:get_name()]
 	local cart = minetest.add_entity(railpos, entity_id)
+	if not cart or not cart:get_pos() then return end
 	local railtype = minetest.get_item_group(node.name, "connect_to_raillike")
 	local le = cart:get_luaentity()
 	if le then
 		le._railtype = railtype
 	end
-	local cart_dir = mcl_minecarts:get_rail_direction(railpos, {x=1, y=0, z=0}, nil, nil, railtype)
+	local cart_dir
+	if node.name == "mcl_minecarts:golden_rail_on" then
+		cart_dir = mcl_minecarts:get_start_direction(railpos)
+	end
+	if cart_dir then
+		mcl_minecarts:set_velocity(le, cart_dir)
+	else
+		cart_dir = mcl_minecarts:get_rail_direction(railpos, {x=1, y=0, z=0}, nil, nil, railtype)
+	end
 	cart:set_yaw(minetest.dir_to_yaw(cart_dir))
 
 	local pname = ""
@@ -711,17 +668,13 @@ local function register_craftitem(itemstring, entity_id, description, tt_help, l
 	local def = {
 		stack_max = 1,
 		on_place = function(itemstack, placer, pointed_thing)
-			if not pointed_thing.type == "node" then
+			if pointed_thing.type ~= "node" then
 				return
 			end
 
 			-- Call on_rightclick if the pointed node defines it
-			local node = minetest.get_node(pointed_thing.under)
-			if placer and not placer:get_player_control().sneak then
-				if minetest.registered_nodes[node.name] and minetest.registered_nodes[node.name].on_rightclick then
-					return minetest.registered_nodes[node.name].on_rightclick(pointed_thing.under, node, placer, itemstack) or itemstack
-				end
-			end
+			local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+			if rc then return rc end
 
 			return mcl_minecarts.place_minecart(itemstack, pointed_thing, placer)
 		end,
@@ -766,6 +719,7 @@ Register a minecart
 ]]
 local function register_minecart(itemstring, entity_id, description, tt_help, longdesc, usagehelp, mesh, textures, icon, drop, on_rightclick, on_activate_by_rail, creative)
 	register_entity(entity_id, mesh, textures, drop, on_rightclick, on_activate_by_rail)
+	tt_help = (tt_help and tt_help .. "\n" or "") .. S("Sneak-click to remove")
 	register_craftitem(itemstring, entity_id, description, tt_help, longdesc, usagehelp, icon, creative)
 	if minetest.get_modpath("doc_identifier") then
 		doc.sub.identifier.register_object(entity_id, "craftitems", itemstring)
@@ -788,19 +742,17 @@ register_minecart(
 	"mcl_minecarts_minecart_normal.png",
 	{"mcl_minecarts:minecart"},
 	function(self, clicker)
-		local name = clicker:get_player_name()
 		if not clicker or not clicker:is_player() then
 			return
 		end
-		local player_name = clicker:get_player_name()
-		if self._driver and player_name == self._driver then
+		local name = clicker:get_player_name()
+		if self._driver and name == self._driver then
 			detach_driver(self)
 		elseif not self._driver then
-			self._driver = player_name
+			self._driver = name
 			self._start_pos = self.object:get_pos()
-			mcl_player.player_attached[player_name] = true
+			mcl_player.players[clicker].attached = true
 			clicker:set_attach(self.object, "", {x=0, y=-1.75, z=-2}, {x=0, y=0, z=0})
-			mcl_player.player_attached[name] = true
 			minetest.after(0.2, function(name)
 				local player = minetest.get_player_by_name(name)
 				if player then
@@ -950,7 +902,7 @@ register_minecart(
 			return
 		end
 		local held = clicker:get_wielded_item()
-		if held:get_name() == "mcl_fire:flint_and_steel" then
+		if minetest.get_item_group(held:get_name(),"flint_and_steel") > 0 then
 			if not minetest.is_creative_enabled(clicker:get_player_name()) then
 				held:add_wear(65535/65) -- 65 uses
 				local index = clicker:get_wield_index()

@@ -1,10 +1,6 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 local F = minetest.formspec_escape
 
-local tonumber = tonumber
-
-local color_red = mcl_colors.RED
-
 local command_blocks_activated = minetest.settings:get_bool("mcl_enable_commandblocks", true)
 local msg_not_activated = S("Command blocks are not enabled on this server")
 
@@ -85,7 +81,7 @@ local function check_commands(commands, player_name)
 			if string.sub(cmd, 1, 1) == "/" then
 				msg = S("Error: The command “@1” does not exist; your command block has not been changed. Use the “help” chat command for a list of available commands. Hint: Try to remove the leading slash.", cmd)
 			end
-			return false, minetest.colorize(color_red, msg)
+			return false, minetest.colorize(mcl_colors.RED, msg)
 		end
 		if player_name then
 			local player_privs = minetest.get_player_privs(player_name)
@@ -93,7 +89,7 @@ local function check_commands(commands, player_name)
 			for cmd_priv, _ in pairs(cmddef.privs) do
 				if player_privs[cmd_priv] ~= true then
 					local msg = S("Error: You have insufficient privileges to use the command “@1” (missing privilege: @2)! The command block has not been changed.", cmd, cmd_priv)
-					return false, minetest.colorize(color_red, msg)
+					return false, minetest.colorize(mcl_colors.RED, msg)
 				end
 			end
 		end
@@ -195,7 +191,7 @@ local function on_rightclick(pos, node, player, itemstack, pointed_thing)
 end
 
 local function on_place(itemstack, placer, pointed_thing)
-	if pointed_thing.type ~= "node" then
+	if pointed_thing.type ~= "node" or not placer or not placer:is_player() then
 		return itemstack
 	end
 
@@ -207,7 +203,7 @@ local function on_place(itemstack, placer, pointed_thing)
 
 	--local node = minetest.get_node(pointed_thing.under)
 
-	local privs = minetest.get_player_privs(placer:get_player_name())
+	local privs = minetest.get_player_privs(placer and placer:get_player_name() or "")
 	if not privs.maphack then
 		minetest.chat_send_player(placer:get_player_name(), S("Placement denied. You need the “maphack” privilege to place command blocks."))
 		return itemstack

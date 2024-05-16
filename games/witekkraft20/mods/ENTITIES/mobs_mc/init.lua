@@ -70,89 +70,13 @@ mobs_mc.make_owner_teleport_function = function(dist, teleport_check_interval)
 	end
 end
 
-local function is_forbidden_node(pos, node)
-	node = node or minetest.get_node(pos)
-	return minetest.get_item_group(node.name, "stair") > 0 or minetest.get_item_group(node.name, "slab") > 0 or minetest.get_item_group(node.name, "carpet") > 0
-end
-
-function mcl_mobs:spawn_abm_check(pos, node, name)
-	-- Don't spawn monsters on mycelium
-	if (node.name == "mcl_core:mycelium" or node.name == "mcl_core:mycelium_snow") and minetest.registered_entities[name].type == "monster" then
-		return true
-    --Don't Spawn mobs on stairs, slabs, or carpets
-	elseif is_forbidden_node(pos, node) or is_forbidden_node(vector.add(pos, vector.new(0, 1, 0))) then
-		return true
-	-- Spawn on opaque or liquid nodes
-	elseif minetest.get_item_group(node.name, "opaque") ~= 0 or minetest.registered_nodes[node.name].liquidtype ~= "none" or node.name == "mcl_core:grass_path" then
-		return false
-	end
-
-	-- Reject everything else
-	return true
-end
-
 mobs_mc.shears_wear = 276
 mobs_mc.water_level = tonumber(minetest.settings:get("water_level")) or 0
 
--- Animals
+-- Auto load all lua files
 local path = minetest.get_modpath("mobs_mc")
-dofile(path .. "/axolotl.lua") -- Mesh and animation by JoeEnderman, Textures by Nova Wustra, modified by JoeEnderman
-dofile(path .. "/bat.lua") -- Mesh and animation by toby109tt  / https://github.com/22i
-dofile(path .. "/rabbit.lua") -- Mesh and animation byExeterDad
-dofile(path .. "/chicken.lua") -- Mesh and animation by Pavel_S
-dofile(path .. "/cow+mooshroom.lua") -- Mesh by Morn76 Animation by Pavel_S
-dofile(path .. "/horse.lua") -- KrupnoPavel; Mesh and animation by toby109tt  / https://github.com/22i
-dofile(path .. "/llama.lua") --  Mesh and animation by toby109tt  / https://github.com/22i
-dofile(path .. "/ocelot.lua") --  Mesh and animation by toby109tt  / https://github.com/22i
-dofile(path .. "/parrot.lua") --  Mesh and animation by toby109tt  / https://github.com/22i
-dofile(path .. "/pig.lua") -- Mesh and animation by Pavel_S
-dofile(path .. "/polar_bear.lua") --  Mesh and animation by toby109tt  / https://github.com/22i
-dofile(path .. "/sheep.lua") -- Mesh and animation by Pavel_S
-dofile(path .. "/wolf.lua") -- KrupnoPavel
-dofile(path .. "/squid.lua") -- Animation, sound and egg texture by daufinsyd
-
--- NPCs
-dofile(path .. "/villager.lua") -- KrupnoPavel Mesh and animation by toby109tt  / https://github.com/22i
-
--- Illagers and witch
-dofile(path .. "/pillager.lua") -- Mesh by KrupnoPavel and MrRar, animation by MrRar
-dofile(path .. "/villager_evoker.lua") -- Mesh and animation by toby109tt  / https://github.com/22i
-dofile(path .. "/villager_vindicator.lua") -- Mesh and animation by toby109tt  / https://github.com/22i
-dofile(path .. "/villager_zombie.lua") -- Mesh and animation by toby109tt  / https://github.com/22i
-
-dofile(path .. "/witch.lua") -- Mesh and animation by toby109tt  / https://github.com/22i
-
---Monsters
-dofile(path .. "/blaze.lua") -- Animation by daufinsyd
-dofile(path .. "/creeper.lua") -- Mesh by Morn76 Animation by Pavel_S
-dofile(path .. "/ender_dragon.lua") -- Mesh and animation by toby109tt  / https://github.com/22i
-dofile(path .. "/enderman.lua") -- Mesh and animation by toby109tt  / https://github.com/22i
-dofile(path .. "/endermite.lua") -- Mesh and animation by toby109tt  / https://github.com/22i
-dofile(path .. "/villager_illusioner.lua") -- Mesh and animation by toby109tt  / https://github.com/22i
-dofile(path .. "/ghast.lua") -- maikerumine
-dofile(path .. "/guardian.lua") -- maikerumine Mesh and animation by toby109tt  / https://github.com/22i
-dofile(path .. "/guardian_elder.lua") -- maikerumine Mesh and animation by toby109tt  / https://github.com/22i
-dofile(path .. "/snowman.lua")
-dofile(path .. "/iron_golem.lua") -- maikerumine Mesh and animation by toby109tt  / https://github.com/22i
-dofile(path .. "/shulker.lua") -- maikerumine Mesh and animation by toby109tt  / https://github.com/22i
-dofile(path .. "/silverfish.lua") -- maikerumine Mesh and animation by toby109tt  / https://github.com/22i
-dofile(path .. "/skeleton+stray.lua") -- Mesh by Morn76 Animation by Pavel_S
-dofile(path .. "/skeleton_wither.lua") -- Mesh by Morn76 Animation by Pavel_S
-dofile(path .. "/zombie.lua") -- Mesh by Morn76 Animation by Pavel_S
-dofile(path .. "/slime+magma_cube.lua") -- Wuzzy
-dofile(path .. "/spider.lua") -- Spider by AspireMint (fishyWET (CC-BY-SA 3.0 license for texture)
-dofile(path .. "/vex.lua") -- KrupnoPavel
-dofile(path .. "/wither.lua") -- Mesh and animation by toby109tt  / https://github.com/22i
-
-dofile(path .. "/cod.lua")
-dofile(path .. "/salmon.lua")
-dofile(path .. "/tropical_fish.lua")
-dofile(path .. "/dolphin.lua")
-
-
-dofile(path .. "/glow_squid.lua")
-
-dofile(path .. "/piglin.lua") -- "mobs_mc_zombie_pigman.b3d" Mesh by Morn76 Animation by Pavel_S
-dofile(path .. "/hoglin+zoglin.lua")
-
-dofile(path .. "/strider.lua")
+for _, file in pairs(minetest.get_dir_list(path, false)) do
+	if file:sub(-4) == ".lua" and file ~= "init.lua" then
+		dofile(path .. "/" ..file)
+	end
+end

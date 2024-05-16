@@ -1,2 +1,2 @@
-# textdomain:hbarmor
+# textdomain: mcl_hbarmor
 Armor=

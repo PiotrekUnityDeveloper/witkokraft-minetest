@@ -5,11 +5,14 @@ mcl_bells = {}
 local has_mcl_wip = minetest.get_modpath("mcl_wip")
 
 function mcl_bells.ring_once(pos)
+	local alarm_time = (minetest.get_timeofday() * 24000) % 24000
+
 	minetest.sound_play( "mcl_bells_bell_stroke", { pos = pos, gain = 1.5, max_hear_distance = 150,})
 	local vv=minetest.get_objects_inside_radius(pos,150)
 	for _,o in pairs(vv) do
-		if o.type == "npc" then
-			o:get_luaentity():gopath(pos,function() end)
+		local entity = o:get_luaentity()
+		if entity and entity.type and entity.type == "npc" then
+			entity._last_alarm = alarm_time
 		end
 	end
 end

@@ -1,0 +1,10 @@
+# The format for the timer label - first string is timer name, second one is seconds left.
+hud_timers.format (Hud timers Format) string %s: %s s
+
+# How often timers should be updated (interval duration in seconds).
+hud_timers.globalstep (Hud timers Globalstep) float 0.1 0.000000 1073741824.000000
+
+# How many timers(maximum) may exist at a time.
+hud_timers.hud_timers_max (Hud timers Hud timers max) float 10 0.000000 100.000000
+
+[hud_timers.hud_pos]

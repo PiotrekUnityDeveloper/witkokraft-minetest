@@ -1,77 +1,57 @@
 local S = minetest.get_translator(minetest.get_current_modname())
-local mod_doc = minetest.get_modpath("doc")
 
-
-local colors = {
-	-- { ID, decription, wool, dye }
-	{ "red", S("Red Bed"), "mcl_wool:red", "mcl_dye:red" },
-	{ "blue", S("Blue Bed"), "mcl_wool:blue", "mcl_dye:blue" },
-	{ "cyan", S("Cyan Bed"), "mcl_wool:cyan", "mcl_dye:cyan" },
-	{ "grey", S("Grey Bed"), "mcl_wool:grey", "mcl_dye:dark_grey" },
-	{ "silver", S("Light Grey Bed"), "mcl_wool:silver", "mcl_dye:grey" },
-	{ "black", S("Black Bed"), "mcl_wool:black", "mcl_dye:black" },
-	{ "yellow", S("Yellow Bed"), "mcl_wool:yellow", "mcl_dye:yellow" },
-	{ "green", S("Green Bed"), "mcl_wool:green", "mcl_dye:dark_green" },
-	{ "magenta", S("Magenta Bed"), "mcl_wool:magenta", "mcl_dye:magenta" },
-	{ "orange", S("Orange Bed"), "mcl_wool:orange", "mcl_dye:orange" },
-	{ "purple", S("Purple Bed"), "mcl_wool:purple", "mcl_dye:violet" },
-	{ "brown", S("Brown Bed"), "mcl_wool:brown", "mcl_dye:brown" },
-	{ "pink", S("Pink Bed"), "mcl_wool:pink", "mcl_dye:pink" },
-	{ "lime", S("Lime Bed"), "mcl_wool:lime", "mcl_dye:green" },
-	{ "light_blue", S("Light Blue Bed"), "mcl_wool:light_blue", "mcl_dye:lightblue" },
-	{ "white", S("White Bed"), "mcl_wool:white", "mcl_dye:white" },
+local messy_textures = { --translator table for the bed texture filenames names not adhering to the common color names of mcl_dyes
+	["lightblue"] = "light_blue",
 }
+
 local canonical_color = "red"
 
-for c=1, #colors do
-	local colorid = colors[c][1]
-	local is_canonical = colorid == canonical_color
+for color, colordef in pairs(mcl_dyes.colors) do
+	local is_canonical =
 
-	-- Recoloring recipe for white bed
-	if minetest.get_modpath("mcl_dye") then
-		minetest.register_craft({
-			type = "shapeless",
-			output = "mcl_beds:bed_"..colorid.."_bottom",
-			recipe = { "mcl_beds:bed_white_bottom", colors[c][4] },
-		})
-	end
-
-	-- Main bed recipe
-	local main_recipe
-	if minetest.get_modpath("mcl_wool") then
-		main_recipe = {
-			{colors[c][3], colors[c][3], colors[c][3]},
-			{"group:wood", "group:wood", "group:wood"}
-		}
-	end
+	minetest.register_craft({
+		type = "shapeless",
+		output = "mcl_beds:bed_"..color.."_bottom",
+		recipe = { "group:bed", "mcl_dyes:"..color }
+	})
 
 	local entry_name, create_entry
-	if mod_doc then
-		if is_canonical then
-			entry_name = S("Bed")
-		else
-			create_entry = false
-		end
+	if is_canonical then
+		entry_name = S("Bed")
+	else
+		create_entry = false
+	end
+	local texcol = color
+	if messy_textures[color] then
+		texcol = messy_textures[color]
 	end
 	-- Register bed
-	mcl_beds.register_bed("mcl_beds:bed_"..colorid, {
-		description = colors[c][2],
+	mcl_beds.register_bed("mcl_beds:bed_"..color, {
+		description = S("@1 Bed", colordef.readable_name),
 		_doc_items_entry_name = entry_name,
 		_doc_items_create_entry = create_entry,
-		inventory_image = "mcl_beds_bed_"..colorid.."_inv.png",
-		wield_image = "mcl_beds_bed_"..colorid.."_inv.png",
-						
+		inventory_image = "mcl_beds_bed_"..texcol.."_inv.png",
+		wield_image = "mcl_beds_bed_"..texcol.."_inv.png",
+
 		tiles = {
-			"mcl_beds_bed_"..colorid..".png"
+			"mcl_beds_bed_"..texcol..".png"
 		},
-		
-		recipe = main_recipe,
+		recipe = {
+			{"mcl_wool:"..color, "mcl_wool:"..color, "mcl_wool:"..color},
+			{"group:wood", "group:wood", "group:wood"}
+		},
 	})
-	if mod_doc and not is_canonical then
-		doc.add_entry_alias("nodes", "mcl_beds:bed_"..canonical_color.."_bottom", "nodes", "mcl_beds:bed_"..colorid.."_bottom")
-		doc.add_entry_alias("nodes", "mcl_beds:bed_"..canonical_color.."_bottom", "nodes", "mcl_beds:bed_"..colorid.."_top")
+
+	if not is_canonical then
+		doc.add_entry_alias("nodes", "mcl_beds:bed_"..canonical_color.."_bottom", "nodes", "mcl_beds:bed_"..color.."_bottom")
+		doc.add_entry_alias("nodes", "mcl_beds:bed_"..canonical_color.."_bottom", "nodes", "mcl_beds:bed_"..color.."_top")
 	end
 
+	-- Alias old non-uniform node names
+	if messy_textures[color] then
+		minetest.register_alias("mcl_beds:bed_"..texcol.."_top","mcl_beds:bed_"..color.."_top")
+		minetest.register_alias("mcl_beds:bed_"..texcol.."_bottom","mcl_beds:bed_"..color.."_bottom")
+	end
 end
 
 minetest.register_alias("beds:bed_bottom", "mcl_beds:bed_red_bottom")

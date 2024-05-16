@@ -108,12 +108,7 @@ minetest.register_node("mcl_core:cobweb", {
 	tiles = {"mcl_core_web.png"},
 	inventory_image = "mcl_core_web.png",
 	paramtype = "light",
-	liquid_viscosity = 14,
-	liquidtype = "source",
-	liquid_alternative_flowing = "mcl_core:cobweb",
-	liquid_alternative_source = "mcl_core:cobweb",
-	liquid_renewable = false,
-	liquid_range = 0,
+	move_resistance = 14,
 	walkable = false,
 	groups = {swordy_cobweb = 1, shearsy_cobweb = 1, fake_liquid = 1, disable_jump = 1, deco_block = 1, dig_by_piston = 1,
 		dig_by_water = 1, destroy_by_lava_flow = 1,},
@@ -164,6 +159,18 @@ minetest.register_node("mcl_core:deadbush", {
 	_mcl_hardness = 0,
 })
 
+mcl_flowerpots.register_potted_flower("mcl_core:deadbush", {
+	name = "deadbush",
+	desc = S("Dead Bush"),
+	image = "default_dry_shrub.png",
+})
+
+minetest.register_craft({
+	type = "fuel",
+	recipe = "mcl_core:deadbush",
+	burntime = 5,
+})
+
 minetest.register_node("mcl_core:barrier", {
 	description = S("Barrier"),
 	_doc_items_longdesc = S("Barriers are invisible walkable blocks. They are used to create boundaries of adventure maps and the like. Monsters and animals won't appear on barriers, and fences do not connect to barriers. Other blocks can be built on barriers like on any other block."),
@@ -194,7 +201,7 @@ minetest.register_node("mcl_core:barrier", {
 		})
 	end,
 	on_place = function(itemstack, placer, pointed_thing)
-		if pointed_thing.type ~= "node" then
+		if pointed_thing.type ~= "node" or not placer or not placer:is_player() then
 			return itemstack
 		end
 
@@ -331,7 +338,6 @@ minetest.register_node("mcl_core:void", {
 			minetest.chat_send_player(placer:get_player_name(),
 				minetest.colorize(mcl_colors.RED, "You can't just place the void by hand!"))
 		end
-		return
 	end,
 	drop = "",
 	-- Infinite blast resistance; it should never be destroyed by explosions

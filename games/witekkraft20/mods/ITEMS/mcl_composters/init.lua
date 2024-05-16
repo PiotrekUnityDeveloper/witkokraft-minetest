@@ -38,16 +38,6 @@ minetest.register_craft({
 	burntime = 15,
 })
 
-local get_item_group = minetest.get_item_group
-local is_creative_enabled = minetest.is_creative_enabled
-local registered_nodes = minetest.registered_nodes
-local swap_node = minetest.swap_node
-local get_node_timer = minetest.get_node_timer
-local add_item = minetest.add_item
-local vector_offset = vector.offset
-local is_protected = minetest.is_protected
-local record_protection_violation = minetest.record_protection_violation
-
 --- Fill the composter when rightclicked.
 --
 -- `on_rightclick` handler for composter blocks of all fill levels except
@@ -64,61 +54,51 @@ local function composter_add_item(pos, node, player, itemstack, pointed_thing)
 		return itemstack
 	end
 	local name = player:get_player_name()
-	if is_protected(pos, name) then
-		record_protection_violation(pos, name)
+	if minetest.is_protected(pos, name) then
+		minetest.record_protection_violation(pos, name)
 		return itemstack
 	end
 	if not itemstack or itemstack:is_empty() then
 		return itemstack
 	end
 	local itemname = itemstack:get_name()
-	local chance = get_item_group(itemname, "compostability")
+	local chance = minetest.get_item_group(itemname, "compostability")
 	if chance > 0 then
-		if not is_creative_enabled(player:get_player_name()) then
+		if not minetest.is_creative_enabled(player:get_player_name()) then
 			itemstack:take_item()
 			minetest.sound_play({name="default_gravel_dug", gain=1}, {
 				pos = pos,
 				max_hear_distance = 16,
 			}, true)
 		end
-		composter_progress_chance(pos, node, chance)
-	end
-	return itemstack
-end
-
---- Math and node swap during compost progression
----@param pos Vector Position of the node
----@param node node
----@param chance integer Value of "compostability" group of inserted item 
-function composter_progress_chance(pos, node, chance)
-	-- calculate leveling up chance
-	local rand = math.random(0,100)
-	if chance >= rand then
-		-- get current compost level
-		local level = registered_nodes[node.name]["_mcl_compost_level"]
-		-- spawn green particles above new layer
-		mcl_dye.add_bone_meal_particle(vector_offset(pos, 0, level/8, 0))
-		-- update composter block
-		if level < 7 then
-			level = level + 1
-		else
-			level = "ready"
-		end
-		swap_node(pos, {name = "mcl_composters:composter_" .. level})
-		minetest.sound_play({name="default_grass_footstep", gain=0.4}, {
-			pos = pos,
-			gain= 0.4,
-			max_hear_distance = 16,
-		}, true)
-		-- a full composter becomes ready for harvest after one second
-		-- the block will get updated by the node timer callback set in node reg def
-		if level == 7 then
-			local timer = get_node_timer(pos)
-			if not timer:is_started() then
+		-- calculate leveling up chance
+		local rand = math.random(0,100)
+		if chance >= rand then
+			-- get current compost level
+			local level = minetest.registered_nodes[node.name]["_mcl_compost_level"]
+			-- spawn green particles above new layer
+			mcl_bone_meal.add_bone_meal_particle(vector.offset(pos, 0, level/8, 0))
+			-- update composter block
+			if level < 7 then
+				level = level + 1
+			else
+				level = "ready"
+			end
+			minetest.swap_node(pos, {name = "mcl_composters:composter_" .. level})
+			minetest.sound_play({name="default_grass_footstep", gain=0.4}, {
+				pos = pos,
+				gain= 0.4,
+				max_hear_distance = 16,
+			}, true)
+			-- a full composter becomes ready for harvest after one second
+			-- the block will get updated by the node timer callback set in node reg def
+			if level == 7 then
+				local timer = minetest.get_node_timer(pos)
 				timer:start(1)
 			end
 		end
 	end
+	return itemstack
 end
 
 --- Update a full composter block to ready for harvesting.
@@ -130,7 +110,7 @@ end
 -- returns false, thereby cancelling further activity of the timer.
 --
 local function composter_ready(pos)
-	swap_node(pos, {name = "mcl_composters:composter_ready"})
+	minetest.swap_node(pos, {name = "mcl_composters:composter_ready"})
 	-- maybe spawn particles again?
 	minetest.sound_play({name="default_dig_snappy", gain=1}, {
 		pos = pos,
@@ -153,19 +133,13 @@ local function composter_harvest(pos, node, player, itemstack, pointed_thing)
 		return itemstack
 	end
 	local name = player:get_player_name()
-	if is_protected(pos, name) then
-		record_protection_violation(pos, name)
+	if minetest.is_protected(pos, name) then
+		minetest.record_protection_violation(pos, name)
 		return itemstack
 	end
-	local meta = minetest.get_meta(pos)
-	local inv = meta:get_inventory()
-	--remove bone meal from internal inventory
-	inv:set_stack("dst", 1, ItemStack())
 	-- reset ready type composter to empty type
-	swap_node(pos, {name="mcl_composters:composter"})
-	-- spawn bone meal item
-	add_item(pos, "mcl_bone_meal:bone_meal")
-	-- TODO play some sounds
+	minetest.swap_node(pos, {name="mcl_composters:composter"})
+	minetest.add_item(pos, "mcl_bone_meal:bone_meal")
 	return itemstack
 end
 
@@ -189,13 +163,81 @@ local function composter_get_nodeboxes(level)
 	}
 end
 
-local function hopper_push_condition(stack)
-	local chance = get_item_group(stack:get_name(), "compostability")
-	if chance > 0 then
-		return true
+local function composter_level(node)
+	local nn = node.name
+	if nn == "mcl_composters:composter" then
+		return 0
+	elseif nn == "mcl_composters:composter_1" then
+		return 1
+	elseif nn == "mcl_composters:composter_2" then
+		return 2
+	elseif nn == "mcl_composters:composter_3" then
+		return 3
+	elseif nn == "mcl_composters:composter_4" then
+		return 4
+	elseif nn == "mcl_composters:composter_5" then
+		return 5
+	elseif nn == "mcl_composters:composter_6" then
+		return 6
+	elseif nn == "mcl_composters:composter_7" then
+		return 7
+	else
+		return nil
 	end
-	return false
 end
+
+for i = 1, 7 do
+	assert(composter_level({name = "mcl_composters:composter_" .. i}) == i)
+end
+
+assert(composter_level({name = "mcl_composters:composter"}) == 0)
+assert(composter_level({name = "mcl_composters:some_other_node"}) == nil)
+
+local function on_hopper_out(uppos, pos)
+	-- Get bonemeal from composter above
+	local upnode = minetest.get_node(uppos)
+	if upnode.name == "mcl_composters:composter_ready" then
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+
+		minetest.swap_node(uppos, {name = "mcl_composters:composter"})
+
+		inv:add_item("main", "mcl_bone_meal:bone_meal")
+	end
+end
+
+local function on_hopper_in(pos, downpos)
+	local downnode = minetest.get_node(downpos)
+	local level = composter_level(downnode)
+
+	--Consume compostable items and update composter below
+	if level then
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+
+		for i = 1, 5 do
+			local stack = inv:get_stack("main", i)
+			local compchance = minetest.get_item_group(stack:get_name(), "compostability")
+
+			if compchance > 0 then
+				stack:take_item()
+				inv:set_stack("main", i, stack)
+
+				if compchance >= math.random(0, 100) then
+					mcl_bone_meal.add_bone_meal_particle(vector.offset(downpos, 0, level / 8, 0))
+					if level < 7 then
+						level = level + 1
+					else
+						level = "ready"
+					end
+					minetest.swap_node(downpos, {name = "mcl_composters:composter_" .. level})
+				end
+				break
+			end
+		end
+	end
+end
+
 
 --- Register empty composter node.
 --
@@ -219,40 +261,14 @@ minetest.register_node("mcl_composters:composter", {
 	groups = {
 		handy=1, material_wood=1, deco_block=1, dirtifier=1,
 		flammable=2, fire_encouragement=3, fire_flammability=4,
-		container = 2
+		container = 1,
 	},
 	sounds = mcl_sounds.node_sound_wood_defaults(),
 	_mcl_hardness = 0.6,
 	_mcl_blast_resistance = 0.6,
 	_mcl_compost_level = 0,
 	on_rightclick = composter_add_item,
-	on_construct = function(pos)
-		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-		inv:set_size("src", 1)
-		inv:set_size("dst", 1)
-	end,
-	_mcl_hoppers_on_try_pull = function(pos, hop_pos, hop_inv, hop_list)
-		return nil, nil, nil
-	end,
-	_mcl_hoppers_on_try_push = function(pos, hop_pos, hop_inv, hop_list)
-		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-		return inv, "src", mcl_util.select_stack(hop_inv, hop_list, inv, "src", hopper_push_condition)
-	end,
-	_mcl_hoppers_on_after_push = function(pos)
-		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-		local stack = inv:get_stack("src", 1)
-		if not stack:is_empty() then
-			local chance = get_item_group(stack:get_name(), "compostability")
-			if chance > 0 then
-				local node = minetest.get_node(pos)
-				composter_progress_chance(pos, node, chance)
-			end
-		end
-		inv:remove_item("src", stack)
-	end,
+	_on_hopper_in = on_hopper_in,
 })
 
 --- Template function for composters with compost.
@@ -278,7 +294,7 @@ local function register_filled_composter(level)
 			handy=1, material_wood=1, deco_block=1, dirtifier=1,
 			not_in_creative_inventory=1, not_in_craft_guide=1,
 			flammable=2, fire_encouragement=3, fire_flammability=4,
-			comparator_signal=level, container = 2
+			comparator_signal=level, container = 1,
 		},
 		sounds = mcl_sounds.node_sound_wood_defaults(),
 		drop = "mcl_composters:composter",
@@ -287,27 +303,7 @@ local function register_filled_composter(level)
 		_mcl_compost_level = level,
 		on_rightclick = composter_add_item,
 		on_timer = composter_ready,
-		_mcl_hoppers_on_try_pull = function(pos, hop_pos, hop_inv, hop_list)
-			return nil, nil, nil
-		end,
-		_mcl_hoppers_on_try_push = function(pos, hop_pos, hop_inv, hop_list)
-			local meta = minetest.get_meta(pos)
-			local inv = meta:get_inventory()
-			return inv, "src", mcl_util.select_stack(hop_inv, hop_list, inv, "src", hopper_push_condition)
-		end,
-		_mcl_hoppers_on_after_push = function(pos)
-			local meta = minetest.get_meta(pos)
-			local inv = meta:get_inventory()
-			local stack = inv:get_stack("src", 1)
-			if not stack:is_empty() then
-				local chance = get_item_group(stack:get_name(), "compostability")
-				if chance > 0 then
-					local node = minetest.get_node(pos)
-					composter_progress_chance(pos, node, chance)
-				end
-			end
-			inv:remove_item("src", stack)
-		end,
+		_on_hopper_in = on_hopper_in,
 	})
 
 	-- Add entry aliases for the Help
@@ -341,7 +337,7 @@ minetest.register_node("mcl_composters:composter_ready", {
 		handy=1, material_wood=1, deco_block=1, dirtifier=1,
 		not_in_creative_inventory=1, not_in_craft_guide=1,
 		flammable=2, fire_encouragement=3, fire_flammability=4,
-		comparator_signal=8, container = 2
+		comparator_signal=8, container = 1,
 	},
 	sounds = mcl_sounds.node_sound_wood_defaults(),
 	drop = "mcl_composters:composter",
@@ -349,24 +345,7 @@ minetest.register_node("mcl_composters:composter_ready", {
 	_mcl_blast_resistance = 0.6,
 	_mcl_compost_level = 7,
 	on_rightclick = composter_harvest,
-	_mcl_hoppers_on_try_push = function(pos, hop_pos, hop_inv, hop_list)
-		return nil, nil, nil
-	end,
-	_mcl_hoppers_on_try_pull = function(pos, hop_pos, hop_inv, hop_list)
-		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-		--remove bone meal from internal inventory
-		inv:set_stack("dst", 1, ItemStack())
-		inv:add_item("dst", "mcl_bone_meal:bone_meal")
-		local stack = inv:get_stack("dst", 1)
-		if not stack:is_empty() and hop_inv:room_for_item(hop_list, stack) then
-			return inv, "dst", 1
-		end
-		return nil, nil, nil
-	end,
-	_mcl_hoppers_on_after_pull = function(pos)
-		minetest.swap_node(pos, {name = "mcl_composters:composter"})
-	end,
+	_on_hopper_out = on_hopper_out,
 })
 
 -- Add entry aliases for the Help

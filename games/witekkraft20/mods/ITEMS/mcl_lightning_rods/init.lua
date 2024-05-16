@@ -1,6 +1,5 @@
 local S = minetest.get_translator("mcl_lightning_rods")
 
----@type nodebox
 local cbox = {
 	type = "fixed",
 	fixed = {
@@ -9,7 +8,6 @@ local cbox = {
 	},
 }
 
----@type node_definition
 local rod_def = {
 	description = S("Lightning Rod"),
 	_doc_items_longdesc = S("A block that attracts lightning"),
@@ -32,7 +30,7 @@ local rod_def = {
 		},
 	},
 	on_place = function(itemstack, placer, pointed_thing)
-		if pointed_thing.type ~= "node" then
+		if pointed_thing.type ~= "node" or not placer or not placer:is_player() then
 			return itemstack
 		end
 
@@ -82,7 +80,8 @@ rod_def_a.on_timer = function(pos, elapsed)
 	local node = minetest.get_node(pos)
 
 	if node.name == "mcl_lightning_rods:rod_powered" then --has not been dug
-		minetest.set_node(pos, { name = "mcl_lightning_rods:rod", param2 = node.param2 })
+		node.name = "mcl_lightning_rods:rod"
+		minetest.set_node(pos, node)
 		mesecon.receptor_off(pos, mesecon.rules.alldirs)
 	end
 
@@ -91,15 +90,15 @@ end
 
 minetest.register_node("mcl_lightning_rods:rod_powered", rod_def_a)
 
-
-lightning.register_on_strike(function(pos, pos2, objects)
-	local lr = minetest.find_node_near(pos, 128, { "group:attracts_lightning" }, true)
-
+mcl_lightning.register_on_strike(function(pos, pos2, objects)
+	local lr = minetest.find_nodes_in_area_under_air(vector.offset(pos, -64, -32, -64), vector.offset(pos, 64, 64, 64), { "group:attracts_lightning" }, true)
+	lr = (lr and #lr > 0 and lr[1]) or false
 	if lr then
 		local node = minetest.get_node(lr)
 
 		if node.name == "mcl_lightning_rods:rod" then
-			minetest.set_node(lr, { name = "mcl_lightning_rods:rod_powered", param2 = node.param2 })
+			node.name = "mcl_lightning_rods:rod_powered"
+			minetest.set_node(lr, node)
 			mesecon.receptor_on(lr, mesecon.rules.alldirs)
 			minetest.get_node_timer(lr):start(0.4)
 		end

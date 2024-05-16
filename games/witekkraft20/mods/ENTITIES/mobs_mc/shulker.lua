@@ -29,13 +29,18 @@ local function check_spot(pos)
 	return false
 end
 local pr = PseudoRandom(os.time()*(-334))
+
+local messy_textures = {
+	grey = "mobs_mc_shulker_gray.png",
+}
+
 -- animation 45-80 is transition between passive and attack stance
 mcl_mobs.register_mob("mobs_mc:shulker", {
 	description = S("Shulker"),
 	type = "monster",
 	spawn_class = "hostile",
 	attack_type = "shoot",
-	shoot_interval = 6,
+	shoot_interval = 5.5,
 	arrow = "mobs_mc:shulkerbullet",
 	shoot_offset = 0.5,
 	passive = false,
@@ -56,6 +61,7 @@ mcl_mobs.register_mob("mobs_mc:shulker", {
 	jump = false,
 	can_despawn = false,
 	fall_speed = 0,
+	does_not_prevent_sleep = true,
 	drops = {
 		{name = "mcl_mobitems:shulker_shell",
 		chance = 2,
@@ -79,19 +85,38 @@ mcl_mobs.register_mob("mobs_mc:shulker", {
 	walk_velocity = 0,
 	run_velocity = 0,
 	noyaw = true,
+	_mcl_fishing_hookable = true,
+	_mcl_fishing_reelable = false,
+	on_rightclick = function(self,clicker)
+		if clicker:is_player() then
+			local wstack = clicker:get_wielded_item()
+			if minetest.get_item_group(wstack:get_name(),"dye") > 0 then
+				local color = minetest.registered_items[wstack:get_name()]._color
+				local tx = "mobs_mc_shulker_"..color..".png"
+				if messy_textures[color] then tx = messy_textures[color] end
+				self.object:set_properties({
+					textures = { tx },
+				})
+				if not minetest.is_creative_enabled(clicker:get_player_name()) then
+					wstack:take_item()
+					clicker:set_wielded_item(wstack)
+				end
+			end
+		end
+	end,
 	do_custom = function(self,dtime)
 		local pos = self.object:get_pos()
 		if math.floor(self.object:get_yaw()) ~=0 then
 			self.object:set_yaw(0)
-			mcl_mobs:yaw(self, 0, 0, dtime)
+			mcl_mobs.yaw(self, 0, 0, dtime)
 		end
 		if self.state == "attack" then
 			self:set_animation("run")
 			self.armor = 0
-		elseif self.state  == "stand" then
-			self.armor = 20
 		elseif self.state == "walk" or self.state == "run" then
 			self.armor = 0
+		else
+			self.armor = 20
 		end
 		self.path.way = false
 		self.look_at_players = false
@@ -117,7 +142,6 @@ mcl_mobs.register_mob("mobs_mc:shulker", {
 						local tg = vector.offset(nodepos,0,1,0)
 						if check_spot(tg) then
 							telepos = tg
-							node_ok = true
 						end
 					end
 					if telepos then
@@ -155,7 +179,7 @@ mcl_mobs.register_mob("mobs_mc:shulker", {
 		end
 	end,
 	on_attack = function(self, dtime)
-		self.shoot_interval = math.random(1, 6)
+		self.shoot_interval = 1 + (math.random() * 4.5)
 	end,
 })
 
@@ -166,25 +190,13 @@ mcl_mobs.register_arrow("mobs_mc:shulkerbullet", {
 	textures = {"mobs_mc_shulkerbullet.png"},
 	velocity = 5,
 	homing = true,
+	_mcl_fishing_hookable = true,
+	_mcl_fishing_reelable = true,
 	hit_player = mcl_mobs.get_arrow_damage_func(4),
 	hit_mob = mcl_mobs.get_arrow_damage_func(4),
+	hit_node = function(self, _)
+		self.object:remove()
+	end
 })
 
 mcl_mobs.register_egg("mobs_mc:shulker", S("Shulker"), "#946694", "#4d3852", 0)
-mcl_mobs:non_spawn_specific("mobs_mc:shulker","overworld",0,minetest.LIGHT_MAX+1)
---[[
-mcl_mobs:spawn_specific(
-"mobs_mc:shulker",
-"end",
-"ground",
-{
-"End"
-},
-0,
-minetest.LIGHT_MAX+1,
-30,
-5000,
-2,
-mcl_vars.mg_end_min,
-mcl_vars.mg_end_max)
---]]

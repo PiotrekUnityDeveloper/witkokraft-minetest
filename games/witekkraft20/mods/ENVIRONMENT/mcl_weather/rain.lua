@@ -1,7 +1,6 @@
-local PARTICLES_COUNT_RAIN = tonumber(minetest.settings:get("mcl_weather_rain_particles")) or 500
-local PARTICLES_COUNT_THUNDER = tonumber(minetest.settings:get("mcl_weather_thunder_particles")) or 900
+local PARTICLES_COUNT_RAIN = 500
+local PARTICLES_COUNT_THUNDER = 900
 
-local get_connected_players = minetest.get_connected_players
 local mgname = minetest.get_mapgen_setting("mg_name")
 
 mcl_weather.rain = {
@@ -44,9 +43,12 @@ local textures = {"weather_pack_rain_raindrop_1.png", "weather_pack_rain_raindro
 
 function mcl_weather.has_rain(pos)
 	if not mcl_worlds.has_weather(pos) then return false end
-	if  mgname == "singlenode" or mgname == "v6" then return true end
+	if  mgname == "singlenode" then return true end
 	local bd = minetest.registered_biomes[minetest.get_biome_name(minetest.get_biome_data(pos).biome)]
 	if bd and bd._mcl_biome_type == "hot" then return false end
+	if not mcl_weather.can_see_outdoors(pos) then
+		return false
+	end
 	return true
 end
 
@@ -68,7 +70,7 @@ function mcl_weather.rain.set_sky_box()
 			{r=85, g=86, b=98},
 			{r=0, g=0, b=0}})
 		mcl_weather.skycolor.active = true
-		for _, player in pairs(get_connected_players()) do
+		for _, player in pairs(minetest.get_connected_players()) do
 			player:set_clouds({color="#5D5D5FE8"})
 		end
 	end
@@ -151,7 +153,7 @@ function mcl_weather.rain.clear()
 	mcl_weather.rain.init_done = false
 	mcl_weather.rain.set_particles_mode("rain")
 	mcl_weather.skycolor.remove_layer("weather-pack-rain-sky")
-	for _, player in pairs(get_connected_players()) do
+	for _, player in pairs(minetest.get_connected_players()) do
 		mcl_weather.rain.remove_sound(player)
 		mcl_weather.rain.remove_player(player)
 		mcl_weather.remove_spawners_player(player)
@@ -173,7 +175,7 @@ function mcl_weather.rain.make_weather()
 		mcl_weather.rain.init_done = true
 	end
 
-	for _, player in pairs(get_connected_players()) do
+	for _, player in pairs(minetest.get_connected_players()) do
 		local pos=player:get_pos()
 		if mcl_weather.is_underwater(player) or not mcl_weather.has_rain(pos) then
 			mcl_weather.rain.remove_sound(player)
@@ -246,15 +248,15 @@ if mcl_weather.allow_abm then
 			-- Rain is equivalent to a water bottle
 			if mcl_weather.rain.raining and mcl_weather.is_outdoor(pos) and mcl_weather.has_rain(pos) then
 				if node.name == "mcl_cauldrons:cauldron" then
-					minetest.set_node(pos, {name="mcl_cauldrons:cauldron_1"})
+					minetest.swap_node(pos, {name="mcl_cauldrons:cauldron_1"})
 				elseif node.name == "mcl_cauldrons:cauldron_1" then
-					minetest.set_node(pos, {name="mcl_cauldrons:cauldron_2"})
+					minetest.swap_node(pos, {name="mcl_cauldrons:cauldron_2"})
 				elseif node.name == "mcl_cauldrons:cauldron_2" then
-					minetest.set_node(pos, {name="mcl_cauldrons:cauldron_3"})
+					minetest.swap_node(pos, {name="mcl_cauldrons:cauldron_3"})
 				elseif node.name == "mcl_cauldrons:cauldron_1r" then
-					minetest.set_node(pos, {name="mcl_cauldrons:cauldron_2r"})
+					minetest.swap_node(pos, {name="mcl_cauldrons:cauldron_2r"})
 				elseif node.name == "mcl_cauldrons:cauldron_2r" then
-					minetest.set_node(pos, {name="mcl_cauldrons:cauldron_3r"})
+					minetest.swap_node(pos, {name="mcl_cauldrons:cauldron_3r"})
 				end
 			end
 		end

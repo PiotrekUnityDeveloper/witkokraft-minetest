@@ -52,7 +52,7 @@ local wolf = {
 	fear_height = 4,
 	follow = { "mcl_mobitems:bone" },
 	on_rightclick = function(self, clicker)
-		-- Try to tame wolf (intentionally does NOT use mcl_mobs:feed_tame)
+		-- Try to tame wolf (intentionally does NOT use mcl_mobs.feed_tame)
 		local tool = clicker:get_wielded_item()
 
 		local dog, ent
@@ -66,19 +66,20 @@ local wolf = {
 			-- 1/3 chance of getting tamed
 			if pr:next(1, 3) == 1 then
 				local yaw = self.object:get_yaw()
-				dog = minetest.add_entity(self.object:get_pos(), "mobs_mc:dog")
-				dog:set_yaw(yaw)
-				ent = dog:get_luaentity()
-				ent.owner = clicker:get_player_name()
-				ent.tamed = true
-				ent:set_animation("sit")
-				ent.walk_chance = 0
-				ent.jump = false
-				ent.health = self.health
-				-- cornfirm taming
-				minetest.sound_play("mobs_mc_wolf_bark", {object=dog, max_hear_distance=16}, true)
-				-- Replace wolf
-				self.object:remove()
+				dog = mcl_util.replace_mob(self.object, "mobs_mc:dog")
+				if dog and dog:get_pos() then
+					dog:set_yaw(yaw)
+					ent = dog:get_luaentity()
+					ent.owner = clicker:get_player_name()
+					ent.tamed = true
+					ent:set_animation("sit")
+					ent.walk_chance = 0
+					ent.jump = false
+					ent.health = self.health
+					-- cornfirm taming
+					minetest.sound_play("mobs_mc_wolf_bark", {object=dog, max_hear_distance=16}, true)
+					-- Replace wolf
+				end
 			end
 		end
 	end,
@@ -97,7 +98,15 @@ local wolf = {
 	jump = true,
 	attacks_monsters = true,
 	attack_animals = true,
-	specific_attack = { "player", "mobs_mc:sheep" },
+	specific_attack = {
+		"player",
+		"mobs_mc:sheep",
+		"mobs_mc:rabbit",
+		"mobs_mc:skeleton",
+		"mobs_mc:stray",
+		"mobs_mc:witherskeleton",
+	},
+	avoid_from = { "mobs_mc:llama" },
 }
 
 mcl_mobs.register_mob("mobs_mc:wolf", wolf)
@@ -142,7 +151,6 @@ dog.hp_max = 20
 -- Tamed wolf texture + red collar
 dog.textures = get_dog_textures("unicolor_red")
 dog.owner = ""
--- TODO: Start sitting by default
 dog.order = "sit"
 dog.state = "stand"
 dog.owner_loyal = true
@@ -160,18 +168,14 @@ dog.follow = {
 dog.attack_animals = nil
 dog.specific_attack = nil
 
-local is_food = function(itemstring)
-	return table.indexof(dog.follow, itemstring) ~= -1
-end
-
 dog.on_rightclick = function(self, clicker)
 	local item = clicker:get_wielded_item()
 
 	if self:feed_tame(clicker, 1, true, false) then
 		return
-	elseif mcl_mobs:protect(self, clicker) then
+	elseif mcl_mobs.protect(self, clicker) then
 		return
-	elseif item:get_name() ~= "" and mcl_mobs:capture_mob(self, clicker, 0, 2, 80, false, nil) then
+	elseif item:get_name() ~= "" and mcl_mobs.capture_mob(self, clicker, 0, 2, 80, false, nil) then
 		return
 	elseif minetest.get_item_group(item:get_name(), "dye") == 1 then
 		-- Dye (if possible)
@@ -198,35 +202,33 @@ dog.on_rightclick = function(self, clicker)
 		-- Huh? This dog has no owner? Let's fix this! This should never happen.
 			self.owner = clicker:get_player_name()
 		end
-		if not minetest.settings:get_bool("mcl_extended_pet_control",true) then
+		if not minetest.settings:get_bool("mcl_extended_pet_control",false) then
 			self:toggle_sit(clicker,-0.4)
 		end
 	end
 end
 
 mcl_mobs.register_mob("mobs_mc:dog", dog)
--- Spawn
-mcl_mobs:spawn_specific(
-"mobs_mc:wolf",
-"overworld",
-"ground",
-{
-	"Taiga",
-	"MegaSpruceTaiga",
-	"MegaTaiga",
-	"Forest",
-	"ColdTaiga",
-	"Forest_beach",
-	"ColdTaiga_beach_water",
-	"Taiga_beach",
-	"ColdTaiga_beach",
-},
-0,
-minetest.LIGHT_MAX+1,
-30,
-9000,
-7,
-mobs_mc.water_level+3,
-mcl_vars.mg_overworld_max)
+
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:wolf",
+	type_of_spawning = "ground",
+	dimension = "overworld",
+	aoc = 7,
+	min_height = mobs_mc.water_level + 3,
+	biomes = {
+		"flat",
+		"Taiga",
+		"MegaSpruceTaiga",
+		"MegaTaiga",
+		"Forest",
+		"ColdTaiga",
+		"Forest_beach",
+		"ColdTaiga_beach_water",
+		"Taiga_beach",
+		"ColdTaiga_beach",
+	},
+	chance = 80,
+})
 
 mcl_mobs.register_egg("mobs_mc:wolf", S("Wolf"), "#d7d3d3", "#ceaf96", 0)

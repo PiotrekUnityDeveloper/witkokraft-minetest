@@ -1,7 +1,5 @@
 mcl_worlds = {}
 
-local get_connected_players = minetest.get_connected_players
-
 -- For a given position, returns a 2-tuple:
 -- 1st return value: true if pos is in void
 -- 2nd return value: true if it is in the deadly part of the void
@@ -36,7 +34,7 @@ end
 --     nil, "void"
 function mcl_worlds.y_to_layer(y)
 	if y >= mcl_vars.mg_overworld_min then
-		return y - mcl_vars.mg_overworld_min, "overworld"
+		return y - mcl_vars.mg_overworld_min_old, "overworld"
 	elseif y >= mcl_vars.mg_nether_min and y <= mcl_vars.mg_nether_max+128 then
 		return y - mcl_vars.mg_nether_min, "nether"
 	elseif y >= mcl_vars.mg_end_min and y <= mcl_vars.mg_end_max then
@@ -46,28 +44,24 @@ function mcl_worlds.y_to_layer(y)
 	end
 end
 
-local y_to_layer = mcl_worlds.y_to_layer
-
 -- Takes a pos and returns the dimension it belongs to (same as above)
 function mcl_worlds.pos_to_dimension(pos)
-	local _, dim = y_to_layer(pos.y)
+	local _, dim = mcl_worlds.y_to_layer(pos.y)
 	return dim
 end
-
-local pos_to_dimension = mcl_worlds.pos_to_dimension
 
 -- Takes a Minecraft layer and a “dimension” name
 -- and returns the corresponding Y coordinate for
 -- MineClone 2.
 -- mc_dimension is one of "overworld", "nether", "end" (default: "overworld").
 function mcl_worlds.layer_to_y(layer, mc_dimension)
-	   if mc_dimension == "overworld" or mc_dimension == nil then
-			   return layer + mcl_vars.mg_overworld_min
-	   elseif mc_dimension == "nether" then
-			   return layer + mcl_vars.mg_nether_min
-	   elseif mc_dimension == "end" then
-			   return layer + mcl_vars.mg_end_min
-	   end
+	if mc_dimension == "overworld" or mc_dimension == nil then
+		return layer + mcl_vars.mg_overworld_min_old
+	elseif mc_dimension == "nether" then
+		return layer + mcl_vars.mg_nether_min
+	elseif mc_dimension == "end" then
+		return layer + mcl_vars.mg_end_min
+	end
 end
 
 -- Takes a position and returns true if this position can have weather
@@ -125,8 +119,6 @@ function mcl_worlds.dimension_change(player, dimension)
 	last_dimension[playername] = dimension
 end
 
-local dimension_change = mcl_worlds.dimension_change
-
 ----------------------- INTERNAL STUFF ----------------------
 
 -- Update the dimension callbacks every DIM_UPDATE seconds
@@ -134,19 +126,19 @@ local DIM_UPDATE = 1
 local dimtimer = 0
 
 minetest.register_on_joinplayer(function(player)
-	last_dimension[player:get_player_name()] = pos_to_dimension(player:get_pos())
+	last_dimension[player:get_player_name()] = mcl_worlds.pos_to_dimension(player:get_pos())
 end)
 
 minetest.register_globalstep(function(dtime)
 	-- regular updates based on iterval
 	dimtimer = dimtimer + dtime;
 	if dimtimer >= DIM_UPDATE then
-		local players = get_connected_players()
+		local players = minetest.get_connected_players()
 		for p = 1, #players do
-			local dim = pos_to_dimension(players[p]:get_pos())
+			local dim = mcl_worlds.pos_to_dimension(players[p]:get_pos())
 			local name = players[p]:get_player_name()
 			if dim ~= last_dimension[name] then
-				dimension_change(players[p], dim)
+				mcl_worlds.dimension_change(players[p], dim)
 			end
 		end
 		dimtimer = 0
@@ -154,9 +146,10 @@ minetest.register_globalstep(function(dtime)
 end)
 
 function mcl_worlds.get_cloud_parameters()
-	if minetest.get_mapgen_setting("mg_name") == "valleys" then
+	local mg_name = minetest.get_mapgen_setting("mg_name")
+	if mg_name == "valleys" or mg_name == "carpathian" then
 		return {
-			height = 384, --valleys has a much higher average elevation thus often "normal" landscape ends up in the clouds
+			height = 384, --valleys and carpathian have a much higher average elevation thus often "normal" landscape ends up in the clouds
 			speed = {x=-2, z=0},
 			thickness=5,
 			color="#FFF0FEF",

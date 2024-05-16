@@ -2,7 +2,7 @@
 
 local S = minetest.get_translator("mobs_mc")
 
-local function spawn_check(pos, environmental_light, artificial_light, sky_light)
+local function check_light(pos, environmental_light, artificial_light, sky_light)
 	local date = os.date("*t")
 	local maxlight
 	if (date.month == 10 and date.day >= 20) or (date.month == 11 and date.day <= 3) then
@@ -11,7 +11,11 @@ local function spawn_check(pos, environmental_light, artificial_light, sky_light
 		maxlight = 3
 	end
 
-	return artificial_light <= maxlight
+	if artificial_light > maxlight then
+		return false, "To bright"
+	end
+
+	return true, ""
 end
 
 mcl_mobs.register_mob("mobs_mc:bat", {
@@ -62,7 +66,7 @@ mcl_mobs.register_mob("mobs_mc:bat", {
 	jump = false,
 	fly = true,
 	makes_footstep_sound = false,
-	spawn_check = spawn_check,
+	check_light = check_light,
 })
 
 
@@ -78,83 +82,17 @@ else
 	maxlight = 3
 end
 
--- Spawn on solid blocks at or below Sea level and the selected light level
-mcl_mobs:spawn_specific(
-"mobs_mc:bat",
-"overworld",
-"ground",
-{
-"FlowerForest_underground",
-"JungleEdge_underground",
-"StoneBeach_underground",
-"MesaBryce_underground",
-"Mesa_underground",
-"RoofedForest_underground",
-"Jungle_underground",
-"Swampland_underground",
-"MushroomIsland_underground",
-"BirchForest_underground",
-"Plains_underground",
-"MesaPlateauF_underground",
-"ExtremeHills_underground",
-"MegaSpruceTaiga_underground",
-"BirchForestM_underground",
-"SavannaM_underground",
-"MesaPlateauFM_underground",
-"Desert_underground",
-"Savanna_underground",
-"Forest_underground",
-"SunflowerPlains_underground",
-"ColdTaiga_underground",
-"IcePlains_underground",
-"IcePlainsSpikes_underground",
-"MegaTaiga_underground",
-"Taiga_underground",
-"ExtremeHills+_underground",
-"JungleM_underground",
-"ExtremeHillsM_underground",
-"JungleEdgeM_underground",
-"Mesa",
-"FlowerForest",
-"Swampland",
-"Taiga",
-"ExtremeHills",
-"Jungle",
-"Savanna",
-"BirchForest",
-"MegaSpruceTaiga",
-"MegaTaiga",
-"ExtremeHills+",
-"Forest",
-"Plains",
-"Desert",
-"ColdTaiga",
-"MushroomIsland",
-"IcePlainsSpikes",
-"SunflowerPlains",
-"IcePlains",
-"RoofedForest",
-"ExtremeHills+_snowtop",
-"MesaPlateauFM_grasstop",
-"JungleEdgeM",
-"ExtremeHillsM",
-"JungleM",
-"BirchForestM",
-"MesaPlateauF",
-"MesaPlateauFM",
-"MesaPlateauF_grasstop",
-"MesaBryce",
-"JungleEdge",
-"SavannaM",
-},
-0,
-maxlight,
-20,
-5000,
-2,
-mcl_vars.mg_overworld_min,
-mobs_mc.water_level-1)
-
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:bat",
+	type_of_spawning = "ground",
+	dimension = "overworld",
+	min_height = mcl_vars.mg_overworld_min,
+	max_height = mobs_mc.water_level - 1,
+	min_light = 0,
+	max_light = maxlight,
+	aoc = 3,
+	chance = 100,
+})
 
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:bat", S("Bat"), "#4c3e30", "#0f0f0f", 0)

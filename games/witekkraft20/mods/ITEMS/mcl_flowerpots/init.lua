@@ -3,10 +3,8 @@ local has_doc = minetest.get_modpath("doc")
 
 mcl_flowerpots = {}
 
----@type table<string, string>
 mcl_flowerpots.registered_pots = {}
 
----@type nodebox
 local pot_box = {
 	type = "fixed",
 	fixed = {
@@ -60,8 +58,6 @@ minetest.register_craft({
 	},
 })
 
----@param name string
----@param def {name: string, desc: string, image: string}
 function mcl_flowerpots.register_potted_flower(name, def)
 	mcl_flowerpots.registered_pots[name] = def.name
 	minetest.register_node(":mcl_flowerpots:flower_pot_" .. def.name, {
@@ -75,13 +71,11 @@ function mcl_flowerpots.register_potted_flower(name, def)
 		use_texture_alpha = "clip",
 		visual_scale = 0.5,
 		paramtype = "light",
-		paramtype2 = def.paramtype2,
-		palette = def.palette,
 		sunlight_propagates = true,
 		selection_box = pot_box,
 		collision_box = pot_box,
 		is_ground_content = false,
-		groups = { dig_immediate = 3, attached_node = 1, dig_by_piston = 1, not_in_creative_inventory = 1, flower_pot = 2, grass_palette = def.grass_palette_group },
+		groups = { dig_immediate = 3, attached_node = 1, dig_by_piston = 1, not_in_creative_inventory = 1, flower_pot = 2 },
 		sounds = mcl_sounds.node_sound_stone_defaults(),
 		on_rightclick = function(pos, item, clicker)
 			local player_name = clicker:get_player_name()
@@ -104,8 +98,6 @@ function mcl_flowerpots.register_potted_flower(name, def)
 	end
 end
 
----@param name string
----@param def {name: string, desc: string, image: string}
 function mcl_flowerpots.register_potted_cube(name, def)
 	mcl_flowerpots.registered_pots[name] = def.name
 	minetest.register_node(":mcl_flowerpots:flower_pot_" .. def.name, {
@@ -148,70 +140,3 @@ function mcl_flowerpots.register_potted_cube(name, def)
 		doc.add_entry_alias("nodes", "mcl_flowerpots:flower_pot", "nodes", "mcl_flowerpots:flower_pot_" .. def.name)
 	end
 end
-
---forced because hard dependency to mcl_core
-mcl_flowerpots.register_potted_cube("mcl_core:cactus", {
-	name = "cactus",
-	desc = S("Cactus"),
-	image = "mcl_flowerpots_cactus.png",
-})
-
-mcl_flowerpots.register_potted_flower("mcl_mushrooms:mushroom_brown", {
-	name = "mushroom_brown",
-	desc = S("Brown Mushroom"),
-	image = "farming_mushroom_brown.png",
-})
-
-mcl_flowerpots.register_potted_flower("mcl_mushrooms:mushroom_red", {
-	name = "mushroom_red",
-	desc = S("Red Mushroom"),
-	image = "farming_mushroom_red.png",
-})
-
-mcl_flowerpots.register_potted_flower("mcl_core:sapling", {
-	name = "sapling",
-	desc = S("Oak Sapling"),
-	image = "default_sapling.png",
-})
-
-mcl_flowerpots.register_potted_flower("mcl_core:acaciasapling", {
-	name = "acaciasapling",
-	desc = S("Acacia Sapling"),
-	image = "default_acacia_sapling.png",
-})
-
-mcl_flowerpots.register_potted_flower("mcl_core:junglesapling", {
-	name = "junglesapling",
-	desc = S("Jungle Sapling"),
-	image = "default_junglesapling.png",
-})
-
-mcl_flowerpots.register_potted_flower("mcl_core:darksapling", {
-	name = "darksapling",
-	desc = S("Dark Oak Sapling"),
-	image = "mcl_core_sapling_big_oak.png",
-})
-
-mcl_flowerpots.register_potted_flower("mcl_core:sprucesapling", {
-	name = "sprucesapling",
-	desc = S("Spruce Sapling"),
-	image = "mcl_core_sapling_spruce.png",
-})
-
-mcl_flowerpots.register_potted_flower("mcl_core:birchsapling", {
-	name = "birchsapling",
-	desc = S("Birch Sapling"),
-	image = "mcl_core_sapling_birch.png",
-})
-
-mcl_flowerpots.register_potted_flower("mcl_core:deadbush", {
-	name = "deadbush",
-	desc = S("Dead Bush"),
-	image = "default_dry_shrub.png",
-})
-
-mcl_flowerpots.register_potted_flower("mcl_cherry_blossom:cherrysapling", {
-	name = "cherrysapling",
-	desc = S("Cherry Sapling"),
-	image = "mcl_cherry_blossom_sapling.png",
-})

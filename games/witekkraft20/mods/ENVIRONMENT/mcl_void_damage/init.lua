@@ -1,13 +1,6 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 --local enable_damage = minetest.settings:get_bool("enable_damage")
 
-local pos_to_dim = mcl_worlds.pos_to_dimension
-local dim_change = mcl_worlds.dimension_change
-local is_in_void = mcl_worlds.is_in_void
-local get_spawn_pos = mcl_spawn.get_player_spawn_pos
-local send_chat = minetest.chat_send_player
-local get_connected = minetest.get_connected_players
-
 local voidtimer = 0
 local VOID_DAMAGE_FREQ = 0.5
 local VOID_DAMAGE = 4
@@ -39,7 +32,7 @@ minetest.register_on_mods_loaded(function()
 			end
 			self._void_timer = 0
 
-			local _, void_deadly = is_in_void(pos)
+			local _, void_deadly = mcl_worlds.is_in_void(pos)
 			if void_deadly then
 				--local ent = obj:get_luaentity()
 				obj:remove()
@@ -57,11 +50,11 @@ minetest.register_globalstep(function(dtime)
 	if voidtimer > VOID_DAMAGE_FREQ then
 		voidtimer = 0
 		local enable_damage = minetest.settings:get_bool("enable_damage")
-		local players = get_connected()
+		local players = minetest.get_connected_players()
 		for p=1, #players do
 			local player = players[p]
 			local pos = player:get_pos()
-			local _, void_deadly = is_in_void(pos)
+			local _, void_deadly = mcl_worlds.is_in_void(pos)
 			if void_deadly then
 				local immortal_val = player:get_armor_groups().immortal
 				local is_immortal = false
@@ -71,10 +64,10 @@ minetest.register_globalstep(function(dtime)
 				if is_immortal or not enable_damage then
 					-- If damage is disabled, we can't kill players.
 					-- So we just teleport the player back to spawn.
-					local spawn = get_spawn_pos(player)
+					local spawn = mcl_spawn.get_player_spawn_pos(player)
 					player:set_pos(spawn)
-					dim_change(player, pos_to_dim(spawn))
-					send_chat(player:get_player_name(), S("The void is off-limits to you!"))
+					mcl_worlds.dimension_change(player, mcl_worlds.pos_to_dimension(spawn))
+					minetest.chat_send_player(player:get_player_name(), S("The void is off-limits to you!"))
 				elseif enable_damage and not is_immortal then
 					-- Damage enabled, not immortal: Deal void damage (4 HP / 0.5 seconds)
 					if player:get_hp() > 0 then

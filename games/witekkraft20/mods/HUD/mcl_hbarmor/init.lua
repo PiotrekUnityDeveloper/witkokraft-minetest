@@ -1,10 +1,5 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 
-local math = math
-local tonumber = tonumber
-
-local get_connected_players = minetest.get_connected_players
-
 local mcl_hbarmor = {
     -- HUD statbar values
     armor = {},
@@ -56,7 +51,7 @@ local function custom_hud(player)
 end
 
 --register and define armor HUD bar
-hb.register_hudbar("armor", 0xFFFFFF, S("Armor"), { icon = "hbarmor_icon.png", bgicon = "hbarmor_bgicon.png", bar = "hbarmor_bar.png" }, 0, 0, 20, mcl_hbarmor.autohide)
+hb.register_hudbar("armor", 0xFFFFFF, S("Armor"), { icon = "hbarmor_icon.png", bgicon = "hbarmor_bgicon.png", bar = "hbarmor_bar.png" }, 0, 20, mcl_hbarmor.autohide)
 
 function mcl_hbarmor.get_armor(player)
 	local name = player:get_player_name()
@@ -115,7 +110,7 @@ minetest.register_globalstep(function(dtime)
 	if main_timer > mcl_hbarmor.tick or timer > 4 then
 		if minetest.settings:get_bool("enable_damage") then
 			if main_timer > mcl_hbarmor.tick then main_timer = 0 end
-			for _,player in pairs(get_connected_players()) do
+			for _,player in pairs(minetest.get_connected_players()) do
 				local name = player:get_player_name()
 				if mcl_hbarmor.player_active[name] == true then
 					local ret = mcl_hbarmor.get_armor(player)

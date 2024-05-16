@@ -1,4 +1,4 @@
-# `mcl_gamemode`
+# `mcl_gamemode`
 
 ## `mcl_gamemode.gamemodes`
 

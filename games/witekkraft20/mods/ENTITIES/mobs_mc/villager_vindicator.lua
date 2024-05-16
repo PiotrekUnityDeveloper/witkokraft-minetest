@@ -14,7 +14,6 @@ mcl_mobs.register_mob("mobs_mc:vindicator", {
 	description = S("Vindicator"),
 	type = "monster",
 	spawn_class = "hostile",
-	physical = false,
 	pathfinding = 1,
 	hp_min = 24,
 	hp_max = 24,
@@ -40,7 +39,7 @@ mcl_mobs.register_mob("mobs_mc:vindicator", {
 	damage = 13,
 	reach = 2,
 	walk_velocity = 1.2,
-	run_velocity = 2.4,
+	run_velocity = 1.6,
 	attack_type = "dogfight",
 	attack_npcs = true,
 	drops = {
@@ -78,4 +77,3 @@ mcl_mobs.register_mob("mobs_mc:vindicator", {
 
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:vindicator", S("Vindicator"), "#959b9b", "#275e61", 0)
-mcl_mobs:non_spawn_specific("mobs_mc:vindicator","overworld",0,7)

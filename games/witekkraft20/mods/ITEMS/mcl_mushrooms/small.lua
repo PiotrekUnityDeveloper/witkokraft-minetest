@@ -26,6 +26,50 @@ local tt_help = S("Grows on podzol, mycelium and other blocks").."\n"..S("Spread
 
 local usagehelp = S("This mushroom can be placed on mycelium and podzol at any light level. It can also be placed on blocks which are both solid and opaque, as long as the light level at daytime is not higher than 12.")
 
+local function on_bone_meal(itemstack,placer,pointed_thing,pos,n)
+	if math.random(1, 100) > 40 then return false end --40% chance
+
+	local bn = minetest.get_node(vector.offset(pos,0,-1,0)).name
+	if bn ~= "mcl_core:mycelium" and bn ~= "mcl_core:dirt" and minetest.get_item_group(bn, "grass_block") ~= 1 and bn ~= "mcl_core:coarse_dirt" and bn ~= "mcl_core:podzol" then
+		return false
+	end
+
+	-- Select schematic
+	local schematic, offset, height
+	height = 8
+	if n.name == "mcl_mushrooms:mushroom_brown" then
+		schematic = minetest.get_modpath("mcl_mushrooms").."/schematics/mcl_mushrooms_huge_brown.mts"
+		offset = vector.new(-3,-1,-3)
+	elseif n.name == "mcl_mushrooms:mushroom_red" then
+		schematic = minetest.get_modpath("mcl_mushrooms").."/schematics/mcl_mushrooms_huge_red.mts"
+		offset = vector.new(-2,-1,-2)
+	else
+		return false
+	end
+	-- Check space requirements
+	for i=1,3 do
+		local cpos = vector.add(pos, {x=0, y=i, z=0})
+		if minetest.get_node(cpos).name ~= "air" then
+			return false
+		end
+	end
+	local yoff = 3
+	local minp, maxp = vector.offset(pos,-3,yoff,-3), vector.offset(pos,3,yoff+(height-3),3)
+	local diff = vector.subtract(maxp, minp)
+	diff = vector.add(diff, vector.new(1,1,1))
+	local totalnodes = diff.x * diff.y * diff.z
+	local goodnodes = minetest.find_nodes_in_area(minp, maxp, {"air", "group:leaves"})
+	if #goodnodes < totalnodes then
+		return false
+	end
+
+	-- Place the huge mushroom
+	minetest.remove_node(pos)
+	local place_pos = vector.add(pos, offset)
+	local ok = minetest.place_schematic(place_pos, schematic, 0, nil, false)
+	return ok ~= nil
+end
+
 minetest.register_node("mcl_mushrooms:mushroom_brown", {
 	description = S("Brown Mushroom"),
 	_doc_items_longdesc = longdesc_intro_brown .. "\n\n" .. longdesc_append,
@@ -51,6 +95,7 @@ minetest.register_node("mcl_mushrooms:mushroom_brown", {
 	},
 	node_placement_prediction = "",
 	on_place = on_place,
+	_on_bone_meal = on_bone_meal,
 	_mcl_blast_resistance = 0,
 })
 
@@ -78,7 +123,20 @@ minetest.register_node("mcl_mushrooms:mushroom_red", {
 	},
 	node_placement_prediction = "",
 	on_place = on_place,
+	_on_bone_meal = on_bone_meal,
 	_mcl_blast_resistance = 0,
+})
+
+mcl_flowerpots.register_potted_flower("mcl_mushrooms:mushroom_brown", {
+	name = "mushroom_brown",
+	desc = S("Brown Mushroom"),
+	image = "farming_mushroom_brown.png",
+})
+
+mcl_flowerpots.register_potted_flower("mcl_mushrooms:mushroom_red", {
+	name = "mushroom_red",
+	desc = S("Red Mushroom"),
+	image = "farming_mushroom_red.png",
 })
 
 minetest.register_craftitem("mcl_mushrooms:mushroom_stew", {
@@ -109,58 +167,57 @@ minetest.register_abm({
 	chance = 50,
 	action = function(pos, node)
 		local node_soil = minetest.get_node({x=pos.x, y=pos.y-1, z=pos.z}).name
-		-- Mushrooms uproot in light except on podzol or mycelium
-		if node_soil ~= "mcl_core:podzol" and node_soil ~= "mcl_core:mycelium" and
-				node_soil ~= "mcl_core:podzol_snow" and node_soil ~= "mcl_core:mycelium_snow" and minetest.get_node_light(pos, nil) > 12 then
-			minetest.dig_node(pos)
+		-- Mushrooms uproot in light except on nodes of the "supports_mushrooms" group
+			if minetest.get_item_group(node_soil, "supports_mushrooms") == 0 and minetest.get_node_light(pos, nil) > 12 then
+				minetest.dig_node(pos)
 			return
 		end
 
-		local pos0 = vector.add(pos, {x=-4, y=-1, z=-4})
-		local pos1 = vector.add(pos, {x=4, y=1, z=4})
+		local pos0 = vector.offset(pos, -4, -1, -4)
+		local pos1 = vector.offset(pos, 4, 1, 4)
 
 		-- Stop mushroom spread if a 9×3×9 box is too crowded
-		if #minetest.find_nodes_in_area(pos0, pos1, node.name) >= 5 then
+		if #minetest.find_nodes_in_area(pos0, pos1, {"group:mushroom"}) >= 5 then
 			return
 		end
 
 		local selected_pos = table.copy(pos)
 
 		-- Do two random selections which may place the new mushroom in a 5×5×5 cube
-		local random = {
-			x = selected_pos.x + math.random(-1, 1),
-			y = selected_pos.y + math.random(0, 1) - math.random(0, 1),
-			z = selected_pos.z + math.random(-1, 1)
-		}
-		local random_node = minetest.get_node_or_nil(random)
+		local rnd = vector.new(
+			selected_pos.x + math.random(-1, 1),
+			selected_pos.y + math.random(0, 1) - math.random(0, 1),
+			selected_pos.z + math.random(-1, 1)
+		)
+		local random_node = minetest.get_node_or_nil(rnd)
 		if not random_node or random_node.name ~= "air" then
 			return
 		end
-		local node_under = minetest.get_node_or_nil({x = random.x, y = random.y - 1, z = random.z})
+		local node_under = minetest.get_node_or_nil(vector.offset(rnd, 0, -1, 0))
 		if not node_under then
 			return
 		end
 
-		if minetest.get_node_light(random, 0.5) > 12 or (minetest.get_item_group(node_under.name, "opaque") == 0) then
+		if minetest.get_node_light(rnd, 0.5) > 12 or (minetest.get_item_group(node_under.name, "opaque") == 0) then
 			return
 		end
-		local random2 = {
-			x = random.x + math.random(-1, 1),
-			y = random.y,
-			z = random.z + math.random(-1, 1)
-		}
-		random_node = minetest.get_node_or_nil(random2)
+		local rnd2 = vector.new(
+			rnd.x + math.random(-1, 1),
+			rnd.y,
+			rnd.z + math.random(-1, 1)
+		)
+		random_node = minetest.get_node_or_nil(rnd2)
 		if not random_node or random_node.name ~= "air" then
 			return
 		end
-		node_under = minetest.get_node_or_nil({x = random2.x, y = random2.y - 1, z = random2.z})
+		node_under = minetest.get_node_or_nil(vector.offset(rnd2, 0, -1, 0))
 		if not node_under then
 			return
 		end
-		if minetest.get_node_light(random2, 0.5) > 12 or (minetest.get_item_group(node_under.name, "opaque") == 0) or (minetest.get_item_group(node_under.name, "solid") == 0) then
+		if minetest.get_node_light(rnd2, 0.5) > 12 or (minetest.get_item_group(node_under.name, "opaque") == 0) or (minetest.get_item_group(node_under.name, "solid") == 0) then
 			return
 		end
 
-		minetest.set_node(random2, {name = node.name})
+		minetest.set_node(rnd2, {name = node.name})
 	end
 })

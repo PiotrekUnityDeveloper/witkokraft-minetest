@@ -1,11 +1,10 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 
-local table = table
-local vector = vector
-local math = math
-
 local has_doc = minetest.get_modpath("doc")
-
+mcl_portals.registered_on_beat_game = {}
+function mcl_portals.register_on_beat_game(func)
+	table.insert(mcl_portals.registered_on_beat_game, func)
+end
 -- Parameters
 --local SPAWN_MIN = mcl_vars.mg_end_min+70
 --local SPAWN_MAX = mcl_vars.mg_end_min+98
@@ -102,29 +101,6 @@ minetest.register_node("mcl_portals:portal_end", {
 	_mcl_blast_resistance = 3600000,
 })
 
--- Obsidian platform at the End portal destination in the End
-local function build_end_portal_destination(pos)
-	local p1 = {x = pos.x - 2, y = pos.y, z = pos.z-2}
-	local p2 = {x = pos.x + 2, y = pos.y+2, z = pos.z+2}
-
-	for x = p1.x, p2.x do
-	for y = p1.y, p2.y do
-	for z = p1.z, p2.z do
-		local newp = {x=x,y=y,z=z}
-		-- Build obsidian platform
-		if minetest.registered_nodes[minetest.get_node(newp).name].is_ground_content then
-			if y == p1.y then
-				minetest.set_node(newp, {name="mcl_core:obsidian"})
-			else
-				minetest.remove_node(newp)
-			end
-		end
-	end
-	end
-	end
-end
-
-
 -- Check if pos is part of a valid end portal frame, filled with eyes of ender.
 local function check_end_portal_frame(pos)
 	for i = 1, 12 do
@@ -164,6 +140,19 @@ local function end_portal_area(pos, destroy)
 	minetest.bulk_set_node(posses, {name=name})
 end
 
+local function show_credits(player)
+	local meta = player:get_meta()
+	local completed_end = meta:get_int("completed_end")
+
+	if completed_end == 0 then
+		meta:set_int("completed_end", 1)
+		for _, func in ipairs(mcl_portals.registered_on_beat_game) do
+			func(player)
+		end
+		mcl_credits.show(player)
+	end
+end
+
 function mcl_portals.end_teleport(obj, pos)
 	if not obj then return end
 	local pos = pos or obj:get_pos()
@@ -181,8 +170,8 @@ function mcl_portals.end_teleport(obj, pos)
 		target = target or mcl_spawn.get_world_spawn_pos(obj)
 	else
 		-- End portal in any other dimension:
-		-- Teleport to the End at a fixed position and generate a
-		-- 5×5 obsidian platform below.
+		-- Teleport to the End at a fixed position.
+		-- The destination is built by mcl_structures.
 
 		local platform_pos = mcl_vars.mg_end_platform_pos
 		-- force emerge of target1 area
@@ -190,20 +179,6 @@ function mcl_portals.end_teleport(obj, pos)
 		if not minetest.get_node_or_nil(platform_pos) then
 			minetest.emerge_area(vector.subtract(platform_pos, 3), vector.add(platform_pos, 3))
 		end
-
-		-- Build destination
-		local function check_and_build_end_portal_destination(pos)
-			local n = minetest.get_node_or_nil(pos)
-			if n and n.name ~= "mcl_core:obsidian" then
-				build_end_portal_destination(pos)
-				minetest.after(2, check_and_build_end_portal_destination, pos)
-			elseif not n then
-				minetest.after(1, check_and_build_end_portal_destination, pos)
-			end
-		end
-
-		build_end_portal_destination(platform_pos)
-		check_and_build_end_portal_destination(platform_pos)
 
 		target = table.copy(platform_pos)
 		target.y = target.y + 1
@@ -218,10 +193,15 @@ function mcl_portals.end_teleport(obj, pos)
 			obj:set_look_horizontal(math.pi/2)
 		-- Show credits
 		else
-			mcl_credits.show(obj)
+			show_credits(obj)
 		end
 		mcl_worlds.dimension_change(obj, mcl_worlds.pos_to_dimension(target))
 		minetest.sound_play("mcl_portals_teleport", {pos=target, gain=0.5, max_hear_distance = 16}, true)
+	else
+		local l = obj:get_luaentity()
+		if l and l.is_mob then
+			l._just_portaled = 5
+		end
 	end
 end
 
@@ -349,16 +329,14 @@ end
 --[[ ITEM OVERRIDES ]]
 
 -- Portal opener
+local old_on_place = minetest.registered_items["mcl_end:ender_eye"].on_place
 minetest.override_item("mcl_end:ender_eye", {
 	on_place = function(itemstack, user, pointed_thing)
-		-- Use pointed node's on_rightclick function first, if present
-		local node = minetest.get_node(pointed_thing.under)
-		if user and not user:get_player_control().sneak then
-			if minetest.registered_nodes[node.name] and minetest.registered_nodes[node.name].on_rightclick then
-				return minetest.registered_nodes[node.name].on_rightclick(pointed_thing.under, node, user, itemstack) or itemstack
-			end
-		end
 
+		local rc = mcl_util.call_on_rightclick(itemstack, user, pointed_thing)
+		if rc then return rc end
+
+		local node = minetest.get_node(pointed_thing.under)
 		-- Place eye of ender into end portal frame
 		if pointed_thing.under and node.name == "mcl_portals:end_portal_frame" then
 			local protname = user:get_player_name()
@@ -387,6 +365,8 @@ minetest.override_item("mcl_end:ender_eye", {
 					doc.mark_entry_as_revealed(user:get_player_name(), "nodes", "mcl_portals:portal_end")
 				end
 			end
+		elseif old_on_place then
+			return old_on_place(itemstack, user, pointed_thing)
 		end
 		return itemstack
 	end,

@@ -1,0 +1,15 @@
+# textdomain: lucky_block
+# author:
+# last update: 2017/Aug/28
+
+### init.lua ###
+Stop hitting yourself!=Прекратите удары себя
+Dry shrub takeover!=Поглощение сухих кустов
+Random teleport!=Случайный телепорт!
+Lucky Block=Удачливый блок
+Super Lucky Block (use pick)=Супер удачливый блок (используйте кирку)
+[MOD] Lucky Blocks loaded (@1 in total)=[MOD] Удачливый блок нагруженный (Всего @1)
+
+### blocks.lua ###
+Super Mega Magenta Ultra Screwdriver 2500\n(left-click to rotate face, right-click to rotates axis)"=Пурпурная супер мега ультра отвёртка 2500\n(левая кнопка для вращения лицевой части, правая кнопка для вращения осей)
+Void Mirror (Place to see through solid walls during daytime=Пустое зеркало (Установите, чтобы видеть сквозь сплошные стены в дневное время)

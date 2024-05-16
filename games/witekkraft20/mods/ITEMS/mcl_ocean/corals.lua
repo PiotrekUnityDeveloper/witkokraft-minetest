@@ -18,12 +18,9 @@ local function coral_on_place(itemstack, placer, pointed_thing)
 	local pos_under = pointed_thing.under
 	local pos_above = pointed_thing.above
 	local node_under = minetest.get_node(pos_under)
-	local def_under = minetest.registered_nodes[node_under.name]
 
-	if def_under and def_under.on_rightclick and not placer:get_player_control().sneak then
-		return def_under.on_rightclick(pos_under, node_under,
-				placer, itemstack, pointed_thing) or itemstack
-	end
+	local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+	if rc then return rc end
 
 	if pos_under.y >= pos_above.y then
 		return itemstack

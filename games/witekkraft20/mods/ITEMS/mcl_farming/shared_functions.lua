@@ -1,6 +1,3 @@
-local math = math
-local tostring = tostring
-
 mcl_farming.plant_lists = {}
 
 local plant_lists = {}
@@ -149,13 +146,8 @@ function mcl_farming:place_seed(itemstack, placer, pointed_thing, plantname)
 		return
 	end
 
-	-- Use pointed node's on_rightclick function first, if present
-	local node = minetest.get_node(pt.under)
-	if placer and not placer:get_player_control().sneak then
-		if minetest.registered_nodes[node.name] and minetest.registered_nodes[node.name].on_rightclick then
-			return minetest.registered_nodes[node.name].on_rightclick(pt.under, node, placer, itemstack) or itemstack
-		end
-	end
+	local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+	if rc then return rc end
 
 	local pos = { x = pt.above.x, y = pt.above.y - 1, z = pt.above.z }
 	local farmland = minetest.get_node(pos)
@@ -482,6 +474,11 @@ function mcl_farming:get_seed_or_eat_callback(plantname, hp_change)
 			return minetest.do_item_eat(hp_change, nil, itemstack, placer, pointed_thing)
 		end
 	end
+end
+
+function mcl_farming.on_bone_meal(itemstack,placer,pointed_thing,pos,n,plant,stages)
+	local stages = stages or math.random(2, 5)
+	return mcl_farming:grow_plant(plant, pos, n, stages, true)
 end
 
 minetest.register_lbm({

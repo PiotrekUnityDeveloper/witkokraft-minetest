@@ -8,9 +8,8 @@ local function register_rocket(n, duration, force)
 		description = description,
 		_tt_help = tt_help .. " " .. duration,
 		inventory_image = "mcl_fireworks_rocket.png",
-		stack_max = 64,
 		on_use = function(itemstack, user, pointed_thing)
-			local elytra = mcl_playerplus.elytra[user]
+			local elytra = mcl_player.players[user].elytra
 			if elytra.active and elytra.rocketing <= 0 then
 				elytra.rocketing = duration
 				if not minetest.is_creative_enabled(user:get_player_name()) then
@@ -22,6 +21,8 @@ local function register_rocket(n, duration, force)
 		end,
 	})
 end
+
+minetest.register_alias("mcl_bows:rocket", "mcl_fireworks:rocket_2")
 
 register_rocket(1, 2.2, 10)
 register_rocket(2, 4.5, 20)

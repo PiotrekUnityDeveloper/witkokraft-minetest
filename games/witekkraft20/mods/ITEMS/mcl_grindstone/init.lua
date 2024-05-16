@@ -1,5 +1,3 @@
--- Code based from mcl_anvils
-
 mcl_grindstone = {}
 
 local S = minetest.get_translator(minetest.get_current_modname())
@@ -20,12 +18,7 @@ local grindstone_formspec = table.concat({
 	mcl_formspec.get_itemslot_bg_v4(2.875, 2.625, 1, 1),
 	"list[context;input;2.875,2.625;1,1;1]",
 
-	"image[2.375,1;2,2.875;grindstone_gui_9.png;2]",
-
-	"image[1.875,1.5;0.5,2.875;grindstone_gui_9.png;2]",
-	"image[4.375,1.5;0.5,2.875;grindstone_gui_9.png;2]",
-
-	"image[5.5,1.95;1.5,1;gui_crafting_arrow.png]",
+	"image[5.125,1.95;1.5,1;gui_crafting_arrow.png]",
 
 	mcl_formspec.get_itemslot_bg_v4(7.875, 1.9375, 1, 1),
 	"list[context;output;7.875,1.9375;1,1;]",
@@ -52,18 +45,7 @@ local function create_new_item(name_item, meta, wear)
 	end
 	local new_meta = new_item:get_meta()
 	new_meta:set_string("name", meta:get_string("name"))
-	tt.reload_itemstack_description(new_item)
 	return new_item
-end
-
--- If an item has an enchanment then remove "_enchanted" from the name
-function mcl_grindstone.remove_enchant_name(stack)
-	if mcl_enchanting.is_enchanted(stack:get_name()) then
-		local name = stack:get_name()
-		return name.sub(name, 1, -11)
-	else
-		return stack:get_name()
-	end
 end
 
 -- If an input has a curse transfer it to the new item
@@ -103,6 +85,31 @@ local function fix_stack_size(stack)
 	return count
 end
 
+-- If an item has an enchanment then remove "_enchanted" from the name
+function mcl_grindstone.remove_enchant_name(stack)
+	local name = stack:get_name()
+	if mcl_enchanting.is_enchanted(name) then
+		name = name:gsub("_enchanted$", "")
+	end
+	return name
+end
+
+-- Accepts an itemstack and returns the disenchanted version of said stack (curses are kept)
+-- Returns an empty string if nothing changed.
+function mcl_grindstone.disenchant(stack)
+	local def = stack:get_definition()
+	local meta = stack:get_meta()
+	local new_item = ""
+	if def.type == "tool" and mcl_enchanting.is_enchanted(stack:get_name()) then
+		new_item = create_new_item(mcl_grindstone.remove_enchant_name(stack), meta, stack:get_wear())
+		new_item = transfer_curse(stack, new_item)
+	elseif stack:get_name() == "mcl_enchanting:book_enchanted" then
+		new_item = create_new_item("mcl_books:book", meta, nil)
+		new_item = transfer_curse(stack, new_item)
+	end
+	return new_item
+end
+
 -- Update the inventory slots of an grindstone node.
 -- meta: Metadata of grindstone node
 local function update_grindstone_slots(meta)
@@ -111,91 +118,42 @@ local function update_grindstone_slots(meta)
 	local input2 = inv:get_stack("input", 2)
 	local meta = input1:get_meta()
 
-	local new_output
+	local new_output = ""
 
-	-- Both input slots are occupied
-	if (not input1:is_empty() and not input2:is_empty()) then
+	if not input1:is_empty() and not input2:is_empty() then
 		local def1 = input1:get_definition()
 		local def2 = input2:get_definition()
-		-- Remove enchant name if they have one
 		local name1 = mcl_grindstone.remove_enchant_name(input1)
 		local name2 = mcl_grindstone.remove_enchant_name(input2)
 
-		-- Calculate repair
 		local function calculate_repair(dur1, dur2)
 			-- Grindstone gives a 5% bonus to durability
 			local new_durability = (MAX_WEAR - dur1) + (MAX_WEAR - dur2) * 1.05
 			return math.max(0, math.min(MAX_WEAR, MAX_WEAR - new_durability))
 		end
 
-		-- Check if both are tools and have the same tool type
 		if def1.type == "tool" and def2.type == "tool" and name1 == name2 then
 			local new_wear = calculate_repair(input1:get_wear(), input2:get_wear())
 			local new_item = create_new_item(name1, meta, new_wear)
-			-- Transfer curses if both items have any
 			new_output = transfer_curse(input1, new_item)
 			new_output = transfer_curse(input2, new_output)
-		else
-			new_output = ""
-		end
-		-- Check if at least one input has an item
-		-- Check if the item is's an enchanted book or tool
-	elseif (not input1:is_empty() and input2:is_empty()) or (input1:is_empty() and not input2:is_empty()) then
-		if input2:is_empty() then
-			local def1 = input1:get_definition()
-			local meta = input1:get_meta()
-			if def1.type == "tool" and mcl_enchanting.is_enchanted(input1:get_name()) then
-				local name = mcl_grindstone.remove_enchant_name(input1)
-				local wear = input1:get_wear()
-				local new_item = create_new_item(name, meta, wear)
-				new_output = transfer_curse(input1, new_item)
-			elseif input1:get_name() == "mcl_enchanting:book_enchanted" then
-				new_item = create_new_item("mcl_books:book", meta, nil)
-				new_output = transfer_curse(input1, new_item)
-			else
-				new_output = ""
-			end
-		else
-			local def2 = input2:get_definition()
-			local meta = input2:get_meta()
-			if def2.type == "tool" and mcl_enchanting.is_enchanted(input2:get_name()) then
-				local name = mcl_grindstone.remove_enchant_name(input2)
-				local wear = input2:get_wear()
-				local new_item = create_new_item(name, meta, wear)
-				new_output = transfer_curse(input2, new_item)
-			elseif input2:get_name() == "mcl_enchanting:book_enchanted" then
-				new_item = create_new_item("mcl_books:book", meta, nil)
-				new_output = transfer_curse(input2, new_item)
-			else
-				new_output = ""
-			end
 		end
 	else
-		new_output = ""
+		if input2:is_empty() and not input1:is_empty() then
+			new_output = mcl_grindstone.disenchant(input1)
+		elseif input1:is_empty() and not input2:is_empty() then
+			new_output = mcl_grindstone.disenchant(input2)
+		end
 	end
 
-	-- Set the new output slot
 	if new_output then
 		fix_stack_size(new_output)
 		inv:set_stack("output", 1, new_output)
 	end
 end
 
--- Drop any items inside the grindstone if destroyed
-local function drop_grindstone_items(pos, meta)
-	local inv = meta:get_inventory()
-	for i = 1, inv:get_size("input") do
-		local stack = inv:get_stack("input", i)
-		if not stack:is_empty() then
-			local p = { x = pos.x + math.random(0, 10) / 10 - 0.5, y = pos.y, z = pos.z + math.random(0, 10) / 10 - 0.5 }
-			minetest.add_item(p, stack)
-		end
-	end
-end
-
 local node_box = {
 	type = "fixed",
-	-- created with nodebox editor
 	fixed = {
 		{ -0.25, -0.25, -0.375, 0.25, 0.5, 0.375 },
 		{ -0.375, -0.0625, -0.1875, -0.25, 0.3125, 0.1875 },
@@ -229,14 +187,7 @@ minetest.register_node("mcl_grindstone:grindstone", {
 	collision_box = node_box,
 	sounds = mcl_sounds.node_sound_stone_defaults(),
 	groups = { pickaxey = 1, deco_block = 1 },
-
-	after_dig_node = function(pos, oldnode, oldmetadata, digger)
-		local meta = minetest.get_meta(pos)
-		local meta2 = meta:to_table()
-		meta:from_table(oldmetadata)
-		drop_grindstone_items(pos, meta)
-		meta:from_table(meta2)
-	end,
+	after_dig_node = mcl_util.drop_items_from_meta_container({"input"}),
 	allow_metadata_inventory_take = function(pos, listname, index, stack, player)
 		local name = player:get_player_name()
 		if minetest.is_protected(pos, name) then
@@ -267,7 +218,7 @@ minetest.register_node("mcl_grindstone:grindstone", {
 		elseif from_list == "output" and to_list == "input" then
 			local meta = minetest.get_meta(pos)
 			local inv = meta:get_inventory()
-			if inv:get_stack(to_list, to_index):is_empty() then
+			if inv:room_for_item(to_list, inv:get_stack(from_list, from_index)) then
 				return count
 			else
 				return 0
@@ -310,7 +261,6 @@ minetest.register_node("mcl_grindstone:grindstone", {
 				inv:set_stack("input", 1, input1)
 				inv:set_stack("input", 2, input2)
 			else
-				-- If only one input item
 				if not input1:is_empty() then
 					xp_earnt = calculate_xp(input1)
 					input1:set_count(math.max(0, input1:get_count() - stack:get_count()))
@@ -322,7 +272,6 @@ minetest.register_node("mcl_grindstone:grindstone", {
 					inv:set_stack("input", 2, input2)
 				end
 			end
-			-- Give the player xp
 			if mcl_experience.throw_xp and xp_earnt > 0 then
 				mcl_experience.throw_xp(pos, xp_earnt)
 			end
@@ -339,7 +288,7 @@ minetest.register_node("mcl_grindstone:grindstone", {
 		meta:set_string("formspec", grindstone_formspec)
 	end,
 	on_rightclick = function(pos, node, player, itemstack)
-		if not player:get_player_control().sneak then
+		if player and player:is_player() and not player:get_player_control().sneak then
 			local meta = minetest.get_meta(pos)
 			update_grindstone_slots(meta)
 			meta:set_string("formspec", grindstone_formspec)

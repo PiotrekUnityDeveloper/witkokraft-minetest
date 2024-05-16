@@ -11,6 +11,7 @@ local S = minetest.get_translator("mobs_mc")
 
 
 local strider = {
+	description = S("Strider"),
 	type = "animal",
 	passive = true,
 	spawn_class = "passive",
@@ -30,6 +31,8 @@ local strider = {
 	} },
 	visual_size = {x=3, y=3},
 	sounds = {
+		eat = "mobs_mc_animal_eat_generic",
+		distance = 16,
 	},
 	jump = true,
 	makes_footstep_sound = true,
@@ -51,6 +54,7 @@ local strider = {
 		walk_start = 1,
 		walk_end = 20,
 	},
+	follow = { "mcl_crimson:warped_fungus" },
 	lava_damage = 0,
 	fire_damage = 0,
 	light_damage = 0,
@@ -67,8 +71,13 @@ local strider = {
 	do_custom = function(self, dtime)
 
 		if minetest.find_node_near(self.object:get_pos(), 2, {"mcl_core:lava_source","mcl_core:lava_flowing","mcl_nether:nether_lava_source","mcl_nether:nether_lava_flowing"}) then
-			self.walk_velocity = 2
-			self.run_velocity = 4
+			if self.driver then
+				self.walk_velocity = 4
+				self.run_velocity = 8
+			else
+				self.walk_velocity = 2
+				self.run_velocity = 4
+			end
 			self.base_texture[1] = "extra_mobs_strider.png"
 			self.shaking = false
 		else
@@ -82,6 +91,7 @@ local strider = {
 
 		-- set needed values if not already present
 		if not self.v2 then
+			local vsize = self.object:get_properties().visual_size
 			self.v2 = 0
 			self.max_speed_forward = 8
 			self.max_speed_reverse = 4
@@ -89,7 +99,7 @@ local strider = {
 			self.terrain_type = 3
 			self.driver_attach_at = {x = 0, y = 5.5, z = -1.75}
 			self.driver_eye_offset = {x = 0, y = 10, z = 0}
-			self.driver_scale = {x = 1/self.visual_size.x, y = 1/self.visual_size.y}
+			self.driver_scale = {x = 1/vsize.x, y = 1/vsize.y}
 		end
 
 		-- if driver present allow control of horse
@@ -122,7 +132,7 @@ local strider = {
 
 		local wielditem = clicker:get_wielded_item()
 
-		if wielditem:get_name() ~= "mcl_crimson:warped_fungus" then
+		if wielditem:get_name() == "mcl_crimson:warped_fungus" then
 			if self:feed_tame(clicker, 1, true, true) then return end
 		end
 
@@ -160,7 +170,6 @@ local strider = {
 		end
 
 		-- Mount or detach player
-		local name = clicker:get_player_name()
 		if self.driver and clicker == self.driver then
 			-- Detach if already attached
 			mcl_mobs.detach(clicker, {x=1, y=0, z=0})
@@ -191,59 +200,35 @@ local strider = {
 		end
 	end,
 }
-
 mcl_mobs.register_mob("mobs_mc:strider", strider)
 
--- Baby strider.
+mcl_mobs.register_mob("mobs_mc:baby_strider",table.merge(strider,{
+	description = S("Baby Strider"),
+	collisionbox = {-.3, -0.01, -.3, .3, 0.94, .3},
+	xp_min = 13,
+	xp_max = 13,
+	textures = { {
+		"extra_mobs_strider.png",
+		"blank.png",
+	} },
+	walk_velocity = 1.2,
+	run_velocity = 2.4,
+	child = 1,
+}))
 
-local baby_strider = table.copy(strider)
-baby_strider.collisionbox = {-.3, -0.01, -.3, .3, 0.94, .3}
-baby_strider.xp_min = 13
-baby_strider.xp_max = 13
-textures = { {
-	"extra_mobs_strider.png",
-	"extra_mobs_trans.png",
-} }
-baby_strider.walk_velocity = 1.2
-baby_strider.run_velocity = 2.4
-baby_strider.child = 1
-
-mcl_mobs.register_mob("mobs_mc:baby_strider", baby_strider)
-
--- Regular spawning in the Nether
-
-mcl_mobs:spawn_setup({
+mcl_mobs.spawn_setup({
 	name = "mobs_mc:strider",
 	type_of_spawning = "lava",
 	dimension = "nether",
-	biomes = {
-		"Nether",
-		"BasaltDelta",
-		"WarpedForest",
-		"CrimsonForest",
-		"SoulsandValley"
-	},
-	min_height = mcl_vars.mg_nether_min,
-	max_height = mcl_vars.mg_nether_max,
-	chance = 2000,
+	chance = 200,
 })
 
-mcl_mobs:spawn_setup({
+mcl_mobs.spawn_setup({
 	name = "mobs_mc:baby_strider",
 	type_of_spawning = "lava",
 	dimension = "nether",
-	biomes = {
-		"Nether",
-		"BasaltDelta",
-		"WarpedForest",
-		"CrimsonForest",
-		"SoulsandValley"
-	},
-	min_height = mcl_vars.mg_nether_min,
-	max_height = mcl_vars.mg_nether_max,
-	chance = 100,
+	chance = 20,
 })
 
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:strider", S("Strider"), "#000000", "#FF0000", 0)
-mcl_mobs:non_spawn_specific("mobs_mc:strider","overworld",0,minetest.LIGHT_MAX+1)

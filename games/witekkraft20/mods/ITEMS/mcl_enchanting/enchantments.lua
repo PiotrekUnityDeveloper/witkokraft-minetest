@@ -27,6 +27,8 @@ mcl_enchanting.enchantments.bane_of_arthropods = {
 	power_range_table = {{5, 25}, {13, 33}, {21, 41}, {29, 49}, {37, 57}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 2,
+	anvil_book_factor = 1,
 }
 
 -- requires missing MineClone2 feature
@@ -46,6 +48,8 @@ mcl_enchanting.enchantments.bane_of_arthropods = {
 	power_range_table = {{25, 50}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 8,
+	anvil_book_factor = 4,
 }]]--
 
 -- implemented in mcl_death_drop
@@ -65,9 +69,11 @@ mcl_enchanting.enchantments.curse_of_vanishing = {
 	power_range_table = {{25, 50}},
 	inv_combat_tab = true,
 	inv_tool_tab = true,
+	anvil_item_factor = 8,
+	anvil_book_factor = 4,
 }
 
--- implemented in mcl_playerplus
+-- implemented below
 mcl_enchanting.enchantments.depth_strider = {
 	name = S("Depth Strider"),
 	max_level = 3,
@@ -84,7 +90,22 @@ mcl_enchanting.enchantments.depth_strider = {
 	power_range_table = {{10, 25}, {20, 35}, {30, 45}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 4,
+	anvil_book_factor = 2,
 }
+
+mcl_player.register_globalstep_slow(function(player, dtime)
+	if minetest.get_item_group(mcl_player.players[player].nodes.feet, "liquid") ~= 0 and mcl_enchanting.get_enchantment(player:get_inventory():get_stack("armor", 5), "depth_strider") then
+		local boots = player:get_inventory():get_stack("armor", 5)
+		local depth_strider = mcl_enchanting.get_enchantment(boots, "depth_strider")
+
+		if depth_strider > 0 then
+			playerphysics.add_physics_factor(player, "speed", "mcl_playerplus:depth_strider", (depth_strider / 3) + 0.75)
+		end
+	else
+		playerphysics.remove_physics_factor(player, "speed", "mcl_playerplus:depth_strider")
+	end
+end)
 
 -- implemented via on_enchant
 mcl_enchanting.enchantments.efficiency = {
@@ -106,6 +127,8 @@ mcl_enchanting.enchantments.efficiency = {
 	power_range_table = {{1, 61}, {11, 71}, {21, 81}, {31, 91}, {41, 101}},
 	inv_combat_tab = false,
 	inv_tool_tab = true,
+	anvil_item_factor = 1,
+	anvil_book_factor = 1,
 }
 
 -- implemented in mcl_mobs and via register_on_punchplayer callback
@@ -125,6 +148,8 @@ mcl_enchanting.enchantments.fire_aspect = {
 	power_range_table = {{10, 61}, {30, 71}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 4,
+	anvil_book_factor = 2,
 }
 
 minetest.register_on_punchplayer(function(player, hitter, time_from_last_punch, tool_capabilities, dir, damage)
@@ -155,6 +180,8 @@ mcl_enchanting.enchantments.flame = {
 	power_range_table = {{20, 50}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 4,
+	anvil_book_factor = 2,
 }
 
 -- implemented in mcl_item_entity
@@ -174,6 +201,8 @@ mcl_enchanting.enchantments.fortune = {
 	power_range_table = {{15, 61}, {24, 71}, {33, 81}},
 	inv_combat_tab = false,
 	inv_tool_tab = true,
+	anvil_item_factor = 4,
+	anvil_book_factor = 2,
 }
 
 -- implemented via walkover.register_global
@@ -193,6 +222,8 @@ mcl_enchanting.enchantments.frost_walker = {
 	power_range_table = {{10, 25}, {20, 35}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 4,
+	anvil_book_factor = 2,
 }
 
 walkover.register_global(function(pos, _, player)
@@ -229,6 +260,8 @@ end)
 	power_range_table = {{1, 21}, {9, 29}, {17, 37}, {25, 45}, {33, 53}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 4,
+	anvil_book_factor = 2,
 }]]--
 
 -- implemented in mcl_bows
@@ -248,6 +281,8 @@ mcl_enchanting.enchantments.infinity = {
 	power_range_table = {{20, 50}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 8,
+	anvil_book_factor = 4,
 }
 
 -- implemented via minetest.calculate_knockback
@@ -267,31 +302,98 @@ mcl_enchanting.enchantments.knockback = {
 	power_range_table = {{5, 61}, {25, 71}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 2,
+	anvil_book_factor = 1,
 }
 
 local old_calculate_knockback = minetest.calculate_knockback
 function minetest.calculate_knockback(player, hitter, time_from_last_punch, tool_capabilities, dir, distance, damage)
 	local knockback = old_calculate_knockback(player, hitter, time_from_last_punch, tool_capabilities, dir, distance, damage)
 	local luaentity
+	local is_blocked = false
 	if hitter then
 		luaentity = hitter:get_luaentity()
+		-- check if attack is blocked
+		local shield_dot = vector.dot(player:get_look_dir(), vector.subtract(hitter:get_pos(), player:get_pos()))
+		if mcl_shields.is_blocking(player) and shield_dot >= 0 then
+			is_blocked = true
+			knockback = knockback * 0.5
+		end
 	end
 	if hitter and hitter:is_player() then
 		local wielditem = hitter:get_wielded_item()
-		knockback = knockback + 5 * mcl_enchanting.get_enchantment(wielditem, "knockback")
+		--knockback = knockback + 3 * mcl_enchanting.get_enchantment(wielditem, "knockback")
+		local enchant = mcl_enchanting.get_enchantment(wielditem, "knockback")
+		knockback = knockback + 3.22 * enchant
+		-- add vertical lift to knockback
+		local v = player:get_velocity()
+		local added_v = 0
+		local invul = player:get_meta():get_int("mcl_damage:invulnerable")
+		if v and v.y <= 0.01 and v.y >= -0.01 and invul == 0 and not is_blocked then
+			local regular_v = 6.4
+			local enchant_v = 7
+			regular_v = regular_v * math.abs(dir.y - 1)
+			enchant_v = enchant_v * math.abs(dir.y - 1)
+			if enchant == 0 then
+				player:add_velocity({x = 0, y = regular_v, z = 0})
+				added_v = regular_v
+			else
+				player:add_velocity({x = 0, y = enchant_v, z = 0})
+				added_v = enchant_v
+			end
+			-- add minimum knockback
+			if knockback <= 1.5 then
+				knockback = knockback + 4.875
+			elseif knockback <= 6.19 then
+				knockback = knockback + 0.609375
+			end
+		end
+		-- counteract forward velocity when hit
+		local self_dir_dot = (v.x * dir.x) + (v.z * dir.z)
+		if self_dir_dot < 0 then
+			player:add_velocity({x = v.x * -1, y = 0, z = v.z * -1})
+		end
 		-- add player velocity to knockback
+		local h_name = hitter:get_player_name()
 		local hv = hitter:get_velocity()
 		local dir_dot = (hv.x * dir.x) + (hv.z * dir.z)
-		if dir_dot > 0 then
-			knockback = knockback + dir_dot * 2
+		local hitter_mag = math.sqrt((hv.x * hv.x) + (hv.z * hv.z))
+		if dir_dot > 0 and mcl_sprint.is_sprinting(h_name) then
+			knockback = knockback + hitter_mag * 0.6875
+		elseif dir_dot > 0 then
+			knockback = knockback + hitter_mag * 0.515625
 		end
+		-- reduce floatiness
+		if added_v ~= 0 then
+			minetest.after(0.25, function()
+				player:add_velocity({x = 0, y = (v.y + added_v) * -0.375, z = 0})
+			end)
+		end
+		-- reduce knockback when moving towards hitter while attacking
+		local self_dir_dot = (v.x * dir.x) + (v.z * dir.z)
+		local control = player:get_player_control()
+		if self_dir_dot < -4.3 and control.up and control.LMB then
+			knockback = knockback * 0.6
+		end
+		-- remove knockback if invulnerable
+		if invul > 0 then
+			knockback = 0
+		end
+		-- remove knockback if attack is blocked
+		if is_blocked then
+			knockback = 0
+		end
+	elseif hitter and hitter:is_player() and distance > 3 then
+		knockback = 0
 	elseif luaentity and luaentity._knockback then
 		local kb = knockback + luaentity._knockback / 4
 		local punch_dir = dir
 		punch_dir.y = 0
 		punch_dir = vector.normalize(punch_dir) * kb
 		punch_dir.y = 4
-		player:add_velocity(punch_dir)
+		if not is_blocked then
+			player:add_velocity(punch_dir)
+		end
 		knockback = 0
 	end
 	return knockback
@@ -314,6 +416,8 @@ mcl_enchanting.enchantments.looting = {
 	power_range_table = {{15, 61}, {24, 71}, {33, 81}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 4,
+	anvil_book_factor = 2,
 }
 
 -- requires missing MineClone2 feature
@@ -333,6 +437,8 @@ mcl_enchanting.enchantments.looting = {
 	power_range_table = {{12, 50}, {19, 50}, {26, 50}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 1,
+	anvil_book_factor = 1,
 }]]--
 
 -- implemented in mcl_fishing
@@ -352,6 +458,8 @@ mcl_enchanting.enchantments.luck_of_the_sea = {
 	power_range_table = {{15, 61}, {24, 71}, {33, 81}},
 	inv_combat_tab = false,
 	inv_tool_tab = true,
+	anvil_item_factor = 4,
+	anvil_book_factor = 2,
 }
 
 -- implemented in mcl_fishing
@@ -371,6 +479,8 @@ mcl_enchanting.enchantments.lure = {
 	power_range_table = {{15, 61}, {24, 71}, {33, 81}},
 	inv_combat_tab = false,
 	inv_tool_tab = true,
+	anvil_item_factor = 4,
+	anvil_book_factor = 2,
 }
 
 -- implemented in mcl_experience
@@ -390,6 +500,8 @@ mcl_enchanting.enchantments.mending = {
 	power_range_table = {{25, 75}},
 	inv_combat_tab = true,
 	inv_tool_tab = true,
+	anvil_item_factor = 4,
+	anvil_book_factor = 2,
 }
 
 mcl_experience.register_on_add_xp(function(player, xp)
@@ -453,6 +565,8 @@ mcl_enchanting.enchantments.multishot = {
 	power_range_table = {{20, 50}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 4,
+	anvil_book_factor = 2,
 }
 
 -- requires missing MineClone2 feature
@@ -472,6 +586,8 @@ mcl_enchanting.enchantments.piercing = {
 	power_range_table = {{1, 50}, {11, 50}, {21, 50}, {31, 50}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 1,
+	anvil_book_factor = 1,
 }
 
 -- implemented in mcl_bows
@@ -491,6 +607,8 @@ mcl_enchanting.enchantments.power = {
 	power_range_table = {{1, 16}, {11, 26}, {21, 36}, {31, 46}, {41, 56}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 1,
+	anvil_book_factor = 1,
 }
 
 -- implemented via minetest.calculate_knockback (together with the Knockback enchantment) and mcl_bows
@@ -510,6 +628,8 @@ mcl_enchanting.enchantments.punch = {
 	power_range_table = {{12, 37}, {32, 57}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 4,
+	anvil_book_factor = 2,
 }
 
 -- requires missing MineClone2 feature
@@ -529,6 +649,8 @@ mcl_enchanting.enchantments.quick_charge = {
 	power_range_table = {{12, 50}, {32, 50}, {52, 50}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 2,
+	anvil_book_factor = 1,
 }
 
 -- unimplemented
@@ -548,6 +670,8 @@ mcl_enchanting.enchantments.quick_charge = {
 	power_range_table = {{10, 40}, {20, 50}, {30, 60}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 4,
+	anvil_book_factor = 2,
 }]]--
 
 -- requires missing MineClone2 feature
@@ -567,6 +691,8 @@ mcl_enchanting.enchantments.quick_charge = {
 	power_range_table = {{17, 50}, {24, 50}, {31, 50}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 4,
+	anvil_book_factor = 2,
 }]]--
 
 -- implemented via on_enchant
@@ -586,6 +712,8 @@ mcl_enchanting.enchantments.sharpness = {
 	power_range_table = {{1, 21}, {12, 32}, {23, 43}, {34, 54}, {45, 65}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 1,
+	anvil_book_factor = 1,
 }
 
 -- implemented in mcl_item_entity
@@ -605,6 +733,8 @@ mcl_enchanting.enchantments.silk_touch = {
 	power_range_table = {{15, 61}},
 	inv_combat_tab = false,
 	inv_tool_tab = true,
+	anvil_item_factor = 8,
+	anvil_book_factor = 4,
 }
 
 -- implemented via on_enchant and additions in mobs_mc
@@ -624,6 +754,8 @@ mcl_enchanting.enchantments.smite = {
 	power_range_table = {{5, 25}, {13, 33}, {21, 41}, {29, 49}, {37, 57}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 2,
+	anvil_book_factor = 1,
 }
 
 -- implemented in mcl_playerplus
@@ -643,6 +775,8 @@ mcl_enchanting.enchantments.soul_speed = {
 	power_range_table = {{10, 25}, {20, 35}, {30, 45}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 8,
+	anvil_book_factor = 4,
 }
 
 -- requires missing MineClone2 feature
@@ -662,13 +796,15 @@ mcl_enchanting.enchantments.soul_speed = {
 	power_range_table = {{5, 20}, {14, 29}, {23, 38}},
 	inv_combat_tab = true,
 	inv_tool_tab = false,
+	anvil_item_factor = 4,
+	anvil_book_factor = 2,
 }]]--
 
 -- for tools & weapons implemented via on_enchant; for bows implemented in mcl_bows; for armor implemented in mcl_armor and mcl_tt; for fishing rods implemented in mcl_fishing
 mcl_enchanting.enchantments.unbreaking = {
 	name = S("Unbreaking"),
 	max_level = 3,
-	primary = {armor_head = true, armor_torso = true, armor_legs = true, armor_feet = true, pickaxe = true, shovel = true, axe = true, hoe = true, sword = true, fishing_rod = true, bow = true},
+	primary = {armor_head = true, armor_torso = true, armor_legs = true, armor_feet = true, pickaxe = true, shovel = true, axe = true, hoe = true, sword = true, fishing_rod = true, bow = true, crossbow = true, },
 	secondary = {tool = true},
 	disallow = {non_combat_armor = true},
 	incompatible = {},
@@ -693,4 +829,6 @@ mcl_enchanting.enchantments.unbreaking = {
 	power_range_table = {{5, 61}, {13, 71}, {21, 81}},
 	inv_combat_tab = true,
 	inv_tool_tab = true,
+	anvil_item_factor = 2,
+	anvil_book_factor = 1,
 }

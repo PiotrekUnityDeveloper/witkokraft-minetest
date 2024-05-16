@@ -1,27 +1,13 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 
 mcl_armor.register_set({
-	name = "leather",
-	description = "Leather",
-	descriptions = {
-		head = "Cap",
-		torso = "Tunic",
-		legs = "Pants",
-	},
-	durability = 80,
-	enchantability = 15,
-	points = {
-		head = 1,
-		torso = 3,
-		legs = 2,
-		feet = 1,
-	},
-	craft_material = "mcl_mobitems:leather",
-})
-
-mcl_armor.register_set({
 	name = "gold",
-	description = "Golden",
+	descriptions = {
+		head = S("Golden Helmet"),
+		torso = S("Golden Chestplate"),
+		legs = S("Golden Leggings"),
+		feet = S("Golden Boots"),
+	},
 	durability = 112,
 	enchantability = 25,
 	points = {
@@ -34,11 +20,19 @@ mcl_armor.register_set({
 	cook_material = "mcl_core:gold_nugget",
 	sound_equip = "mcl_armor_equip_iron",
 	sound_unequip = "mcl_armor_unequip_iron",
+	groups = {
+		golden = 1,
+	},
 })
 
 mcl_armor.register_set({
 	name = "chain",
-	description = "Chain",
+	descriptions = {
+		head = S("Chainmail Helmet"),
+		torso = S("Chainmail Chestplate"),
+		legs = S("Chainmail Leggings"),
+		feet = S("Chainmail Boots"),
+	},
 	durability = 240,
 	enchantability = 12,
 	points = {
@@ -55,7 +49,12 @@ mcl_armor.register_set({
 
 mcl_armor.register_set({
 	name = "iron",
-	description = "Iron",
+	descriptions = {
+		head = S("Iron Helmet"),
+		torso = S("Iron Chestplate"),
+		legs = S("Iron Leggings"),
+		feet = S("Iron Boots"),
+	},
 	durability = 240,
 	enchantability = 9,
 	points = {
@@ -72,7 +71,12 @@ mcl_armor.register_set({
 
 mcl_armor.register_set({
 	name = "diamond",
-	description = "Diamond",
+	descriptions = {
+		head = S("Diamond Helmet"),
+		torso = S("Diamond Chestplate"),
+		legs = S("Diamond Leggings"),
+		feet = S("Diamond Boots"),
+	},
 	durability = 528,
 	enchantability = 10,
 	points = {
@@ -91,8 +95,12 @@ mcl_armor.register_set({
 
 mcl_armor.register_set({
 	name = "netherite",
-	description = "Netherite",
-	durability = 555,
+	descriptions = {
+		head = S("Netherite Helmet"),
+		torso = S("Netherite Chestplate"),
+		legs = S("Netherite Leggings"),
+		feet = S("Netherite Boots"),
+	},	durability = 555,
 	enchantability = 10,
 	points = {
 		head = 3,
@@ -219,7 +227,7 @@ minetest.register_tool("mcl_armor:elytra", {
 	_doc_items_longdesc = mcl_armor.longdesc,
 	_doc_items_usagehelp = mcl_armor.usage,
 	inventory_image = "mcl_armor_inv_elytra.png",
-	groups = {armor = 1, non_combat_armor = 1, armor_torso = 1, non_combat_torso = 1, mcl_armor_uses = 10, enchantability = 1, elytra = 1},
+	groups = {armor = 1, non_combat_armor = 1, armor_torso = 1, non_combat_torso = 1, mcl_armor_uses = 10},
 	sounds = {
 		_mcl_armor_equip = "mcl_armor_equip_leather",
 		_mcl_armor_unequip = "mcl_armor_unequip_leather",
@@ -227,27 +235,5 @@ minetest.register_tool("mcl_armor:elytra", {
 	on_place = mcl_armor.equip_on_use,
 	on_secondary_use = mcl_armor.equip_on_use,
 	_mcl_armor_element = "torso",
-	_mcl_armor_texture = function(obj, itemstack)
-		if obj:is_player() then
-			local cape = mcl_skins.player_skins[obj].cape
-			if cape ~= "blank.png" then
-				return cape:gsub("_body", "_elytra")
-			end
-		end
-		return "mcl_armor_elytra.png"
-	end,
-	_on_equip =  function(obj, itemstack)
-		if not obj:is_player() then return end
-		local cape = mcl_skins.player_skins[obj].cape
-		if cape ~= "blank.png" then
-			local skinval = mcl_player.player_get_skin(obj)
-			skinval = skinval:gsub("%^" .. cape, "")
-			mcl_player.player_set_skin(obj, skinval)
-			-- this doesn't mess with the data mcl_skins has, so when mcl_skins reloads (which happens when the elytra is unequipped), the normal cape returns
-		end
-	end,
-	_on_unequip = function(obj, itemstack)
-		if not obj:is_player() then return end
-		mcl_skins.update_player_skin(obj)
-	end
+	_mcl_armor_texture = "mcl_armor_elytra.png"
 })

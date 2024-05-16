@@ -1,5 +1,4 @@
 local modname = minetest.get_current_modname()
-local S = minetest.get_translator(modname)
 local modpath = minetest.get_modpath(modname)
 
 local cold_oceans = {
@@ -70,6 +69,23 @@ local warm_oceans = {
 	"JungleM_deep_ocean",
 }
 
+local function place_sus_nodes(pos,def,pr,susnode,replace_nodes)
+	local hl = def.sidelen / 2
+	local p1 = vector.offset(pos,-hl,-hl,-hl)
+	local p2 = vector.offset(pos,hl,hl,hl)
+	if minetest.registered_nodes["mcl_sus_nodes:"..susnode] then
+		local sus_poss = minetest.find_nodes_in_area(vector.offset(p1,0,-3,0), vector.offset(p2,0,-hl+2,0), replace_nodes)
+		if #sus_poss > 0 then
+			table.shuffle(sus_poss)
+			for i = 1,pr:next(1,math.min(250,#sus_poss)) do
+				minetest.set_node(sus_poss[i],{name="mcl_sus_nodes:"..susnode})
+				local meta = minetest.get_meta(sus_poss[i])
+				meta:set_string("structure", def.name)
+			end
+		end
+	end
+end
+
 local cold = {
 	place_on = {"group:sand","mcl_core:gravel","mcl_core:dirt","mcl_core:clay","group:material_stone"},
 	spawn_by = {"mcl_core:water_source"},
@@ -83,12 +99,15 @@ local cold = {
 	y_max = -2,
 	biomes = cold_oceans,
 	chunk_probability = 400,
-	sidelen = 20,
+	sidelen = 10,
 	filenames = {
 		modpath.."/schematics/mcl_structures_ocean_ruins_cold_1.mts",
 		modpath.."/schematics/mcl_structures_ocean_ruins_cold_2.mts",
 		modpath.."/schematics/mcl_structures_ocean_ruins_cold_3.mts",
 	},
+	after_place = function(pos,def,pr)
+		place_sus_nodes(pos,def,pr,"gravel",{"mcl_core:gravel","mcl_core:sand","mcl_core:stone"})
+	end,
 	loot = {
 		["mcl_chests:chest_small" ] = {
 			{
@@ -115,18 +134,60 @@ local cold = {
 				{ itemstring = "mcl_core:apple_gold_enchanted", weight = 2, },
 				}
 			}
-		}
+		},
+		["SUS"] = {
+			{
+			stacks_min = 1,
+			stacks_max = 1,
+			items = {
+				{ itemstring = "mcl_core:coal_lump", weight = 2 },
+				{ itemstring = "mcl_core:emerald", weight = 2 },
+				{ itemstring = "mcl_farming:wheat_item", weight = 2 },
+				{ itemstring = "mcl_farming:hoe_wood", weight = 2 },
+				{ itemstring = "mcl_core:gold_nugget", weight = 2 },
+				{ itemstring = "mcl_pottery_sherds:blade", weight = 1, },
+				{ itemstring = "mcl_pottery_sherds:explorer", weight = 1, },
+				{ itemstring = "mcl_pottery_sherds:mourner", weight = 1, },
+				{ itemstring = "mcl_pottery_sherds:plenty", weight = 1, },
+				{ itemstring = "mcl_tools:axe_iron", weight = 1 },
+				}
+			}
+		},
 	},
 }
 
-local warm = table.copy(cold)
-warm.biomes = warm_oceans
-warm.filenames = {
-	modpath.."/schematics/mcl_structures_ocean_ruins_warm_1.mts",
-	modpath.."/schematics/mcl_structures_ocean_ruins_warm_2.mts",
-	modpath.."/schematics/mcl_structures_ocean_ruins_warm_3.mts",
-	modpath.."/schematics/mcl_structures_ocean_ruins_warm_4.mts",
-}
+local warm = table.merge(cold,{
+	after_place = function(pos,def,pr)
+		place_sus_nodes(pos,def,pr,"sand",{"mcl_core:sand","mcl_core:gravel","mcl_core:stone","mcl_core:sandstone"})
+	end,
+	biomes = warm_oceans,
+	filenames = {
+		modpath.."/schematics/mcl_structures_ocean_ruins_warm_1.mts",
+		modpath.."/schematics/mcl_structures_ocean_ruins_warm_2.mts",
+		modpath.."/schematics/mcl_structures_ocean_ruins_warm_3.mts",
+		modpath.."/schematics/mcl_structures_ocean_ruins_warm_4.mts",
+	},
+	loot = table.merge(cold.loot,{
+		["SUS"] = {
+			{
+			stacks_min = 1,
+			stacks_max = 1,
+			items = {
+				{ itemstring = "mcl_core:coal_lump", weight = 2 },
+				{ itemstring = "mcl_core:emerald", weight = 2 },
+				{ itemstring = "mcl_farming:wheat_item", weight = 2 },
+				{ itemstring = "mcl_farming:hoe_wood", weight = 2 },
+				{ itemstring = "mcl_core:gold_nugget", weight = 2 },
+				{ itemstring = "mcl_pottery_sherds:angler", weight = 1, },
+				{ itemstring = "mcl_pottery_sherds:shelter", weight = 1, },
+				--FIXME: add sniffer egg { itemstring = "mobs_mc:SNIFFER", weight = 1, },
+				{ itemstring = "mcl_pottery_sherds:snort", weight = 1, },
+				{ itemstring = "mcl_tools:axe_iron", weight = 1 },
+				}
+			}
+		},
+	}),
+})
 
 mcl_structures.register_structure("cold_ocean_ruins",cold)
 mcl_structures.register_structure("warm_ocean_ruins",warm)

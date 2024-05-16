@@ -14,7 +14,7 @@ See Minecraft Wiki <http://minecraft.gamepedia.com/Minecraft_Wiki> for more
 information.
 
 How the mod is used
-===================
+-------------------
 
 In MineClone 2, all diggable nodes have the hardness set in the custom field
 "_mcl_hardness" (0 by default).  These values are used together with digging
@@ -57,7 +57,7 @@ or above means that the tool can harvest nodes with that level or below.  See
 "mcl_tools/init.lua" for examples on how "_mcl_diggroups" is used in practice.
 
 Information about the mod
-=========================
+-------------------------
 
 The mod is split up into two parts, mcl_autogroup and _mcl_autogroup.
 mcl_autogroup contains the API functions used to register custom digging groups.
@@ -215,10 +215,6 @@ function mcl_autogroup.can_harvest(nodename, toolname, player)
 		return true
 	end
 
-	if minetest.get_item_group(nodename, "dig_immediate_piston") >= 1 then
-		return true
-	end
-
 	-- Check if it can be dug by tool
 	local tdef = minetest.registered_tools[toolname]
 	if tdef and tdef._mcl_diggroups then
@@ -232,10 +228,11 @@ function mcl_autogroup.can_harvest(nodename, toolname, player)
 	end
 
 	-- Check if it can be dug by hand
-	if not player or not player:is_player() then return false end
-	local name = player:get_inventory():get_stack("hand", 1):get_name()
-	local tdef = minetest.registered_items[name]
-	if tdef then
+	if player and player:is_player() then
+		local name = player:get_inventory():get_stack("hand", 1):get_name()
+		tdef = minetest.registered_items[name]
+	end
+	if tdef and tdef._mcl_diggroups then
 		for g, gdef in pairs(tdef._mcl_diggroups) do
 			if ndef.groups[g] then
 				if ndef.groups[g] <= gdef.level then
@@ -304,10 +301,6 @@ end
 -- loading order.
 function mcl_autogroup.get_wear(toolname, diggroup)
 	local tdef = minetest.registered_tools[toolname]
-	if not tdef then
-		minetest.log("warning", "Adding wear for tool: " .. tostring(toolname) .. " failed with diggroup: " .. tostring(diggroup))
-		return nil
-	end
 	local uses = tdef._mcl_diggroups[diggroup].uses
 	return math.ceil(65535 / uses)
 end

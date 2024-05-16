@@ -102,7 +102,7 @@ function mcl_potions.register_lingering(name, descr, color, def)
 		_doc_items_longdesc = longdesc,
 		_doc_items_usagehelp = S("Use the “Punch” key to throw it."),
 		inventory_image = lingering_image(color),
-		groups = {brewitem=1, not_in_creative_inventory=0, bottle=1},
+		groups = {brewitem=1, not_in_creative_inventory=0, potion = 1},
 		on_use = function(item, placer, pointed_thing)
 			local velocity = 10
 			local dir = placer:get_look_dir();
@@ -123,20 +123,24 @@ function mcl_potions.register_lingering(name, descr, color, def)
 			local pos = {x=s_pos.x+dropdir.x,y=s_pos.y+dropdir.y,z=s_pos.z+dropdir.z}
 			minetest.sound_play("mcl_throwing_throw", {pos = pos, gain = 0.4, max_hear_distance = 16}, true)
 			local obj = minetest.add_entity(pos, id.."_flying")
-			local velocity = 22
-			obj:set_velocity({x=dropdir.x*velocity,y=dropdir.y*velocity,z=dropdir.z*velocity})
-			obj:set_acceleration({x=dropdir.x*-3, y=-9.8, z=dropdir.z*-3})
+			if obj and obj:get_pos() then
+				local velocity = 22
+				obj:set_velocity({x=dropdir.x*velocity,y=dropdir.y*velocity,z=dropdir.z*velocity})
+				obj:set_acceleration({x=dropdir.x*-3, y=-9.8, z=dropdir.z*-3})
+			end
 		end
 	})
 
 	local w = 0.7
 
 	minetest.register_entity(id.."_flying",{
-		textures = {lingering_image(color)},
-		hp_max = 1,
-		visual_size = {x=w/2,y=w/2},
-		collisionbox = {-0.1,-0.1,-0.1,0.1,0.1,0.1},
-		pointable = false,
+		initial_properties = {
+			textures = {lingering_image(color)},
+			hp_max = 1,
+			visual_size = {x=w/2,y=w/2},
+			collisionbox = {-0.1,-0.1,-0.1,0.1,0.1,0.1},
+			pointable = false,
+		},
 		on_step = function(self, dtime)
 			local pos = self.object:get_pos()
 			local node = minetest.get_node(pos)

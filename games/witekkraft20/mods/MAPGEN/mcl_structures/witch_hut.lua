@@ -1,5 +1,4 @@
 local modname = minetest.get_current_modname()
-local S = minetest.get_translator(modname)
 local modpath = minetest.get_modpath(modname)
 
 local peaceful = minetest.settings:get_bool("only_peaceful_mobs", false)
@@ -14,11 +13,13 @@ local function spawn_witch(p1,p2)
 			witch._home = c
 			witch.can_despawn = false
 		end
-		local cat = minetest.add_entity(vector.offset(nn[math.random(#nn)],0,1,0),"mobs_mc:cat"):get_luaentity()
-		cat.object:set_properties({textures = {"mobs_mc_cat_black.png"}})
-		cat.owner = "!witch!" --so it's not claimable by player
-		cat._home = c
-		cat.can_despawn = false
+		local catobject = minetest.add_entity(vector.offset(nn[math.random(#nn)],0,1,0),"mobs_mc:cat")
+		if catobject and catobject:get_pos() then
+			local cat=catobject:get_luaentity()
+			cat.object:set_properties({textures = {"mobs_mc_cat_black.png"}})
+			cat._home = c
+			cat.can_despawn = false
+		end
 		return
 	end
 end
@@ -27,7 +28,7 @@ local function hut_placement_callback(pos,def,pr)
 	local hl = def.sidelen / 2
 	local p1 = vector.offset(pos,-hl,-hl,-hl)
 	local p2 = vector.offset(pos,hl,hl,hl)
-	local legs = minetest.find_nodes_in_area(vector.offset(pos,-hl,0,-hl),vector.offset(pos,hl,0,hl), "mcl_core:tree")
+	local legs = minetest.find_nodes_in_area(vector.offset(pos,-hl,0,-hl),vector.offset(pos,hl,0,hl), {"mcl_core:tree","mcl_trees:tree_oak"})
 	local tree = {}
 	for _,leg in pairs(legs) do
 		while minetest.get_item_group(mcl_vars.get_node(vector.offset(leg,0,-1,0), true, 333333).name, "water") ~= 0 do
@@ -35,7 +36,7 @@ local function hut_placement_callback(pos,def,pr)
 			table.insert(tree,leg)
 		end
 	end
-	minetest.bulk_set_node(tree, {name = "mcl_core:tree", param2 = 2})
+	minetest.bulk_set_node(tree, {name = "mcl_trees:tree_oak", param2 = 2})
 	spawn_witch(p1,p2)
 end
 

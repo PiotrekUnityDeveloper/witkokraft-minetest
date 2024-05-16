@@ -33,17 +33,9 @@ local bow_load = {}
 -- Another player table, this one stores the wield index of the bow being charged
 local bow_index = {}
 
--- define FOV modifier(s)
-mcl_fovapi.register_modifier({
-	name = "bowcomplete",
-	fov_factor = 0.8,
-	time = 1,
-	reset_time = 0.3,
-	is_multiplier = true,
-})
-
 function mcl_bows.shoot_arrow(arrow_item, pos, dir, yaw, shooter, power, damage, is_critical, bow_stack, collectable)
 	local obj = minetest.add_entity({x=pos.x,y=pos.y,z=pos.z}, arrow_item.."_entity")
+	if not obj or not obj:get_pos() then return end
 	if power == nil then
 		power = BOW_MAX_SPEED --19
 	end
@@ -57,7 +49,7 @@ function mcl_bows.shoot_arrow(arrow_item, pos, dir, yaw, shooter, power, damage,
 			damage = damage + (enchantments.power + 1) / 4
 		end
 		if enchantments.punch then
-			knockback = enchantments.punch * 21
+			knockback = enchantments.punch * 3
 		end
 		if enchantments.flame then
 			mcl_burning.set_on_fire(obj, math.huge)
@@ -140,7 +132,7 @@ minetest.register_tool("mcl_bows:bow", {
 	_tt_help = S("Launches arrows"),
 	_doc_items_longdesc = S("Bows are ranged weapons to shoot arrows at your foes.").."\n"..
 S("The speed and damage of the arrow increases the longer you charge. The regular damage of the arrow is between 1 and 9. At full charge, there's also a 20% of a critical hit, dealing 10 damage instead."),
-	_doc_items_usagehelp = S("To use the bow, you first need to have at least one arrow anywhere in your inventory (unless in Creative Mode). Hold down the right mouse button to charge, release to shoot."),
+	_doc_items_usagehelp = S("To use the bow, you first need to have at least one arrow anywhere in your inventory (unless in Creative Mode). Hold down the right mouse button (or the zoom key) to charge, release to shoot."),
 	_doc_items_durability = BOW_DURABILITY,
 	inventory_image = "mcl_bows_bow.png",
 	wield_scale = mcl_vars.tool_wield_scale,
@@ -149,15 +141,8 @@ S("The speed and damage of the arrow increases the longer you charge. The regula
 	-- Trick to disable digging as well
 	on_use = function() return end,
 	on_place = function(itemstack, player, pointed_thing)
-		if pointed_thing and pointed_thing.type == "node" then
-			-- Call on_rightclick if the pointed node defines it
-			local node = minetest.get_node(pointed_thing.under)
-			if player and not player:get_player_control().sneak then
-				if minetest.registered_nodes[node.name] and minetest.registered_nodes[node.name].on_rightclick then
-					return minetest.registered_nodes[node.name].on_rightclick(pointed_thing.under, node, player, itemstack) or itemstack
-				end
-			end
-		end
+		local rc = mcl_util.call_on_rightclick(itemstack, player, pointed_thing)
+		if rc then return rc end
 
 		itemstack:get_meta():set_string("active", "true")
 		return itemstack
@@ -192,9 +177,6 @@ end
 
 -- Resets the bow charging state and player speed. To be used when the player is no longer charging the bow
 local function reset_bow_state(player, also_reset_bows)
-	-- clear the FOV change from the player.
-	mcl_fovapi.remove_modifier(player, "bowcomplete") -- for the complete zoom in FOV Modifier.
-
 	bow_load[player:get_player_name()] = nil
 	bow_index[player:get_player_name()] = nil
 	if minetest.get_modpath("playerphysics") then
@@ -239,7 +221,7 @@ end
 
 
 controls.register_on_release(function(player, key, time)
-	if key~="RMB" then return end
+	if key~="RMB" and key~="zoom" then return end
 	--local inv = minetest.get_inventory({type="player", name=player:get_player_name()})
 	local wielditem = player:get_wielded_item()
 	if (wielditem:get_name()=="mcl_bows:bow_0" or wielditem:get_name()=="mcl_bows:bow_1" or wielditem:get_name()=="mcl_bows:bow_2" or
@@ -307,12 +289,14 @@ end)
 controls.register_on_hold(function(player, key, time)
 	local name = player:get_player_name()
 	local creative = minetest.is_creative_enabled(name)
-	if key ~= "RMB" or not (creative or get_arrow(player)) then
+	if (key ~= "RMB" and key ~= "zoom") or not (creative or get_arrow(player)) then
 		return
 	end
 	--local inv = minetest.get_inventory({type="player", name=name})
 	local wielditem = player:get_wielded_item()
-	if bow_load[name] == nil and (wielditem:get_name()=="mcl_bows:bow" or wielditem:get_name()=="mcl_bows:bow_enchanted") and wielditem:get_meta():get("active") and (creative or get_arrow(player)) then
+		if bow_load[name] == nil
+		and (wielditem:get_name()=="mcl_bows:bow" or wielditem:get_name()=="mcl_bows:bow_enchanted")
+		and (wielditem:get_meta():get("active") or key == "zoom") and (creative or get_arrow(player)) then
 		local enchanted = mcl_enchanting.is_enchanted(wielditem:get_name())
 		if enchanted then
 			wielditem:set_name("mcl_bows:bow_0_enchanted")
@@ -326,9 +310,6 @@ controls.register_on_hold(function(player, key, time)
 		end
 		bow_load[name] = minetest.get_us_time()
 		bow_index[name] = player:get_wield_index()
-
-		-- begin Bow Zoom.
-		mcl_fovapi.apply_modifier(player, "bowcomplete")
 	else
 		if player:get_wield_index() == bow_index[name] then
 			if type(bow_load[name]) == "number" then

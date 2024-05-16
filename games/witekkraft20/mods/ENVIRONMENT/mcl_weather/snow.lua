@@ -1,45 +1,8 @@
-local get_connected_players = minetest.get_connected_players
-
 mcl_weather.snow = {}
 
-local PARTICLES_COUNT_SNOW = tonumber(minetest.settings:get("mcl_weather_snow_particles")) or 100
+local PARTICLES_COUNT_SNOW = 100
 mcl_weather.snow.init_done = false
 local mgname = minetest.get_mapgen_setting("mg_name")
-
-local snow_biomes = {
-	"ColdTaiga_underground",
-	"IcePlains_underground",
-	"IcePlainsSpikes_underground",
-	"MegaTaiga_underground",
-	"Taiga_underground",
-	"IcePlains_deep_ocean",
-	"MegaSpruceTaiga_deep_ocean",
-	"IcePlainsSpikes_ocean",
-	"StoneBeach_ocean",
-	"ColdTaiga_deep_ocean",
-	"MegaTaiga_ocean",
-	"StoneBeach_deep_ocean",
-	"IcePlainsSpikes_deep_ocean",
-	"ColdTaiga_ocean",
-	"MegaTaiga_deep_ocean",
-	"MegaSpruceTaiga_ocean",
-	"ExtremeHills+_ocean",
-	"IcePlains_ocean",
-	"Taiga_ocean",
-	"Taiga_deep_ocean",
-	"StoneBeach",
-	"ColdTaiga_beach_water",
-	"Taiga_beach",
-	"ColdTaiga_beach",
-	"Taiga",
-	"ExtremeHills+_snowtop",
-	"MegaSpruceTaiga",
-	"MegaTaiga",
-	"ExtremeHills+",
-	"ColdTaiga",
-	"IcePlainsSpikes",
-	"IcePlains",
-}
 
 local psdef= {
 	amount = PARTICLES_COUNT_SNOW,
@@ -63,9 +26,12 @@ local psdef= {
 
 function mcl_weather.has_snow(pos)
 	if not mcl_worlds.has_weather(pos) then return false end
-	if  mgname == "singlenode" or mgname == "v6" then return false end
+	if  mgname == "singlenode" then return false end
 	local bn = minetest.get_biome_name(minetest.get_biome_data(pos).biome)
 	local bd = minetest.registered_biomes[bn]
+	if not mcl_weather.can_see_outdoors(pos) then
+		return false
+	end
 	if bd and bd._mcl_biome_type == "snowy" then return true end
 	if bd and bd._mcl_biome_type == "cold" then
 		if bn == "Taiga" and pos.y > 140 then return true end
@@ -83,7 +49,7 @@ function mcl_weather.snow.set_sky_box()
 		{r=85, g=86, b=86},
 		{r=0, g=0, b=0}})
 	mcl_weather.skycolor.active = true
-	for _, player in pairs(get_connected_players()) do
+	for _, player in pairs(minetest.get_connected_players()) do
 		player:set_clouds({color="#ADADADE8"})
 	end
 	mcl_weather.skycolor.active = true
@@ -101,6 +67,35 @@ function mcl_weather.snow.add_player(player)
 		mcl_weather.add_spawner_player(player,"snow"..i,psdef)
 	end
 end
+
+local timer = 0
+minetest.register_globalstep(function(dtime)
+	if mcl_weather.state ~= "snow" then
+		return false
+	end
+
+	timer = timer + dtime;
+	if timer >= 0.5 then
+		timer = 0
+	else
+		return
+	end
+
+	if mcl_weather.snow.init_done == false then
+		mcl_weather.snow.set_sky_box()
+		mcl_weather.snow.init_done = true
+	end
+
+	for _, player in pairs(minetest.get_connected_players()) do
+		if mcl_weather.is_underwater(player) or not mcl_weather.has_snow(player:get_pos()) then
+			mcl_weather.remove_spawners_player(player)
+			mcl_weather.set_sky_box_clear(player)
+		else
+			mcl_weather.snow.add_player(player)
+			mcl_weather.snow.set_sky_box()
+		end
+	end
+end)
 
 -- register snow weather
 if mcl_weather.reg_weathers.snow == nil then

@@ -1,5 +1,11 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 
+local function on_bone_meal(itemstack,placer,pointed_thing,pos,node)
+	if math.random(1, 100) <= 75 then
+		return mcl_farming.on_bone_meal(itemstack,placer,pointed_thing,pos,node,"plant_beetroot",1)
+	end
+end
+
 minetest.register_craftitem("mcl_farming:beetroot_seeds", {
 	description = S("Beetroot Seeds"),
 	_tt_help = S("Grows on farmland"),
@@ -30,12 +36,13 @@ minetest.register_node("mcl_farming:beetroot_0", {
 	selection_box = {
 		type = "fixed",
 		fixed = {
-			{-0.5, -0.5, -0.5, 0.5, -5/16, 0.5}
+			{-5/16, -0.5 ,-5/16, 5/16, -0.5+(2/16) ,5/16}
 		},
 	},
 	groups = {dig_immediate=3, not_in_creative_inventory=1,plant=1,attached_node=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1},
 	sounds = mcl_sounds.node_sound_leaves_defaults(),
 	_mcl_blast_resistance = 0,
+	_on_bone_meal = on_bone_meal,
 })
 
 minetest.register_node("mcl_farming:beetroot_1", {
@@ -54,12 +61,13 @@ minetest.register_node("mcl_farming:beetroot_1", {
 	selection_box = {
 		type = "fixed",
 		fixed = {
-			{-0.5, -0.5, -0.5, 0.5, -4/16, 0.5}
+			{-6/16, -0.5 ,-6/16, 6/16, -0.5+(5/16) ,6/16}
 		},
 	},
 	groups = {dig_immediate=3, not_in_creative_inventory=1,plant=1,attached_node=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1},
 	sounds = mcl_sounds.node_sound_leaves_defaults(),
 	_mcl_blast_resistance = 0,
+	_on_bone_meal = on_bone_meal,
 })
 
 minetest.register_node("mcl_farming:beetroot_2", {
@@ -78,12 +86,13 @@ minetest.register_node("mcl_farming:beetroot_2", {
 	selection_box = {
 		type = "fixed",
 		fixed = {
-			{-0.5, -0.5, -0.5, 0.5, -3/16, 0.5}
+			{-7/16, -0.5 ,-7/16, 7/16, -0.5+(6/16) ,7/16}
 		},
 	},
 	groups = {dig_immediate=3, not_in_creative_inventory=1,plant=1,attached_node=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1},
 	sounds = mcl_sounds.node_sound_leaves_defaults(),
 	_mcl_blast_resistance = 0,
+	_on_bone_meal = on_bone_meal,
 })
 
 minetest.register_node("mcl_farming:beetroot", {
@@ -129,12 +138,13 @@ minetest.register_node("mcl_farming:beetroot", {
 	selection_box = {
 		type = "fixed",
 		fixed = {
-			{-0.5, -0.5, -0.5, 0.5, -1/16, 0.5}
+			{-8/16, -0.5 ,-8/16, 8/16, -0.5+(8/16) ,8/16}
 		},
 	},
 	groups = {dig_immediate=3, not_in_creative_inventory=1,plant=1,attached_node=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1,beetroot=4},
 	sounds = mcl_sounds.node_sound_leaves_defaults(),
 	_mcl_blast_resistance = 0,
+	_on_bone_meal = on_bone_meal,
 })
 
 minetest.register_craftitem("mcl_farming:beetroot_item", {

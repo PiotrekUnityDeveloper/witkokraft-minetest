@@ -1,7 +1,5 @@
 local modname = minetest.get_current_modname()
-local S = minetest.get_translator(modname)
 local modpath = minetest.get_modpath(modname)
-local peaceful = minetest.settings:get_bool("only_peaceful_mobs", false)
 
 local BLAZE_SPAWNER_MAX_LIGHT = 11
 
@@ -165,6 +163,8 @@ mcl_structures.register_structure("nether_bulwark",{
 				end },
 				{ itemstring = "mcl_core:goldblock", weight = 1, },
 				{ itemstring = "mcl_tools:sword_gold", weight = 1, },
+				{ itemstring = "mcl_jukebox:record_8", weight = 5 },
+				{ itemstring = "mcl_banners:pattern_piglin", weight = 9 },
 				{ itemstring = "mcl_tools:axe_gold", weight = 1, func = function(stack, pr)mcl_enchanting.enchant_uniform_randomly(stack, {"soul_speed"}, pr) end },
 				{ itemstring = "mcl_armor:helmet_gold", weight = 1, func = function(stack, pr)mcl_enchanting.enchant_uniform_randomly(stack, {"soul_speed"}, pr) end },
 				{ itemstring = "mcl_armor:chestplate_gold", weight = 1, func = function(stack, pr)mcl_enchanting.enchant_uniform_randomly(stack, {"soul_speed"}, pr) end },
@@ -189,6 +189,7 @@ mcl_structures.register_structure("nether_bulwark",{
 			items = {
 				{ itemstring = "mcl_compass:lodestone" },
 				{ itemstring = "mcl_armor:rib" },
+				{ itemstring = "mcl_armor:snout" },
 			}
 		}}
 	},

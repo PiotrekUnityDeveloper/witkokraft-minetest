@@ -2,7 +2,7 @@ local S = minetest.get_translator(minetest.get_current_modname())
 
 -- Template rail function
 local function register_rail(itemstring, tiles, def_extras, creative)
-	local groups = {handy=1,pickaxey=1, attached_node=1,rail=1,connect_to_raillike=minetest.raillike_group("rail"),dig_by_water=0,destroy_by_lava_flow=0, transport=1}
+	local groups = {handy=1,pickaxey=1, attached_node=1,rail=1,connect_to_raillike=minetest.raillike_group("rail"),transport=1}
 	if creative == false then
 		groups.not_in_creative_inventory = 1
 	end
@@ -18,7 +18,6 @@ local function register_rail(itemstring, tiles, def_extras, creative)
 			type = "fixed",
 			fixed = {-1/2, -1/2, -1/2, 1/2, -1/2+1/16, 1/2},
 		},
-		stack_max = 64,
 		groups = groups,
 		sounds = mcl_sounds.node_sound_metal_defaults(),
 		_mcl_blast_resistance = 0.7,
@@ -111,6 +110,22 @@ register_rail("mcl_minecarts:golden_rail_on",
 				offstate = "mcl_minecarts:golden_rail",
 				onstate = "mcl_minecarts:golden_rail_on",
 				rules = rail_rules_long,
+			},
+			effector = {
+				action_on = function(pos, node)
+					local dir = mcl_minecarts:get_start_direction(pos)
+					if not dir then return end
+					local objs = minetest.get_objects_inside_radius(pos, 1)
+					for _, o in pairs(objs) do
+						local l = o:get_luaentity()
+						local v = o:get_velocity()
+						if l and string.sub(l.name, 1, 14) == "mcl_minecarts:"
+						and v and vector.equals(v, vector.zero())
+						then
+							mcl_minecarts:set_velocity(l, dir)
+						end
+					end
+end,
 			},
 		},
 		drop = "mcl_minecarts:golden_rail",

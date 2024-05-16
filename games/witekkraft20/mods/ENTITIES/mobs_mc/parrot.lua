@@ -99,7 +99,6 @@ local function check_perch(self,dtime)
 				if l and l.name == "mobs_mc:parrot" then
 					local n1 = minetest.get_node(vector.offset(p:get_pos(),0,-0.6,0)).name
 					local n2 = minetest.get_node(vector.offset(p:get_pos(),0,0,0)).name
-					local n3 = minetest.get_node(vector.offset(p:get_pos(),0,1,0)).name
 					if ( n1 == "air" or minetest.get_item_group(n2,"water") > 0 or minetest.get_item_group(n2,"lava") > 0) and
 					not minetest.is_creative_enabled(p:get_player_name()) then
 						o:set_detach()
@@ -160,7 +159,7 @@ mcl_mobs.register_mob("mobs_mc:parrot", {
 		max = 2,
 		looting = "common",},
 	},
-   	animation = {
+	animation = {
 		stand_speed = 50,
 		walk_speed = 50,
 		fly_speed = 50,
@@ -221,24 +220,22 @@ mcl_mobs.register_mob("mobs_mc:parrot", {
 	end,
 })
 
--- Parrots spawn rarely in jungles. TODO: Also check for jungle *biome* <- I'll get to this eventually -j4i
-mcl_mobs:spawn_specific(
-"mobs_mc:parrot",
-"overworld",
-"ground",
-{
-"Jungle",
-"JungleEdgeM",
-"JungleM",
-"JungleEdge",
-},
-0,
-minetest.LIGHT_MAX+1,
-7,
-30000,
-1,
-mobs_mc.water_level+7,
-mcl_vars.mg_overworld_max)
+mcl_mobs.spawn_setup({
+	name = "mobs_mc:parrot",
+	type_of_spawning = "ground",
+	dimension = "overworld",
+	aoc = 3,
+	min_height = mobs_mc.water_level+7,
+	max_height = mcl_vars.mg_overworld_max,
+	biomes = {
+		"Jungle",
+		"JungleEdgeM",
+		"JungleM",
+		"JungleEdge",
+		"BambooJungle",
+	},
+	chance = 400,
+})
 
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:parrot", S("Parrot"), "#0da70a", "#ff0000", 0)

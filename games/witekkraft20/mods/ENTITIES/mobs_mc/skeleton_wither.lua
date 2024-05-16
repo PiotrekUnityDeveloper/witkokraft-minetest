@@ -42,8 +42,9 @@ mcl_mobs.register_mob("mobs_mc:witherskeleton", {
 		damage = "mobs_mc_skeleton_hurt",
 		distance = 16,
 	},
-	walk_velocity = 1.2,
-	run_velocity = 2.0,
+	walk_velocity = 1,
+	run_velocity = 1.3,
+	runaway_from = {"mobs_mc:wolf"},
 	damage = 7,
 	reach = 2,
 	drops = {
@@ -103,24 +104,5 @@ mcl_mobs.register_mob("mobs_mc:witherskeleton", {
 	},
 })
 
---spawn
---[[]
-mcl_mobs:spawn_specific(
-"mobs_mc:witherskeleton",
-"nether",
-"ground",
-{
-"Nether",
-"SoulsandValley",
-},
-0,
-7,
-30,
-5000,
-5,
-mcl_vars.mg_nether_min,
-mcl_vars.mg_nether_max)
---]]
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:witherskeleton", S("Wither Skeleton"), "#141414", "#474d4d", 0)
-mcl_mobs:non_spawn_specific("mobs_mc:witherskeleton","overworld",0,7)

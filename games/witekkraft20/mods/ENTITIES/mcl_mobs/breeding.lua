@@ -1,9 +1,8 @@
-local math, vector, minetest, mcl_mobs = math, vector, minetest, mcl_mobs
 local mob_class = mcl_mobs.mob_class
 
-local HORNY_TIME = 30
-local HORNY_AGAIN_TIME = 30 -- was 300 or 15*20
-local CHILD_GROW_TIME = 60
+local HORNY_TIME = 30*20
+local HORNY_AGAIN_TIME = 30*20 -- was 300 or 15*20
+local CHILD_GROW_TIME = 60*20
 
 local LOGGING_ON = minetest.settings:get_bool("mcl_logging_mobs_villager",false)
 
@@ -16,29 +15,45 @@ end
 
 -- No-op in MCL2 (capturing mobs is not possible).
 -- Provided for compability with Mobs Redo
-function mcl_mobs:capture_mob(self, clicker, chance_hand, chance_net, chance_lasso, force_take, replacewith)
+function mcl_mobs.capture_mob(self, clicker, chance_hand, chance_net, chance_lasso, force_take, replacewith)
 	return false
 end
 
 
 -- No-op in MCL2 (protecting mobs is not possible).
-function mcl_mobs:protect(self, clicker)
+function mcl_mobs.protect(self, clicker)
 	return false
 end
 
+function mob_class:use_shears(new_textures, shears_stack)
+	if minetest.get_item_group(shears_stack:get_name(), "shears") > 0 then
+		self.object:set_properties({ textures = new_textures })
+		self.gotten = true
+		minetest.sound_play("mcl_tools_shears_cut", { pos = self.object:get_pos() }, true)
+		local shears_def = shears_stack:get_definition()
+		shears_stack:add_wear(65535 / shears_def._mcl_diggroups.shearsy.uses)
+	end
+	return shears_stack
+end
 
--- feeding, taming and breeding (thanks blert2112)
+function mob_class:_on_dispense(dropitem, pos, droppos, dropnode, dropdir)
+	local item = dropitem.get_name and dropitem:get_name() or dropitem
+	if self.follow and ((type(self.follow) == "table" and table.indexof(self.follow, item) ~= -1) or item == self.follow) then
+		if self:feed_tame(nil, 1, true, false) then
+			dropitem:take_item()
+			return dropitem
+		end
+	end
+end
+
 function mob_class:feed_tame(clicker, feed_count, breed, tame, notake)
 	if not self.follow then
 		return false
 	end
-	-- can eat/tame with item in hand
-	if self.nofollow or self:follow_holding(clicker) then
+	if clicker == nil or self.nofollow or self:follow_holding(clicker) then
 		local consume_food = false
 
-		-- tame if not still a baby
-
-		if tame and not self.child then
+		if clicker and tame and not self.child then
 			if not self.owner or self.owner == "" then
 				self.tamed = true
 				self.owner = clicker:get_player_name()
@@ -46,11 +61,9 @@ function mob_class:feed_tame(clicker, feed_count, breed, tame, notake)
 			end
 		end
 
-		-- increase health
-
-		if self.health < self.hp_max and not consume_food then
+		if self.health < self.object:get_properties().hp_max and not consume_food then
 			consume_food = true
-			self.health = math.min(self.health + 4, self.hp_max)
+			self.health = math.min(self.health + 4, self.object:get_properties().hp_max)
 
 			if self.htimer < 1 then
 				self.htimer = 5
@@ -58,15 +71,10 @@ function mob_class:feed_tame(clicker, feed_count, breed, tame, notake)
 			self.object:set_hp(self.health)
 		end
 
-		-- make children grow quicker
-
 		if not consume_food and self.child == true then
 			consume_food = true
-			-- deduct 10% of the time to adulthood
 			self.hornytimer = self.hornytimer + ((CHILD_GROW_TIME - self.hornytimer) * 0.1)
 		end
-
-		--  breed animals
 
 		if breed and not consume_food and self.hornytimer == 0 and not self.horny then
 			self.food = (self.food or 0) + 1
@@ -79,27 +87,22 @@ function mob_class:feed_tame(clicker, feed_count, breed, tame, notake)
 		end
 
 		self:update_tag()
-		-- play a sound if the animal used the item and take the item if not in creative
-		if consume_food then
-			-- don't consume food if clicker is in creative
+		if clicker and consume_food then
 			if not minetest.is_creative_enabled(clicker:get_player_name()) and not notake then
 				local item = clicker:get_wielded_item()
 				item:take_item()
 				clicker:set_wielded_item(item)
 			end
-			-- always play the eat sound if food is used, even in creative
 			self:mob_sound("eat", nil, true)
 
 		else
-			-- make sound when the mob doesn't want food
 			self:mob_sound("random", true)
 		end
-		return true
+		if consume_food then return true end
 	end
 	return false
 end
 
--- Spawn a child
 function mcl_mobs.spawn_child(pos, mob_type)
 	local child = minetest.add_entity(pos, mob_type)
 	if not child then
@@ -112,13 +115,11 @@ function mcl_mobs.spawn_child(pos, mob_type)
 	ent.child = true
 
 	local textures
-	-- using specific child texture (if found)
 	if ent.child_texture then
 		textures = ent.child_texture[1]
 	end
 
-	-- and resize to half height
-	child:set_properties({
+	ent:set_properties({
 		textures = textures,
 		visual_size = {
 			x = ent.base_size.x * .5,
@@ -149,13 +150,8 @@ function mcl_mobs.spawn_child(pos, mob_type)
 	return child
 end
 
--- find two animals of same type and breed if nearby and horny
 function mob_class:check_breeding()
-
-	--mcl_log("In breed function")
-	-- child takes a long time before growing into adult
 	if self.child == true then
-
 		-- When a child, hornytimer is used to count age until adulthood
 		self.hornytimer = self.hornytimer + 1
 
@@ -164,15 +160,13 @@ function mob_class:check_breeding()
 			self.child = false
 			self.hornytimer = 0
 
-			self.object:set_properties({
+			self:set_properties({
 				textures = self.base_texture,
 				mesh = self.base_mesh,
 				visual_size = self.base_size,
 				collisionbox = self.base_colbox,
 				selectionbox = self.base_selbox,
 			})
-
-			-- custom function when child grows up
 			if self.on_grown then
 				self.on_grown(self)
 			else
@@ -186,14 +180,12 @@ function mob_class:check_breeding()
 
 			self.animation = nil
 			local anim = self._current_animation
-			self._current_animation = nil -- Mobs Redo does nothing otherwise
+			self._current_animation = nil
 			self:set_animation(anim)
 		end
 
 		return
 	else
-		-- horny animal can mate for HORNY_TIME seconds,
-		-- afterwards horny animal cannot mate again for HORNY_AGAIN_TIME seconds
 		if self.horny == true then
 			self.hornytimer = self.hornytimer + 1
 
@@ -203,8 +195,6 @@ function mob_class:check_breeding()
 			end
 		end
 	end
-
-	-- find another same animal who is also horny and mate if nearby
 	if self.horny == true
 	and self.hornytimer <= HORNY_TIME then
 
@@ -216,7 +206,7 @@ function mob_class:check_breeding()
 
 		local objs = minetest.get_objects_inside_radius(pos, 3)
 		local num = 0
-		local ent = nil
+		local ent
 
 		for n = 1, #objs do
 
@@ -259,9 +249,6 @@ function mob_class:check_breeding()
 				self.hornytimer = HORNY_TIME + 1
 				ent.hornytimer = HORNY_TIME + 1
 
-				-- spawn baby
-
-
 				minetest.after(5, function(parent1, parent2, pos)
 					if not parent1.object:get_luaentity() then
 						return
@@ -272,9 +259,7 @@ function mob_class:check_breeding()
 
 					mcl_experience.throw_xp(pos, math.random(1, 7))
 
-					-- custom breed function
 					if parent1.on_breed then
-						-- when false, skip going any further
 						if parent1.on_breed(parent1, parent2) == false then
 							return
 						end
@@ -284,7 +269,6 @@ function mob_class:check_breeding()
 
 					local ent_c = child:get_luaentity()
 
-
 					-- Use texture of one of the parents
 					local p = math.random(1, 2)
 					if p == 1 then
@@ -292,17 +276,13 @@ function mob_class:check_breeding()
 					else
 						ent_c.base_texture = parent2.base_texture
 					end
-					child:set_properties({
+					ent_c:set_properties({
 						textures = ent_c.base_texture
 					})
 
-					-- tamed and owned by parents' owner
 					ent_c.tamed = true
 					ent_c.owner = parent1.owner
 				end, self, ent, pos)
-
-				num = 0
-
 				break
 			end
 		end
@@ -318,15 +298,14 @@ function mob_class:toggle_sit(clicker,p)
 	if not self.order or self.order == "" or self.order == "sit" then
 		particle = "mobs_mc_wolf_icon_roam.png"
 		self.order = "roam"
-		self.state = "stand"
-		self.walk_chance = default_walk_chance
+		self:set_state("stand")
+		self.walk_chance = 50
 		self.jump = true
 		self:set_animation("stand")
-		-- TODO: Add sitting model
 	else
 		particle = "mobs_mc_wolf_icon_sit.png"
 		self.order = "sit"
-		self.state = "stand"
+		self:set_state("stand")
 		self.walk_chance = 0
 		self.jump = false
 		if self.animation.sit_start then

@@ -18,47 +18,15 @@ minetest.register_craftitem("mcl_books:book", {
 	description = S("Book"),
 	_doc_items_longdesc = S("Books are used to make bookshelves and book and quills."),
 	inventory_image = "default_book.png",
-	stack_max = 64,
 	groups = { book = 1, craftitem = 1, enchantability = 1 },
 	_mcl_enchanting_enchanted_tool = "mcl_enchanting:book_enchanted",
 })
 
-if minetest.get_modpath("mcl_core") and minetest.get_modpath("mcl_mobitems") then
-	minetest.register_craft({
-		type = "shapeless",
-		output = "mcl_books:book",
-		recipe = { "mcl_core:paper", "mcl_core:paper", "mcl_core:paper", "mcl_mobitems:leather", }
-	})
-end
-
--- Get the included text out of the book item
--- itemstack: Book item
--- meta: Meta of book (optional)
-local function get_text(itemstack)
-	-- Grab the text
-	local meta = itemstack:get_meta()
-	local text = meta:get_string("text")
-
-	-- Backwards-compability with MCL2 0.21.0
-	-- Remember that get_metadata is deprecated since MT 0.4.16!
-	if text == nil or text == "" then
-		local meta_legacy = itemstack:get_metadata()
-		if itemstack:get_name() == "mcl_books:written_book" then
-			local des = minetest.deserialize(meta_legacy)
-			if des then
-				text = des.text
-			end
-		else
-			text = meta_legacy
-		end
-	end
-
-	-- Security check
-	if not text then
-		text = ""
-	end
-	return text
-end
+minetest.register_craft({
+	type = "shapeless",
+	output = "mcl_books:book",
+	recipe = { "mcl_core:paper", "mcl_core:paper", "mcl_core:paper", "mcl_mobitems:leather", }
+})
 
 local function make_description(title, author, generation)
 	local desc
@@ -80,18 +48,10 @@ local function cap_text_length(text, max_length)
 end
 
 local function write(itemstack, user, pointed_thing)
-	-- Call on_rightclick if the pointed node defines it
-	if pointed_thing.type == "node" then
-		local node = minetest.get_node(pointed_thing.under)
-		if user and not user:get_player_control().sneak then
-			if minetest.registered_nodes[node.name] and minetest.registered_nodes[node.name].on_rightclick then
-				return minetest.registered_nodes[node.name].on_rightclick(pointed_thing.under, node, user, itemstack) or
-					itemstack
-			end
-		end
-	end
+	local rc = mcl_util.call_on_rightclick(itemstack, user, pointed_thing)
+	if rc then return rc end
 
-	local text = get_text(itemstack)
+	local text = itemstack:get_meta():get_string("text")
 	local formspec = "size[8,9]" ..
 		header ..
 		"background[-0.5,-0.5;9,10;mcl_books_book_bg.png]" ..
@@ -102,18 +62,10 @@ local function write(itemstack, user, pointed_thing)
 end
 
 local function read(itemstack, user, pointed_thing)
-	-- Call on_rightclick if the pointed node defines it
-	if pointed_thing.type == "node" then
-		local node = minetest.get_node(pointed_thing.under)
-		if user and not user:get_player_control().sneak then
-			if minetest.registered_nodes[node.name] and minetest.registered_nodes[node.name].on_rightclick then
-				return minetest.registered_nodes[node.name].on_rightclick(pointed_thing.under, node, user, itemstack) or
-					itemstack
-			end
-		end
-	end
+	local rc = mcl_util.call_on_rightclick(itemstack, user, pointed_thing)
+	if rc then return rc end
 
-	local text = get_text(itemstack)
+	local text = itemstack:get_meta():get_string("text")
 	local formspec = "size[8,9]" ..
 		header ..
 		"background[-0.5,-0.5;9,10;mcl_books_book_bg.png]" ..
@@ -177,9 +129,10 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			end
 			title = cap_text_length(title, max_title_length)
 			local meta = newbook:get_meta()
-			local text = cap_text_length(get_text(book), max_text_length)
+			local text = cap_text_length(book:get_meta():get_string("text"), max_text_length)
 			meta:set_string("title", title)
 			meta:set_string("author", name)
+			meta:set_int("date", os.time())
 			meta:set_string("text", text)
 			meta:set_string("description", make_description(title, name, 0))
 
@@ -198,13 +151,11 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	end
 end)
 
-if minetest.get_modpath("mcl_dye") and minetest.get_modpath("mcl_mobitems") then
-	minetest.register_craft({
-		type = "shapeless",
-		output = "mcl_books:writable_book",
-		recipe = { "mcl_books:book", "mcl_dye:black", "mcl_mobitems:feather" },
-	})
-end
+minetest.register_craft({
+	type = "shapeless",
+	output = "mcl_books:writable_book",
+	recipe = { "mcl_books:book", "mcl_mobitems:ink_sac", "mcl_mobitems:feather" },
+})
 
 -- Written Book
 minetest.register_craftitem("mcl_books:written_book", {
@@ -224,70 +175,20 @@ minetest.register_craftitem("mcl_books:written_book", {
 	on_secondary_use = read
 })
 
--- Copy books
+--This adds 8 recipes containing 1 written book and 1-8 writeable book
+for i = 1, 8 do
+	local rc = {}
+	table.insert(rc, "mcl_books:written_book")
+	for j = 1, i do	table.insert(rc, "mcl_books:writable_book") end
 
--- This adds 8 recipes
-local baq = "mcl_books:writable_book"
-local wb = "mcl_books:written_book"
-local recipes = {
-	{ wb,  baq },
-	{ baq, baq, wb },
-	{ baq, baq, wb,  baq },
-	{ baq, baq, baq, baq, wb },
-	{ baq, baq, baq, baq, wb, baq },
-	{ baq, baq, baq, baq, wb, baq, baq },
-	{ baq, baq, baq, baq, wb, baq, baq, baq },
-	{ baq, baq, baq, baq, wb, baq, baq, baq, baq },
-}
-for r = #recipes, 1, -1 do
 	minetest.register_craft({
 		type = "shapeless",
-		output = "mcl_books:written_book " .. r,
-		recipe = recipes[r],
+		output = "mcl_books:written_book " .. i,
+		recipe = rc,
 	})
 end
 
-minetest.register_craft_predict(function(itemstack, player, old_craft_grid, craft_inv)
-	if itemstack:get_name() ~= "mcl_books:written_book" then
-		return
-	end
-
-	local original
-	for i = 1, player:get_inventory():get_size("craft") do
-		if old_craft_grid[i]:get_name() == "mcl_books:written_book" then
-			original = old_craft_grid[i]
-		end
-	end
-	if not original then
-		return
-	end
-
-	local ometa = original:get_meta()
-	local generation = ometa:get_int("generation")
-
-	-- Check generation, don't allow crafting with copy of copy of book
-	if generation >= 2 then
-		return ItemStack("")
-	else
-		-- Valid copy. Let's update the description field of the result item
-		-- so it is properly displayed in the crafting grid.
-		local imeta = itemstack:get_meta()
-		local title = cap_text_length(ometa:get_string("title"), max_title_length)
-		local author = ometa:get_string("author")
-
-		-- Increase book generation and update description
-		generation = generation + 1
-		if generation < 1 then
-			generation = 1
-		end
-
-		local desc = make_description(title, author, generation)
-		imeta:set_string("description", desc)
-		return itemstack
-	end
-end)
-
-minetest.register_on_craft(function(itemstack, player, old_craft_grid, craft_inv)
+local function craft_copy_book(itemstack, player, old_craft_grid, craft_inv)
 	if itemstack:get_name() ~= "mcl_books:written_book" then
 		return
 	end
@@ -304,47 +205,36 @@ minetest.register_on_craft(function(itemstack, player, old_craft_grid, craft_inv
 		return
 	end
 
-	-- copy of the book
-	local text = get_text(original)
-	if not text or text == "" then
-		local copymeta = original:get_metadata()
-		itemstack:set_metadata(copymeta)
-	else
-		local ometa = original:get_meta()
-		local generation = ometa:get_int("generation")
+	local ometa = original:get_meta()
+	local generation = ometa:get_int("generation")
 
-		-- No copy of copy of copy of book allowed
-		if generation >= 2 then
-			return ItemStack("")
-		end
-
-		-- Copy metadata
-		local imeta = itemstack:get_meta()
-		local title = cap_text_length(ometa:get_string("title"), max_title_length)
-		local author = ometa:get_string("author")
-		imeta:set_string("title", title)
-		imeta:set_string("author", author)
-		imeta:set_string("text", cap_text_length(text, max_text_length))
-
-		-- Increase book generation and update description
-		generation = generation + 1
-		if generation < 1 then
-			generation = 1
-		end
-
-		local desc = make_description(title, author, generation)
-
-		imeta:set_string("description", desc)
-		imeta:set_int("generation", generation)
+	-- No copy of copy of copy of book allowed
+	if generation >= 2 then
+		return ItemStack("")
 	end
-	-- put the book with metadata back in the craft grid
-	craft_inv:set_stack("craft", index, original)
-end)
 
-local wood_sound
-if minetest.get_modpath("mcl_sounds") then
-	wood_sound = mcl_sounds.node_sound_wood_defaults()
+	-- Copy metadata
+	local imeta = itemstack:get_meta()
+	imeta:from_table(ometa:to_table())
+	imeta:set_string("title", cap_text_length(ometa:get_string("title"), max_title_length))
+	imeta:set_string("text", cap_text_length(ometa:get_string("text"), max_text_length))
+
+	-- Increase book generation and update description
+	generation = generation + 1
+	if generation < 1 then
+		generation = 1
+	end
+
+	imeta:set_string("description", make_description(ometa:get_string("title"), ometa:get_string("author"), generation))
+	imeta:set_int("generation", generation)
+	return itemstack, original, index
 end
+minetest.register_craft_predict(craft_copy_book)
+
+minetest.register_on_craft(function(itemstack, player, old_craft_grid, craft_inv)
+	local _, original, index = craft_copy_book(itemstack, player, old_craft_grid, craft_inv)
+	if original and index then craft_inv:set_stack("craft", index, original) end
+end)
 
 -- Bookshelf GUI
 local drop_content = mcl_util.drop_items_from_meta_container("main")
@@ -378,9 +268,6 @@ local function protection_check_put_take(pos, listname, index, stack, player)
 	end
 end
 
----@param pos Vector
----@param node node
----@param clicker ObjectRef
 local function bookshelf_gui(pos, node, clicker)
 	if not bookshelf_inv then return end
 	local name = minetest.get_meta(pos):get_string("name")
@@ -428,7 +315,6 @@ minetest.register_node("mcl_books:bookshelf", {
 	description = S("Bookshelf"),
 	_doc_items_longdesc = S("Bookshelves are used for decoration."),
 	tiles = { "mcl_books_bookshelf_top.png", "mcl_books_bookshelf_top.png", "default_bookshelf.png" },
-	stack_max = 64,
 	is_ground_content = false,
 	groups = {
 		handy = 1,
@@ -438,10 +324,10 @@ minetest.register_node("mcl_books:bookshelf", {
 		flammable = 3,
 		fire_encouragement = 30,
 		fire_flammability = 20,
-		container = 2
+		container = 1
 	},
 	drop = "mcl_books:book 3",
-	sounds = wood_sound,
+	sounds = mcl_sounds.node_sound_wood_defaults(),
 	_mcl_blast_resistance = 1.5,
 	_mcl_hardness = 1.5,
 	_mcl_silk_touch_drop = true,
@@ -472,12 +358,6 @@ minetest.register_node("mcl_books:bookshelf", {
 	on_blast = on_blast,
 	on_rightclick = bookshelf_gui,
 	on_destruct = close_forms,
-	_mcl_hoppers_on_try_push = function(pos, hop_pos, hop_inv, hop_list)
-		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-		return inv, "main", mcl_util.select_stack(hop_inv, hop_list, inv, "main",
-				function(stack) return minetest.get_item_group(stack:get_name(), "book") == 1 or stack:get_name() == "mcl_enchanting:book_enchanted" end)
-	end,
 })
 
 minetest.register_craft({

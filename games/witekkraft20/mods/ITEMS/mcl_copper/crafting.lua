@@ -52,17 +52,11 @@ local waxable_blocks = { "block", "block_cut", "block_exposed", "block_exposed_c
 
 for _, w in ipairs(waxable_blocks) do
 	minetest.register_craft({
-		output = "mcl_copper:waxed_"..w,
+		output = "mcl_copper:"..w.."_preserved",
 		recipe = {
 			{ "mcl_copper:"..w, "mcl_honey:honeycomb" },
 		},
 	})
-end
-
-local cuttable_blocks = { "block", "waxed_block", "block_exposed", "waxed_block_exposed", "block_weathered", "waxed_block_weathered", "block_oxidized", "waxed_block_oxidized" }
-
-for _, c in ipairs(cuttable_blocks) do
-	mcl_stonecutter.register_recipe("mcl_copper:"..c, "mcl_copper:"..c.."_cut", 4)
 end
 
 minetest.register_craft({

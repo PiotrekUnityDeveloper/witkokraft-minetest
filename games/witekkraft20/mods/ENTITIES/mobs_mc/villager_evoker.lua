@@ -42,6 +42,7 @@ mcl_mobs.register_mob("mobs_mc:evoker", {
 	run_velocity = 1.4,
 	group_attack = true,
 	attack_type = "dogfight",
+	custom_attack_interval = 15,
 	-- Summon vexes
 	custom_attack = function(self, to_attack)
 		if not spawned_vexes[self] then spawned_vexes[self] = {} end
@@ -55,16 +56,17 @@ mcl_mobs.register_mob("mobs_mc:evoker", {
 		for i=1, r do
 			local spawnpos = vector.add(basepos, minetest.yaw_to_dir(pr:next(0,360)))
 			local vex = minetest.add_entity(spawnpos, "mobs_mc:vex")
-			local ent = vex:get_luaentity()
+			if vex and vex:get_pos() then
+				local ent = vex:get_luaentity()
 
-			-- Mark vexes as summoned and start their life clock (they take damage it reaches 0)
-			ent._summoned = true
-			ent._lifetimer = pr:next(33, 108)
+				-- Mark vexes as summoned and start their life clock (they take damage it reaches 0)
+				ent._summoned = true
+				ent._lifetimer = pr:next(33, 108)
 
-			table.insert(spawned_vexes[self],ent)
+				table.insert(spawned_vexes[self],ent)
+			end
 		end
 	end,
-	shoot_interval = 15,
 	passive = false,
 	drops = {
 		{name = "mcl_core:emerald",
@@ -86,8 +88,12 @@ mcl_mobs.register_mob("mobs_mc:evoker", {
 	},
 	view_range = 16,
 	fear_height = 4,
+
+	on_spawn = function(self)
+		self.timer = 15
+		return true
+	end,
 })
 
 -- spawn eggs
 mcl_mobs.register_egg("mobs_mc:evoker", S("Evoker"), "#959b9b", "#1e1c1a", 0)
-mcl_mobs:non_spawn_specific("mobs_mc:evoker","overworld",0,7)

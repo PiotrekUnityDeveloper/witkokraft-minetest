@@ -1,15 +1,5 @@
 # textdomain: mcl_mangrove
-Mangrove Wood=マングローブの木
-The trunk of a Mangrove tree.=マングローブの樹幹部分です。
-Mangrove Bark=マングローブの樹皮
-The bark of a Mangrove tree.=マングローブの木の樹皮です。
-Mangrove Wood Planks=マングローブの板材
-Mangrove Leaves=マングローブの葉
-Mangrove leaves are grown from mangrove trees.=マングローブの葉は、マングローブの木から育ちます。
-Stripped Mangrove Log=樹皮を剥いだマングローブの木
-The stripped wood of a Mangrove tree=剥き身となったマングローブの木
-Stripped Mangrove Wood=剥がされたマングローブの樹皮
-The stripped bark of a Mangrove tree=マングローブの木から剥がされた樹皮
+Mangrove=
 Mangrove Roots=マングローブの根
 Mangrove roots are decorative blocks that form as part of mangrove trees.=マングローブの根は、マングローブの木の一部として形成される装飾ブロックです。
 Mangrove Propagule=マングローブの芽
@@ -23,6 +13,21 @@ These cannot be crafted yet only occure when get in contact of water.=これは�
 Muddy Mangrove Roots=泥に塗れたマングローブの根
 crafted with Mud and Mangrove roots=泥とマングローブの根で作られたもの
 Muddy Mangrove Roots is a block from mangrove swamp.It drowns player a bit inside it.=泥に塗れたマングローブの根は、マングローブの沼地から1ブロックの場所にあります。
+
+
+##### not used anymore #####
+
+Mangrove Wood=マングローブの木
+The trunk of a Mangrove tree.=マングローブの樹幹部分です。
+Mangrove Bark=マングローブの樹皮
+The bark of a Mangrove tree.=マングローブの木の樹皮です。
+Mangrove Wood Planks=マングローブの板材
+Mangrove Leaves=マングローブの葉
+Stripped Mangrove Wood=剥がされたマングローブの樹皮
+Mangrove leaves are grown from mangrove trees.=マングローブの葉は、マングローブの木から育ちます。
+Stripped Mangrove Log=樹皮を剥いだマングローブの木
+The stripped wood of a Mangrove tree=剥き身となったマングローブの木
+The stripped bark of a Mangrove tree=マングローブの木から剥がされた樹皮
 Mangrove Door=マングローブのドア
 Wooden doors are 2-block high barriers which can be opened or closed by hand and by a redstone signal.=木製のドアは、高さ2ブロックの障壁で、手やレッドストーンの信号で開閉できます。
 To open or close a wooden door, rightclick it or supply its lower half with a redstone signal.=木製のドアを開閉するには、右クリックするか、下半分にレッドストーン信号を供給してください。

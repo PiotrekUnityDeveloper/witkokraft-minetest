@@ -10,8 +10,6 @@ minetest.register_node("mcl_core:cactus", {
 	drawtype = "nodebox",
 	use_texture_alpha = minetest.features.use_texture_alpha_string_modes and "clip" or true,
 	tiles = {"mcl_core_cactus_top.png", "mcl_core_cactus_bottom.png", "mcl_core_cactus_side.png"},
-	is_ground_content = true,
-	stack_max = 64,
 	groups = {
 		handy = 1, attached_node = 1, deco_block = 1, dig_by_piston = 1,
 		plant = 1, enderman_takable = 1, compostability = 50
@@ -50,6 +48,31 @@ minetest.register_node("mcl_core:cactus", {
 	_mcl_hardness = 0.4,
 })
 
+mcl_flowerpots.register_potted_cube("mcl_core:cactus", {
+	name = "cactus",
+	desc = S("Cactus"),
+	image = "mcl_flowerpots_cactus.png",
+})
+
+mcl_player.register_globalstep_slow(function(player, dtime)
+	-- Am I near a cactus?
+	local pos = player:get_pos()
+	local near = minetest.find_node_near(pos, 1, "mcl_core:cactus")
+	if not near then
+		near = minetest.find_node_near({x=pos.x, y=pos.y-1, z=pos.z}, 1, "mcl_core:cactus")
+	end
+	if near then
+		-- Am I touching the cactus? If so, it hurts
+		local dist = vector.distance(pos, near)
+		local dist_feet = vector.distance({x=pos.x, y=pos.y-1, z=pos.z}, near)
+		if dist < 1.1 or dist_feet < 1.1 then
+			if player:get_hp() > 0 then
+				mcl_util.deal_damage(player, 1, {type = "cactus"})
+			end
+		end
+	end
+end)
+
 minetest.register_node("mcl_core:reeds", {
 	description = S("Sugar Canes"),
 	_tt_help = S("Grows on sand or dirt next to water"),
@@ -64,7 +87,6 @@ minetest.register_node("mcl_core:reeds", {
 	wield_image = "mcl_core_reeds.png",
 	paramtype = "light",
 	walkable = false,
-	is_ground_content = true,
 	node_box = {
 		type = "fixed",
 		fixed = {
@@ -81,10 +103,9 @@ minetest.register_node("mcl_core:reeds", {
 			{-6/16, -8/16, -6/16, 6/16, 8/16, 6/16},
 		},
 	},
-	stack_max = 64,
 	groups = {
 		dig_immediate = 3, craftitem = 1, deco_block = 1, dig_by_piston = 1,
-		plant = 1, non_mycelium_plant = 1, compostability = 50, grass_palette = 1
+		plant = 1, non_mycelium_plant = 1, compostability = 50, biomecolor = 1,
 	},
 	sounds = mcl_sounds.node_sound_leaves_defaults(),
 	node_placement_prediction = "",
@@ -127,7 +148,7 @@ minetest.register_node("mcl_core:reeds", {
 	on_construct = function(pos)
 		local node = minetest.get_node(pos)
 		if node.param2 == 0 then
-			node.param2 = mcl_util.get_palette_indexes_from_pos(pos).grass_palette_index
+			node.param2 = mcl_core.get_grass_palette_index(pos)
 			if node.param2 ~= 0 then
 				minetest.set_node(pos, node)
 			end

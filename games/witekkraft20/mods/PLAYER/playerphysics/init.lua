@@ -43,3 +43,17 @@ function playerphysics.remove_physics_factor(player, attribute, id)
 	local raw_value = calculate_attribute_product(player, attribute)
 	player:set_physics_override({[attribute] = raw_value})
 end
+
+function playerphysics.get_physics_factor(player, attribute, id)
+	local meta = player:get_meta()
+	local a = minetest.deserialize(meta:get_string("playerphysics:physics"))
+	if a == nil then
+		return nil
+	elseif a[attribute] == nil then
+		return nil
+	else
+		return a[attribute][id]
+	end
+end
+
+dofile(minetest.get_modpath(minetest.get_current_modname()).."/elytra.lua")

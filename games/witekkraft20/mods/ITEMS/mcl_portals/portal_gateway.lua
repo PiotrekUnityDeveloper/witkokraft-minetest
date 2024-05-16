@@ -1,8 +1,6 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 local storage = mcl_portals.storage
 
-local vector = vector
-
 local gateway_positions = {
 	{x = 96, y = -26925, z = 0},
 	{x = 91, y = -26925, z = 29},

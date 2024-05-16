@@ -1,15 +1,19 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 
+local function on_bone_meal(itemstack,placer,pointed_thing,pos,node)
+	return mcl_farming.on_bone_meal(itemstack,placer,pointed_thing,pos,node,"plant_carrot")
+end
+
 for i=1, 7 do
 	local texture, sel_height
 	if i < 3 then
-		sel_height = -5/16
+		sel_height = -0.5+(2/16)
 		texture = "farming_carrot_1.png"
 	elseif i < 5 then
-		sel_height = -4/16
+		sel_height = -0.5+(4/16)
 		texture = "farming_carrot_2.png"
 	else
-		sel_height = -3/16
+		sel_height = -0.5+(6/16)
 		texture = "farming_carrot_3.png"
 	end
 
@@ -39,12 +43,13 @@ for i=1, 7 do
 		selection_box = {
 			type = "fixed",
 			fixed = {
-				{-0.5, -0.5, -0.5, 0.5, sel_height, 0.5}
+				{-7/16, -0.5 ,-7/16, 7/16, sel_height ,7/16}
 			},
 		},
 		groups = {dig_immediate=3, not_in_creative_inventory=1,plant=1,attached_node=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1},
 		sounds = mcl_sounds.node_sound_leaves_defaults(),
 		_mcl_blast_resistance = 0,
+		_on_bone_meal = on_bone_meal,
 	})
 end
 
@@ -72,12 +77,20 @@ minetest.register_node("mcl_farming:carrot", {
 	selection_box = {
 		type = "fixed",
 		fixed = {
-			{-0.5, -0.5, -0.5, 0.5, -1/16, 0.5}
+			{-7/16, -0.5 ,-7/16, 7/16, -0.5+(8/16) ,7/16}
 		},
 	},
 	groups = {dig_immediate=3, not_in_creative_inventory=1,plant=1,attached_node=1,dig_by_water=1,destroy_by_lava_flow=1,dig_by_piston=1},
 	sounds = mcl_sounds.node_sound_leaves_defaults(),
 	_mcl_blast_resistance = 0,
+	_on_bone_meal = on_bone_meal,
+	_mcl_fortune_drop = {
+		discrete_uniform_distribution = true,
+		items = {"mcl_farming:carrot_item"},
+		min_count = 2,
+		max_count = 4,
+		cap = 5,
+	}
 })
 
 minetest.register_craftitem("mcl_farming:carrot_item", {
@@ -89,7 +102,14 @@ minetest.register_craftitem("mcl_farming:carrot_item", {
 	groups = {food = 2, eatable = 3, compostability = 65},
 	_mcl_saturation = 3.6,
 	on_secondary_use = minetest.item_eat(3),
-	on_place = mcl_farming:get_seed_or_eat_callback("mcl_farming:carrot_1", 3),
+	on_place = function(itemstack, placer, pointed_thing)
+		local new = mcl_farming:place_seed(itemstack, placer, pointed_thing, "mcl_farming:carrot_1")
+		if new then
+			return new
+		else
+			return minetest.do_item_eat(3, nil, itemstack, placer, pointed_thing)
+		end
+	end,
 })
 
 minetest.register_craftitem("mcl_farming:carrot_item_gold", {

@@ -1,86 +1,33 @@
+mcl_sus_stew = {}
+mcl_sus_stew.registered_stews = {}
+local item_effect = {}
 local S = minetest.get_translator(minetest.get_current_modname())
 
---                                          ____________________________
---_________________________________________/    Variables & Functions    \_________
-
-local eat = minetest.item_eat(6, "mcl_core:bowl") --6 hunger points, player receives mcl_core:bowl after eating
-
-local flower_effect = {
-	[ "mcl_flowers:allium" ] = "fire_resistance",
-	[ "mcl_flowers:lily_of_the_valley" ] = "poison",
-	[ "mcl_flowers:blue_orchid" ] = "hunger",
-	[ "mcl_flowers:dandelion" ] = "hunger",
-	[ "mcl_flowers:cornflower" ] = "jump",
-	[ "mcl_flowers:oxeye_daisy" ] = "regeneration",
-	[ "mcl_flowers:poppy" ] = "night_vision"
-}
-
-local effects = {
-	[ "fire_resistance" ] = function(itemstack, placer, pointed_thing)
-		mcl_potions.fire_resistance_func(placer, 1, 4)
-		return eat(itemstack, placer, pointed_thing)
-	end,
-	[ "poison" ] = function(itemstack, placer, pointed_thing)
-		mcl_potions.poison_func(placer, 1, 12)
-		return eat(itemstack, placer, pointed_thing)
-	end,
-
-	[ "hunger" ] = function(itemstack, placer, pointed_thing, player)
-		mcl_hunger.item_eat(6, "mcl_core:bowl", 3.5, 0, 100)
-		return eat(itemstack, placer, pointed_thing)
-	end,
-
-	["jump"] = function(itemstack, placer, pointed_thing)
-		mcl_potions.leaping_func(placer, 1, 6)
-		return eat(itemstack, placer, pointed_thing)
-	end,
-
-	["regeneration"] = function(itemstack, placer, pointed_thing)
-		mcl_potions.regeneration_func(placer, 1, 8)
-		return eat(itemstack, placer, pointed_thing)
-	end,
-
-	["night_vision"] = function(itemstack, placer, pointed_thing)
-		mcl_potions.night_vision_func(placer, 1, 5)
-		return eat(itemstack, placer, pointed_thing)
-	end,
-}
 local function get_random_effect()
 	local keys = {}
-	for k in pairs(effects) do
+	for k in pairs(mcl_sus_stew.registered_stews) do
 		table.insert(keys, k)
 	end
-	return effects[keys[math.random(#keys)]]
+	local e = keys[math.random(#keys)]
+	return mcl_sus_stew.registered_stews[e],e
 end
 
-local function eat_stew(itemstack, user, pointed_thing)
-	if pointed_thing.type == "node" then
-		if user and not user:get_player_control().sneak then
-			-- Use pointed node's on_rightclick function first, if present
-			local node = minetest.get_node(pointed_thing.under)
-			if user and not user:get_player_control().sneak then
-				if minetest.registered_nodes[node.name] and minetest.registered_nodes[node.name].on_rightclick then
-					return minetest.registered_nodes[node.name].on_rightclick(pointed_thing.under, node, user, itemstack) or itemstack
-				end
-			end
-		end
-	elseif pointed_thing.type == "object" then
-		return itemstack
-	end
-
+local function eat_stew(itemstack, placer, pointed_thing)
+	local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+	if rc then return rc end
 	local e = itemstack:get_meta():get_string("effect")
-	local f = effects[e]
+	local f = mcl_sus_stew.registered_stews[e]
 	if not f then
-		f = get_random_effect()
+		f, e = get_random_effect()
 	end
-	if f(itemstack, user, pointed_thing) then
+	if f(itemstack,placer,pointed_thing,e) then
 		return "mcl_core:bowl"
 	end
 end
 
 minetest.register_on_craft(function(itemstack, player, old_craft_grid, craft_inv)
 	if itemstack:get_name() ~= "mcl_sus_stew:stew" then return end
-	for f,e in pairs(flower_effect) do
+	for f,e in pairs(item_effect) do
 		for _,it in pairs(old_craft_grid) do
 			if it:get_name() == f then
 				itemstack:get_meta():set_string("effect",e)
@@ -90,8 +37,44 @@ minetest.register_on_craft(function(itemstack, player, old_craft_grid, craft_inv
 	end
 end)
 
---										  ________________________
---_________________________________________/	Item Regestration	\_________________
+function mcl_sus_stew.register_stew(name,recipe_item,effect_func)
+	mcl_sus_stew.registered_stews[name] = effect_func
+	item_effect[recipe_item] = name
+	minetest.register_craft({
+		type = "shapeless",
+		output = "mcl_sus_stew:stew",
+		recipe = {"mcl_mushrooms:mushroom_red", "mcl_mushrooms:mushroom_brown", "mcl_core:bowl", recipe_item },
+	})
+end
+
+local eat = minetest.item_eat(6, "mcl_core:bowl")
+
+local function hunger_effect(itemstack, placer, pointed_thing)
+	mcl_hunger.item_eat(6, "mcl_core:bowl", 3.5, 0, 100)
+	return eat(itemstack, placer, pointed_thing)
+end
+
+local function potion_effect(itemstack, placer, pointed_thing,effect)
+	if mcl_potions[effect.."_func"] then
+		mcl_potions[effect.."_func"](placer, 1, 6)
+	end
+	return eat(itemstack, placer, pointed_thing)
+end
+
+mcl_sus_stew.register_stew("fire_resistance","mcl_flowers:allium",potion_effect)
+--mcl_sus_stew.register_stew("blindness","mcl_flowers:azure_bluet",potion_effect) -- effect not implemented
+mcl_sus_stew.register_stew("hunger","mcl_flowers:blue_orchid",hunger_effect)
+mcl_sus_stew.register_stew("leaping","mcl_flowers:cornflower",potion_effect)
+mcl_sus_stew.register_stew("hunger","mcl_flowers:dandelion",hunger_effect)
+mcl_sus_stew.register_stew("poison","mcl_flowers:lily_of_the_valley",potion_effect)
+mcl_sus_stew.register_stew("regeneration","mcl_flowers:oxeye_daisy",potion_effect)
+mcl_sus_stew.register_stew("night_vision","mcl_flowers:poppy",potion_effect)
+--mcl_sus_stew.register_stew("weakness","mcl_flowers:tulip_orange",potion_effect) -- effect not implemented
+--mcl_sus_stew.register_stew("weakness","mcl_flowers:tulip_pink",potion_effect) -- effect not implemented
+--mcl_sus_stew.register_stew("weakness","mcl_flowers:tulip_red",potion_effect) -- effect not implemented
+--mcl_sus_stew.register_stew("weakness","mcl_flowers:tulip_white",potion_effect) -- effect not implemented
+mcl_sus_stew.register_stew("harming","mcl_flowers:wither_rose",potion_effect) -- in place of real wither effect
+
 minetest.register_craftitem("mcl_sus_stew:stew",{
 	description = S("Suspicious Stew"),
 	inventory_image = "sus_stew.png",
@@ -110,48 +93,3 @@ minetest.register_alias("mcl_sus_stew:hunger_stew", "mcl_sus_stew:stew")
 minetest.register_alias("mcl_sus_stew:jump_boost_stew", "mcl_sus_stew:stew")
 minetest.register_alias("mcl_sus_stew:regneration_stew", "mcl_sus_stew:stew")
 minetest.register_alias("mcl_sus_stew:night_vision_stew", "mcl_sus_stew:stew")
-
---										 ______________
---_________________________________________/	Crafts	\________________________________
-
-minetest.register_craft({
-	type = "shapeless",
-	output = "mcl_sus_stew:stew",
-	recipe = {"mcl_mushrooms:mushroom_red", "mcl_mushrooms:mushroom_brown", "mcl_core:bowl", "mcl_flowers:allium"},
-})
-
-minetest.register_craft({
-	type = "shapeless",
-	output = "mcl_sus_stew:stew",
-	recipe = {"mcl_mushrooms:mushroom_red", "mcl_mushrooms:mushroom_brown", "mcl_core:bowl", "mcl_flowers:lily_of_the_valley"},
-})
-
-minetest.register_craft({
-	type = "shapeless",
-	output = "mcl_sus_stew:stew",
-	recipe = {"mcl_mushrooms:mushroom_red", "mcl_mushrooms:mushroom_brown", "mcl_core:bowl", "mcl_flowers:blue_orchid"},
-})
-
-minetest.register_craft({
-	type = "shapeless",
-	output = "mcl_sus_stew:stew",
-	recipe = {"mcl_mushrooms:mushroom_red", "mcl_mushrooms:mushroom_brown", "mcl_core:bowl", "mcl_flowers:dandelion"} ,
-})
-
-minetest.register_craft({
-	type = "shapeless",
-	output = "mcl_sus_stew:stew",
-	recipe = {"mcl_mushrooms:mushroom_red", "mcl_mushrooms:mushroom_brown", "mcl_core:bowl", "mcl_flowers:cornflower"},
-})
-
-minetest.register_craft({
-	type = "shapeless",
-	output = "mcl_sus_stew:stew",
-	recipe = {"mcl_mushrooms:mushroom_red", "mcl_mushrooms:mushroom_brown", "mcl_core:bowl", "mcl_flowers:oxeye_daisy"},
-})
-
-minetest.register_craft({
-	type = "shapeless",
-	output = "mcl_sus_stew:stew",
-	recipe = {"mcl_mushrooms:mushroom_red", "mcl_mushrooms:mushroom_brown", "mcl_core:bowl", "mcl_flowers:poppy"},
-})

@@ -32,7 +32,6 @@ minetest.register_craftitem("mcl_potions:fermented_spider_eye", {
 	wield_image = "mcl_potions_spider_eye_fermented.png",
 	inventory_image = "mcl_potions_spider_eye_fermented.png",
 	groups = { brewitem = 1, },
-	stack_max = 64,
 })
 
 minetest.register_craft({
@@ -48,19 +47,15 @@ minetest.register_craftitem("mcl_potions:glass_bottle", {
 	_doc_items_usagehelp = S("To collect water, use it on a cauldron with water (which removes a level of water) or any water source (which removes no water)."),
 	inventory_image = "mcl_potions_potion_bottle.png",
 	wield_image = "mcl_potions_potion_bottle.png",
-	groups = {brewitem=1},
+	groups = {brewitem=1, empty_bottle = 1},
 	liquids_pointable = true,
 	on_place = function(itemstack, placer, pointed_thing)
 		if pointed_thing.type == "node" then
 			local node = minetest.get_node(pointed_thing.under)
 			local def = minetest.registered_nodes[node.name]
 
-			-- Call on_rightclick if the pointed node defines it
-			if placer and not placer:get_player_control().sneak then
-				if def and def.on_rightclick then
-					return def.on_rightclick(pointed_thing.under, node, placer, itemstack) or itemstack
-				end
-			end
+			local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+			if rc then return rc end
 
 			-- Try to fill glass bottle with water
 			local get_water = false
@@ -80,25 +75,25 @@ minetest.register_craftitem("mcl_potions:glass_bottle", {
 				end
 				if node.name == "mcl_cauldrons:cauldron_3" then
 					get_water = true
-					minetest.set_node(pointed_thing.under, {name="mcl_cauldrons:cauldron_2"})
+					minetest.swap_node(pointed_thing.under, {name="mcl_cauldrons:cauldron_2"})
 				elseif node.name == "mcl_cauldrons:cauldron_2" then
 					get_water = true
-					minetest.set_node(pointed_thing.under, {name="mcl_cauldrons:cauldron_1"})
+					minetest.swap_node(pointed_thing.under, {name="mcl_cauldrons:cauldron_1"})
 				elseif node.name == "mcl_cauldrons:cauldron_1" then
 					get_water = true
-					minetest.set_node(pointed_thing.under, {name="mcl_cauldrons:cauldron"})
+					minetest.swap_node(pointed_thing.under, {name="mcl_cauldrons:cauldron"})
 				elseif node.name == "mcl_cauldrons:cauldron_3r" then
 					get_water = true
 					river_water = true
-					minetest.set_node(pointed_thing.under, {name="mcl_cauldrons:cauldron_2r"})
+					minetest.swap_node(pointed_thing.under, {name="mcl_cauldrons:cauldron_2r"})
 				elseif node.name == "mcl_cauldrons:cauldron_2r" then
 					get_water = true
 					river_water = true
-					minetest.set_node(pointed_thing.under, {name="mcl_cauldrons:cauldron_1r"})
+					minetest.swap_node(pointed_thing.under, {name="mcl_cauldrons:cauldron_1r"})
 				elseif node.name == "mcl_cauldrons:cauldron_1r" then
 					get_water = true
 					river_water = true
-					minetest.set_node(pointed_thing.under, {name="mcl_cauldrons:cauldron"})
+					minetest.swap_node(pointed_thing.under, {name="mcl_cauldrons:cauldron"})
 				end
 			end
 			if get_water then
@@ -190,7 +185,6 @@ local function set_node_empty_bottle(itemstack, placer, pointed_thing, newitemst
 	-- play sound
 	minetest.sound_play("mcl_potions_bottle_pour", {pos=pointed_thing.under, gain=0.5, max_hear_range=16}, true)
 
-	--
 	if minetest.is_creative_enabled(placer:get_player_name()) then
 		return itemstack
 	else
@@ -218,14 +212,9 @@ end
 local function water_bottle_on_place(itemstack, placer, pointed_thing)
 	if pointed_thing.type == "node" then
 		local node = minetest.get_node(pointed_thing.under)
-		local def = minetest.registered_nodes[node.name]
 
-		-- Call on_rightclick if the pointed node defines it
-		if placer and not placer:get_player_control().sneak then
-			if def and def.on_rightclick then
-				return def.on_rightclick(pointed_thing.under, node, placer, itemstack) or itemstack
-			end
-		end
+		local rc = mcl_util.call_on_rightclick(itemstack, placer, pointed_thing)
+		if rc then return rc end
 
 		local cauldron = nil
 		if itemstack:get_name() == "mcl_potions:water" then -- regular water
@@ -256,7 +245,7 @@ minetest.register_craftitem("mcl_potions:water", {
 	stack_max = 1,
 	inventory_image = potion_image("#0022FF"),
 	wield_image = potion_image("#0022FF"),
-	groups = {brewitem=1, food=3, can_eat_when_full=1, water_bottle=1, bottle=1},
+	groups = {brewitem=1, food=3, can_eat_when_full=1, water_bottle=1},
 	on_place = water_bottle_on_place,
 	_on_dispense = dispense_water_bottle,
 	_dispense_into_walkable = true,
@@ -273,7 +262,7 @@ minetest.register_craftitem("mcl_potions:river_water", {
 	stack_max = 1,
 	inventory_image = potion_image("#0044FF"),
 	wield_image = potion_image("#0044FF"),
-	groups = {brewitem=1, food=3, can_eat_when_full=1, water_bottle=1, bottle=1},
+	groups = {brewitem=1, food=3, can_eat_when_full=1, water_bottle=1},
 	on_place = water_bottle_on_place,
 	_on_dispense = dispense_water_bottle,
 	_dispense_into_walkable = true,
@@ -317,7 +306,6 @@ mcl_potions.register_lingering("water", S("Lingering Water Bottle"), "#0022FF", 
 minetest.register_craftitem("mcl_potions:speckled_melon", {
 	description = S("Glistering Melon"),
 	_doc_items_longdesc = S("This shiny melon is full of tiny gold nuggets and would be nice in an item frame. It isn't edible and not useful for anything else."),
-	stack_max = 64,
 	groups = { brewitem = 1, },
 	inventory_image = "mcl_potions_melon_speckled.png",
 })
@@ -356,7 +344,6 @@ local awkward_table = {
 	["mcl_fishing:pufferfish_raw"] = "mcl_potions:water_breathing",
 	["mcl_mobitems:ghast_tear"] = "mcl_potions:regeneration",
 	["mcl_mobitems:spider_eye"] = "mcl_potions:poison",
-	["mcl_flowers:wither_rose"] = "mcl_potions:withering",
 	["mcl_mobitems:rabbit_foot"] = "mcl_potions:leaping",
 }
 
@@ -365,6 +352,17 @@ local output_table = {
 	["mcl_potions:water"] = water_table,
 	["mcl_potions:awkward"] = awkward_table,
 }
+
+minetest.register_on_mods_loaded(function()
+	for k, _ in pairs(table.merge(awkward_table, water_table)) do
+		local def = minetest.registered_items[k]
+		if def then
+			minetest.override_item(k, {
+				groups = table.merge(def.groups, {brewing_ingredient = 1})
+			})
+		end
+	end
+end)
 
 
 local enhancement_table = {}

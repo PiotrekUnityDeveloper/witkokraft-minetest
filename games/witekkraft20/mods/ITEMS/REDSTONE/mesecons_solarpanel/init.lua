@@ -1,7 +1,7 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 
 local function sunlight_visible(position)
-	local light_level = mcl_util.get_natural_light(position)
+	local light_level = minetest.get_natural_light(position)
 	return light_level ~= nil and light_level >= 12
 end
 

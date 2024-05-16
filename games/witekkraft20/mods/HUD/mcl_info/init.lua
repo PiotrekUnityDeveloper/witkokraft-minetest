@@ -1,9 +1,13 @@
 mcl_info = {}
-local format, pairs,ipairs,table,vector,minetest,mcl_info,tonumber,tostring = string.format,pairs,ipairs,table,vector,minetest,mcl_info,tonumber,tostring
+
+-- TODO: when < minetest 5.9 isn't supported anymore, remove this variable check and replace all occurences of [hud_elem_type_field] with type
+local hud_elem_type_field = "type"
+if not minetest.features.hud_def_type_field then
+	hud_elem_type_field = "hud_elem_type"
+end
 
 local modname = minetest.get_current_modname()
 local S = minetest.get_translator(modname)
-local storage = minetest.get_mod_storage()
 local player_dbg = {}
 
 local refresh_interval      = .63
@@ -71,12 +75,11 @@ local function info()
 	for _, player in pairs(minetest.get_connected_players()) do
 		local name = player:get_player_name()
 		local s = player_setting(player)
-		local pos = player:get_pos()
 		local text = get_text(player, s)
 		local hud = huds[name]
 		if s and not hud then
 			local def = {
-				hud_elem_type = "text",
+				[hud_elem_type_field] = "text",
 				alignment     = {x = 1, y = -1},
 				scale         = {x = 100, y = 100},
 				position      = {x = 0.0073, y = 0.889},
@@ -163,7 +166,7 @@ mcl_info.register_debug_field("Biome",{
 		local biome_data = minetest.get_biome_data(pos)
 		local biome = biome_data and minetest.get_biome_name(biome_data.biome) or "No biome"
 		if biome_data then
-			return format("%s (%s), Humidity: %.1f, Temperature: %.1f",biome, biome_data.biome, biome_data.humidity, biome_data.heat)
+			return string.format("%s (%s), Humidity: %.1f, Temperature: %.1f",biome, biome_data.biome, biome_data.humidity, biome_data.heat)
 		end
 		return "No biome"
 	end
@@ -172,33 +175,31 @@ mcl_info.register_debug_field("Biome",{
 mcl_info.register_debug_field("Coords", {
 	level = 2,
 	func = function(pl, pos)
-		return format("x:%.1f y:%.1f z:%.1f", pos.x, pos.y, pos.z)
+		return string.format("x:%.1f y:%.1f z:%.1f", pos.x, pos.y, pos.z)
 	end
 })
 
 mcl_info.register_debug_field("Location", {
 	level = 1,
 	func = function(pl, pos)
-		local report_y = 0
 		-- overworld
 		if (pos.y >= mcl_vars.mg_overworld_min) and (pos.y <= mcl_vars.mg_overworld_max) then
-			return format("Overworld: x:%.1f y:%.1f z:%.1f", pos.x, pos.y, pos.z)
+			return string.format("Overworld: x:%.1f y:%.1f z:%.1f", pos.x, pos.y, pos.z)
 		end
 
 		-- nether
 		if (pos.y >= mcl_vars.mg_nether_min) and (pos.y <= mcl_vars.mg_nether_max) then
-			report_y = pos.y - mcl_vars.mg_nether_min
-			return format("Nether: x:%.1f y:%.1f z:%.1f", pos.x, report_y, pos.z)
+			local report_y = pos.y - mcl_vars.mg_nether_min
+			return string.format("Nether: x:%.1f y:%.1f z:%.1f", pos.x, report_y, pos.z)
 		end
 
 		-- end
 		if (pos.y >= mcl_vars.mg_end_min) and (pos.y <= mcl_vars.mg_end_max) then
-			report_y = pos.y - mcl_vars.mg_end_min
-			return format("End: x:%.1f y:%.1f z:%.1f", pos.x, report_y, pos.z)
+			local report_y = pos.y - mcl_vars.mg_end_min
+			return string.format("End: x:%.1f y:%.1f z:%.1f", pos.x, report_y, pos.z)
 		end
 
 		-- outside of scoped bounds.
-		return format("Void: x:%.1f y:%.1f z:%.1f", pos.x, pos.y, pos.z)
-
+		return string.format("Void: x:%.1f y:%.1f z:%.1f", pos.x, pos.y, pos.z)
 	end
 })

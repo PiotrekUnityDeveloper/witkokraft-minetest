@@ -1,37 +1,42 @@
 # textdomain: mcl_wool
-Wool=Lana
+### init.lua ###
 Carpet=Alfombra
-White Wool=Lana blanca
-White Carpet=Alfombra blanca
-Grey Wool=Lana gris
-Grey Carpet=Alfombra gris
-Light Grey Wool=Lana gris claro
-Light Grey Carpet=Alfombra gris claro
-Black Wool=Lana negra
-Black Carpet=Alfombra negra
-Red Wool=Lana roja
-Red Carpet=Alfombra roja
-Yellow Wool=Lana amarilla
-Yellow Carpet=Alfombra amarilla
-Green Wool=Lana verde
-Green Carpet=Alfombra verde
-Cyan Wool=Lana cian
-Cyan Carpet=Alfombra cian
-Blue Wool=Lana azul
-Blue Carpet=Alfombra azul
-Magenta Wool=Lana magenta
-Magenta Carpet=Alfombra magenta
-Orange Wool=Lana naranja
-Orange Carpet=Alfombra naranja
-Purple Wool=Lana morada
-Purple Carpet=Alfombra morada
-Brown Wool=Lana marrón
-Brown Carpet=Alfombra marrón
-Pink Wool=Lana rosa
-Pink Carpet=Alfombra rosa
-Lime Wool=Lana verde lima
-Lime Carpet=Alfombra verde lima
-Light Blue Wool=Lana azul claro
-Light Blue Carpet=Alfombra azul claro
+Wool=Lana
 Wool is a decorative block which comes in many different colors.=WLa lana es un bloque decorativo que viene en muchos colores diferentes.
 Carpets are thin floor covers which come in many different colors.=Las alfombras son finas cubiertas para el suelo que vienen en muchos colores diferentes.
+
+
+##### not used anymore #####
+
+Black Carpet=Alfombra negra
+Black Wool=Lana negra
+Blue Carpet=Alfombra azul
+Blue Wool=Lana azul
+Brown Carpet=Alfombra marrón
+Brown Wool=Lana marrón
+Cyan Carpet=Alfombra cian
+Cyan Wool=Lana cian
+Green Carpet=Alfombra verde
+Green Wool=Lana verde
+Grey Carpet=Alfombra gris
+Grey Wool=Lana gris
+Light Blue Carpet=Alfombra azul claro
+Light Blue Wool=Lana azul claro
+Light Grey Carpet=Alfombra gris claro
+Light Grey Wool=Lana gris claro
+Lime Carpet=Alfombra verde lima
+Lime Wool=Lana verde lima
+Magenta Carpet=Alfombra magenta
+Magenta Wool=Lana magenta
+Orange Carpet=Alfombra naranja
+Orange Wool=Lana naranja
+Pink Carpet=Alfombra rosa
+Pink Wool=Lana rosa
+Purple Carpet=Alfombra morada
+Purple Wool=Lana morada
+Red Carpet=Alfombra roja
+Red Wool=Lana roja
+White Carpet=Alfombra blanca
+White Wool=Lana blanca
+Yellow Carpet=Alfombra amarilla
+Yellow Wool=Lana amarilla

@@ -1,8 +1,8 @@
 local S = minetest.get_translator(minetest.get_current_modname())
 local F = minetest.formspec_escape
 
-local math = math
-local vector = vector
+local allow_nav_hacks = minetest.settings:get_bool("mcl_mob_allow_nav_hacks", false)
+
 local player_in_bed = 0
 local is_sp = minetest.is_singleplayer()
 local weather_mod = minetest.get_modpath("mcl_weather")
@@ -48,20 +48,6 @@ local function check_in_beds(players)
 	return players_in_bed_setting() <= (player_in_bed * 100) / #players
 end
 
--- These monsters do not prevent sleep
-local monster_exceptions = {
-	["mobs_mc:ghast"] = true,
-	["mobs_mc:enderdragon"] = true,
-	["mobs_mc:killer_bunny"] = true,
-	["mobs_mc:slime_big"] = true,
-	["mobs_mc:slime_small"] = true,
-	["mobs_mc:slime_tiny"] = true,
-	["mobs_mc:magma_cube_big"] = true,
-	["mobs_mc:magma_cube_small"] = true,
-	["mobs_mc:magma_cube_tiny"] = true,
-	["mobs_mc:shulker"] = true,
-}
-
 function mcl_beds.is_night(tod)
 	-- Values taken from Minecraft Wiki with offset of +600
 	if not tod then
@@ -69,6 +55,18 @@ function mcl_beds.is_night(tod)
 	end
 	tod = ( tod * 24000 ) % 24000
 	return  tod > 18541 or tod < 5458
+end
+
+-- monsters prevent sleep unless the "does_not_prevent_sleep" flag is set
+-- other mobs *can* prevent sleep when hostile if the "prevents_sleep_when_hostile"
+-- flag is set. This is needed because zombiefied piglins technically count as
+-- animals.
+local function prevents_sleep(mob_def,mob_ent)
+	if ( mob_def.prevents_sleep_when_hostile and mob_ent.state ~= "attack" )
+	or mob_def.type ~= "monster"
+	or mob_def.does_not_prevent_sleep
+	then return false end
+	return true
 end
 
 local function lay_down(player, pos, bed_pos, state, skip)
@@ -123,17 +121,12 @@ local function lay_down(player, pos, bed_pos, state, skip)
 				local mobname = ent.name
 				local def = minetest.registered_entities[mobname]
 				-- Approximation of monster detection range
-				if def.is_mob and (def.type == "monster" or mobname == "mobs_mc:zombified_piglin") then
-					if monster_exceptions[mobname] or
-							(mobname == "mobs_mc:zombified_piglin" and ent.state ~= "attack") then
-						-- Some exceptions do not prevent sleep. Zombie piglin only prevent sleep while they are hostile.
-					else
-						if math.abs(bed_pos.y - obj:get_pos().y) <= 5 then
-							return false, S("You can't sleep now, monsters are nearby!")
-						end
+				if def.is_mob and prevents_sleep(def,ent) then
+				--((mobname ~= "mobs_mc:pigman" and def.type == "monster" and not monster_exceptions[mobname]) or (mobname == "mobs_mc:pigman" and ent.state == "attack")) then
+					if math.abs(bed_pos.y - obj:get_pos().y) <= 5 then
+						return false, S("You can't sleep now, monsters are nearby!")
 					end
 				end
-
 			end
 		end
 	end
@@ -161,7 +154,7 @@ local function lay_down(player, pos, bed_pos, state, skip)
 		if player:get_look_vertical() > 0 then
 			player:set_look_vertical(0)
 		end
-		mcl_player.player_attached[name] = false
+		mcl_player.players[player].attached = false
 		playerphysics.remove_physics_factor(player, "speed", "mcl_beds:sleeping")
 		playerphysics.remove_physics_factor(player, "jump", "mcl_beds:sleeping")
 		player:get_meta():set_string("mcl_beds:sleeping", "false")
@@ -197,7 +190,7 @@ local function lay_down(player, pos, bed_pos, state, skip)
 		playerphysics.add_physics_factor(player, "speed", "mcl_beds:sleeping", 0)
 		playerphysics.add_physics_factor(player, "jump", "mcl_beds:sleeping", 0)
 		player:set_pos(bed_center)
-		mcl_player.player_attached[name] = true
+		mcl_player.players[player].attached = true
 		hud_flags.wielditem = false
 		mcl_player.player_set_animation(player, "lay" , 0)
 	end
@@ -237,11 +230,11 @@ local function update_formspecs(finished, ges)
 			form_n = form_n .. bg_sleep
 			form_n = form_n .. button_abort
 		else
-			local comment = "You will fall asleep when "
+			local comment
 			if players_in_bed_setting() == 100 then
-				comment = S(comment .. "all players are in bed.")
+				comment = S("You will fall asleep when all players are in bed.")
 			else
-				comment = S(comment .. "@1% of all players are in bed.", players_in_bed_setting())
+				comment = S("You will fall asleep when @1% of all players are in bed.", players_in_bed_setting())
 			end
 			text = text .. "\n" .. comment
 			form_n = form_n .. bg_presleep
@@ -314,7 +307,18 @@ function mcl_beds.kick_player(player)
 	end
 end
 
+-- Remember when the last skip was
+local last_skip = 0
+
+function mcl_beds.last_skip()
+	return last_skip
+end
+
 function mcl_beds.skip_night()
+	if allow_nav_hacks then
+		last_skip = minetest.get_day_count()
+	end
+
 	minetest.set_timeofday(0.25) -- tod = 6000
 end
 
@@ -322,13 +326,7 @@ function mcl_beds.get_bed_top (pos)
 	local node = minetest.get_node(pos)
 	local dir = minetest.facedir_to_dir(node.param2)
 	local bed_top_pos = vector.add(pos, dir)
-	local bed_top = minetest.get_node(bed_top_pos)
 
-	if bed_top then
-		--mcl_log("Has a bed top")
-	else
-		--mcl_log("No bed top")
-	end
 	return bed_top_pos
 end
 
@@ -364,7 +362,7 @@ function mcl_beds.on_rightclick(pos, player, is_top)
 			minetest.remove_node(pos)
 			minetest.remove_node(string.sub(node.name, -4) == "_top" and vector.subtract(pos, dir) or vector.add(pos, dir))
 			if explosions_mod then
-				mcl_explosions.explode(pos, 5, {drop_chance = 1.0, fire = true})
+				mcl_explosions.explode(pos, 5, {fire = true})
 			end
 			return
 		end
