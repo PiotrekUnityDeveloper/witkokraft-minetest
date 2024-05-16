@@ -3,11 +3,11 @@ Sptmap:T
 E
 Swagons:T
 E
+Strains:T
+E
 Satc:T
 Scontrollers:T
 E
-E
-Strains:T
 E
 E
 END_SER

@@ -1,3 +1,0 @@
-dofile ("/server")
-os.sleep (1.0)
-dofile ("/boot_os")

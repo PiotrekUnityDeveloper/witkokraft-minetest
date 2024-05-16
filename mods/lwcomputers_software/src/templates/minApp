@@ -1,9 +1,0 @@
-
--- collect any program arguments
-local app_args = { ... }
-
--- create the application's main frame
-local appFrame = win.create_app_frame ()
-
--- run the application's loop
-appFrame:run_app ()

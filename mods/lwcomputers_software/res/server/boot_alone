@@ -1,5 +1,0 @@
-dofile ("/server")
-
-while true do
-	os.get_event ()
-end
