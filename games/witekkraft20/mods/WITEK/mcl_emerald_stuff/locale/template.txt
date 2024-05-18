@@ -1,9 +1,0 @@
-# textdomain: mcl_emerald_stuff
-Emerald Pickaxe=
-Emerald Shovel=
-Emerald Axe=
-Emerald Sword=
-Emerald Helmet=
-Emerald Chestplate=
-Emerald Leggings=
-Emerald Boots=

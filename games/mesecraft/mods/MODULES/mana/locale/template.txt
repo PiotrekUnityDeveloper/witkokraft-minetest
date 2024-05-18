@@ -1,3 +1,0 @@
-# textdomain:mana
-Mana=
-Mana: @1/@2=
