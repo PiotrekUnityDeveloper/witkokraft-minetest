@@ -1,16 +1,16 @@
 LUA_SER v=2
-Sversion:N1
 Senvs:T
+E
+Sinterrupt:T
+Stimer:N329.5518579929
+Squeue:T
+E
 E
 Spcnaming:T
 E
+Sversion:N1
 Sactive:T
 Snodes:T
-E
-E
-Sinterrupt:T
-Stimer:N325.68401868802
-Squeue:T
 E
 E
 E
